@@ -1,0 +1,27 @@
+{
+  "name": "university-management-server",
+  "version": "1.0.0",
+  "description": "Backend for University Management System",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.js",
+    "dev": "bun --watch run src/index.js"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "latest",
+    "@elysiajs/jwt": "latest",
+    "@node-rs/argon2": "^2.0.2",
+    "bcrypt": "^5.1.1",
+    "chalk": "4",
+    "dotenv": "^16.4.7",
+    "elysia": "latest",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.15.0",
+    "mongoose": "latest",
+    "winston": "latest"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9"
+  }
+}
