@@ -1,5 +1,14 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { BookOpen, BarChart as ChartIcon, Clock, TrendingUp } from "lucide-react";
 import React, { useContext, useEffect, useState } from "react";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AuthContext } from "../../context/AuthContext";
+import { api } from "../../lib/api";
 import { studentService } from "../../services/api";
 
 const ReportsPanel = () => {
@@ -14,6 +23,32 @@ const ReportsPanel = () => {
   });
   const [projects, setProjects] = useState([]);
   const [submittedReports, setSubmittedReports] = useState([]);
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['studentStats'],
+    queryFn: () => api.get('/api/student/stats')
+  });
+
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4 }
+  };
+
+  // Mock data for demonstration
+  const activityData = [
+    { month: 'Jan', submissions: 4, meetings: 2 },
+    { month: 'Feb', submissions: 3, meetings: 4 },
+    { month: 'Mar', submissions: 5, meetings: 3 },
+    { month: 'Apr', submissions: 2, meetings: 5 },
+  ];
+
+  const progressData = [
+    { week: 'Week 1', progress: 25 },
+    { week: 'Week 2', progress: 45 },
+    { week: 'Week 3', progress: 65 },
+    { week: 'Week 4', progress: 85 },
+  ];
 
   useEffect(() => {
     if (user?.studentId) {
@@ -84,7 +119,162 @@ const ReportsPanel = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div {...fadeIn} transition={{ delay: 0.1 }}>
+          <Card className="border-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="w-5 h-5 text-blue-500" />
+                Project Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-3xl font-bold text-blue-600">85%</div>
+                <Progress value={85} className="bg-blue-100 dark:bg-blue-950">
+                  <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: '85%' }} />
+                </Progress>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Overall completion rate</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div {...fadeIn} transition={{ delay: 0.2 }}>
+          <Card className="border-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-3xl font-bold text-green-600">A+</div>
+                <Badge className="bg-green-500">Excellent</Badge>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Current grade standing</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div {...fadeIn} transition={{ delay: 0.3 }}>
+          <Card className="border-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="w-5 h-5 text-amber-500" />
+                Upcoming Deadline
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-xl font-semibold text-amber-600">Final Submission</div>
+                <Badge variant="outline" className="bg-amber-500/10 text-amber-600">
+                  {format(new Date('2025-05-15'), 'MMM dd, yyyy')}
+                </Badge>
+                <p className="text-sm text-gray-600 dark:text-gray-400">9 days remaining</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div {...fadeIn} transition={{ delay: 0.4 }}>
+          <Card className="border-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <ChartIcon className="w-5 h-5 text-purple-500" />
+                Activity Score
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-3xl font-bold text-purple-600">92</div>
+                <Progress value={92} className="bg-purple-100 dark:bg-purple-950">
+                  <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: '92%' }} />
+                </Progress>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Based on participation</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div {...fadeIn} transition={{ delay: 0.5 }}>
+          <Card className="border-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
+            <CardHeader>
+              <CardTitle>Monthly Activity</CardTitle>
+              <CardDescription>Submissions and team meetings overview</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={activityData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300/20" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                    <Bar dataKey="submissions" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="meetings" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div {...fadeIn} transition={{ delay: 0.6 }}>
+          <Card className="border-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
+            <CardHeader>
+              <CardTitle>Progress Trend</CardTitle>
+              <CardDescription>Weekly progress monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={progressData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300/20" />
+                    <XAxis dataKey="week" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="progress"
+                      stroke="url(#progressGradient)"
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', strokeWidth: 2 }}
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#6366f1" />
+                      </linearGradient>
+                    </defs>
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
       <h2 className="text-2xl font-semibold mb-6">Reports</h2>
 
       {error && (

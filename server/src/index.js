@@ -1,597 +1,406 @@
-import { config } from 'dotenv';
-config({ path: '../.env' });
-
-import { cors } from "@elysiajs/cors";
+import { swagger } from "@elysiajs/swagger";
+import { config } from "dotenv";
 import { Elysia } from "elysia";
-import fs from "fs";
-import jsonwebtoken from 'jsonwebtoken';
-import mongoose from "mongoose";
-import { connectDB } from "../config/db.js";
-import {
-  getUserProfile,
-  loginUser,
-  registerUser,
-  updateUserProfile,
-} from "./controllers/authController.js";
-import { setupSuperAdmin } from "./controllers/setupController.js";
-import './models/Session.js';
-import './models/Student.js';
-import './models/Supervisor.js';
-import './models/Team.js';
-import './models/User.js';
-import { dashboardRoutes } from "./routes/dashboardRoutes.js";
-import { sessionRoutes } from "./routes/sessionRoutes.js";
-import { ValidationError } from "./utils/errors.js";
+import jwt from "jsonwebtoken";
+import connectToDatabase from "./config/database.js";
 import logger from "./utils/logger.js";
 
-// Create logs directory if it doesn't exist
-if (!fs.existsSync("logs")) {
-  fs.mkdirSync("logs");
-}
-
-const Doc=`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Documentation | Swadhin Biswas</title>
-    <style>
-        :root {
-            --dark-blue: #0a192f;
-            --medium-blue: #172a45;
-            --light-blue: #303c55;
-            --highlight-blue: #64ffda;
-            --white: #e6f1ff;
-            --gray: #8892b0;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--dark-blue);
-            color: var(--white);
-            line-height: 1.6;
-        }
-
-        header {
-            background-color: var(--medium-blue);
-            padding: 2rem 0;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 0;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--highlight-blue);
-        }
-
-        h2 {
-            font-size: 2rem;
-            margin: 2rem 0 1rem;
-            color: var(--highlight-blue);
-            border-bottom: 2px solid var(--gray);
-            padding-bottom: 0.5rem;
-        }
-
-        h3 {
-            font-size: 1.5rem;
-            margin: 1.5rem 0 1rem;
-            color: var(--white);
-        }
-
-        p {
-            margin-bottom: 1.5rem;
-            color: var(--gray);
-        }
-
-        .endpoint {
-            background-color: var(--light-blue);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            transition: transform 0.3s ease;
-        }
-
-        .endpoint:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .method {
-            display: inline-block;
-            padding: 0.3rem 0.6rem;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-
-        .get {
-            background-color: #61affe;
-            color: #fff;
-        }
-
-        .post {
-            background-color: #49cc90;
-            color: #fff;
-        }
-
-        .put {
-            background-color: #fca130;
-            color: #fff;
-        }
-
-        .delete {
-            background-color: #f93e3e;
-            color: #fff;
-        }
-
-        .path {
-            font-family: monospace;
-            font-size: 1rem;
-        }
-
-        .description {
-            margin-top: 0.5rem;
-            color: var(--gray);
-        }
-
-        .section {
-            margin-bottom: 3rem;
-        }
-
-        .profile {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: var(--medium-blue);
-            padding: 2rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-        }
-
-        .profile-info {
-            flex: 2;
-        }
-
-        .profile-image {
-            flex: 1;
-            text-align: center;
-        }
-
-        .profile-image img {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid var(--highlight-blue);
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .social-links a {
-            color: var(--highlight-blue);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .social-links a:hover {
-            color: var(--white);
-        }
-
-        footer {
-            background-color: var(--medium-blue);
-            text-align: center;
-            padding: 2rem 0;
-            margin-top: 4rem;
-        }
-
-        @media (max-width: 768px) {
-            .profile {
-                flex-direction: column-reverse;
-                text-align: center;
-            }
-
-            .profile-image {
-                margin-bottom: 2rem;
-            }
-
-            .social-links {
-                justify-content: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>API Documentation</h1>
-            <p>Comprehensive guide to our REST API endpoints</p>
-        </div>
-    </header>
-
-    <div class="container">
-        <section class="profile">
-            <div class="profile-info">
-                <h2>Swadhin Biswas</h2>
-                <p>Full Stack Developer & API Architect</p>
-                <p>Passionate about creating robust and scalable backend systems with clean, efficient APIs that power modern web applications.</p>
-                <div class="social-links">
-                    <a href="https://github.com/swadhinbiswas" target="_blank">GitHub</a>
-                    <a href="https://linkedin.com/in/swadhinbiswas" target="_blank">LinkedIn</a>
-                    <a href="mailto:contact@swadhinbiswas.com">Email</a>
-                </div>
-            </div>
-            <div class="profile-image">
-                <img src="https://avatars.githubusercontent.com/u/107450069?v=4" alt="Swadhin Biswas">
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Authentication Endpoints</h2>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/auth/register</span>
-                <div class="description">Register a new user to the system.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/auth/login</span>
-                <div class="description">Authenticate and log in a user.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/auth/profile</span>
-                <div class="description">Retrieve the authenticated user's profile information.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method put">PUT</span>
-                <span class="path">/api/auth/profile</span>
-                <div class="description">Update the authenticated user's profile details.</div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Admin Endpoints</h2>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/admin/users</span>
-                <div class="description">Get a list of all users in the system. Restricted to admin access.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/admin/pending-supervisors</span>
-                <div class="description">Get a list of supervisor accounts awaiting approval.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method put">PUT</span>
-                <span class="path">/api/admin/approve-supervisor/:id</span>
-                <div class="description">Approve a pending supervisor account by ID.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method delete">DELETE</span>
-                <span class="path">/api/admin/users/:id</span>
-                <div class="description">Delete a user account from the system by ID.</div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Session Management</h2>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/sessions/</span>
-                <div class="description">Create a new session. Admin only.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/sessions/</span>
-                <div class="description">Get all sessions with optional filtering.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/sessions/:id</span>
-                <div class="description">Get detailed information about a specific session by ID.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method put">PUT</span>
-                <span class="path">/api/sessions/:id</span>
-                <div class="description">Update a session's details. Admin only.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/sessions/:id/deadlines</span>
-                <div class="description">Add or update deadlines for a session. Admin only.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method delete">DELETE</span>
-                <span class="path">/api/sessions/:sessionId/deadlines/:deadlineId</span>
-                <div class="description">Delete a specific deadline from a session. Admin only.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/sessions/:id/activate</span>
-                <div class="description">Activate a session. Admin only.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/sessions/:id/analytics</span>
-                <div class="description">Get analytics data for a specific session.</div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Student Endpoints</h2>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/dashboard/student</span>
-                <div class="description">Get the student's dashboard information.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/student/create-team</span>
-                <div class="description">Create a new team.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/student/join-team</span>
-                <div class="description">Join an existing team.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/student/invite-to-team</span>
-                <div class="description">Invite another student to join a team.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/student/create-project</span>
-                <div class="description">Create a new project.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/student/submit-report</span>
-                <div class="description">Submit a project report.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/student/messages</span>
-                <div class="description">Get messages for the student.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method put">PUT</span>
-                <span class="path">/api/student/messages/:messageId/read</span>
-                <div class="description">Mark a message as read.</div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Supervisor Endpoints</h2>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/supervisor/students</span>
-                <div class="description">Get a list of the supervisor's students.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/supervisor/teams</span>
-                <div class="description">Get a list of the supervisor's teams.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method put">PUT</span>
-                <span class="path">/api/supervisor/student-progress</span>
-                <div class="description">Update a student's progress.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/supervisor/mark-student</span>
-                <div class="description">Mark a student's work.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/supervisor/send-message</span>
-                <div class="description">Send a message to a student.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/supervisor/review-report</span>
-                <div class="description">Review a student's report.</div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>System Setup</h2>
-
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/setup/superadmin</span>
-                <div class="description">Set up the super admin account for the system.</div>
-            </div>
-
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/</span>
-                <div class="description">Root endpoint. Displays this landing page.</div>
-            </div>
-        </section>
-    </div>
-
-    <footer>
-        <div class="container">
-            <p>© 2025 Swadhin Biswas. All rights reserved.</p>
-            <p>API Documentation and Student Project Management System</p>
-        </div>
-    </footer>
-</body>
-</html>`
-
-// Define public paths that bypass authentication
-const PUBLIC_PATHS = [
-  "/",                  // Already included, just ensuring it's clear
-  "/api/auth/login",
-  "/api/auth/register",
-  "/api/setup/superadmin",
-];
-
-// Authentication middleware
-const auth = async ({ request, set }) => {
-  const path = new URL(request.url).pathname;
-  if (PUBLIC_PATHS.includes(path)) return {};
-
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    set.status = 401;
-    return { error: true, message: "No token provided" };
-  }
-
-  const token = authHeader.split(" ")[1];
+// Import middleware
+import { elysiaCorsMiddleware } from "./middleware/cors.js";
+import staticFilesMiddleware from "./middleware/staticFiles.js";
+
+// Import routes
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+
+// Import additional routes
+import activityRoutes from "./routes/activityRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import apiDocsRoutes from "./routes/apiDocsRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
+import calendarServiceRoutes from "./routes/calendarServiceRoutes.js";
+import exportRoutes from "./routes/exportRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import supervisorRoutes from "./routes/supervisorRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+
+// Load environment variables
+config();
+
+// Connect to the database with proper error handling
+(async () => {
   try {
-    const payload = jsonwebtoken.verify(token, process.env.JWT_SECRET || "your-secret-key");
-    if (!payload || !payload.userId) {
-      set.status = 401;
-      return { error: true, message: "Invalid token payload" };
+    logger.info("Attempting to connect to MongoDB database");
+
+    // Call the connectToDatabase function without parameters since it now handles
+    // reading the URI from environment variables internally
+    const connection = await connectToDatabase();
+
+    if (connection) {
+      logger.info("✅ MongoDB connection established successfully");
+
+      // Store the connection for potential later use
+      global.mongoConnection = connection;
+    } else {
+      logger.error(
+        "❌ Could not establish MongoDB connection - server will continue but database operations may fail"
+      );
+      // The global flag is now set inside connectToDatabase function
     }
-
-    const User = mongoose.model('User');
-    const user = await User.findById(payload.userId).select('-password');
-    if (!user) {
-      set.status = 401;
-      return { error: true, message: "User not found" };
-    }
-
-    if (user.role === 'supervisor' && !user.isApproved) {
-      set.status = 401;
-      return { error: true, message: "Account pending approval" };
-    }
-
-    return { user };
-  } catch (err) {
-    logger.error('Auth error:', err);
-    set.status = 401;
-    return { error: true, message: "Invalid token" };
-  }
-};
-
-// Request tracking middleware
-const requestTracker = () => ({ requestStart: Date.now() });
-
-// Start the server
-async function startServer() {
-  try {
-    await connectDB();
-
-    const app = new Elysia()
-      .use(cors({
-        origin: ["http://localhost:5173"],
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        credentials: true,
-        allowedHeaders: ["Content-Type", "Authorization", "Accept"]
-      }))
-      .derive(auth)
-      .derive(requestTracker)
-      .onError(({ code, error, set }) => {
-        logger.error(`Error: ${code}`, error);
-        if (error instanceof ValidationError) {
-          set.status = 400;
-          return { error: error.message };
-        }
-        set.status = code === "NOT_FOUND" ? 404 : 500;
-        return { error: code === "NOT_FOUND" ? "Endpoint not found" : "Internal server error" };
-      })
-      .onAfterHandle(({ request, set, requestStart }) => {
-        if (requestStart) {
-          const responseTime = Date.now() - requestStart;
-          logger.info(`${request.method} ${new URL(request.url).pathname} ${set.status} ${responseTime}ms`);
-        }
-      })
-      // Log request body for debugging (optional)
-      .onRequest(({ request, body }) => {
-        logger.info(`Request to ${request.url} with body:`, body);
-      });
-
-    // Public root endpoint with DevVolop details
-    app.get("/", () => {
-      return new Response(Doc, {
-        headers: {
-          "Content-Type": "text/html",
-          "Cache-Control": "no-store",
-        },
-      });
-    });
-
-    // Other public routes
-    app.post("/api/auth/register", ({ body }) => registerUser(body));
-    app.post("/api/auth/login", ({ body }) => loginUser(body));
-    app.post("/api/setup/superadmin", async ({ body, headers, set }) => {
-      const setupKey = headers['x-setup-key'];
-      const result = await setupSuperAdmin(body, setupKey);
-      if (result.error) {
-        set.status = result.status || 400;
-        return { error: result.error };
-      }
-      return result;
-    });
-
-    // Protected routes
-    app.get("/api/auth/profile", ({ user }) => getUserProfile(user));
-    app.put("/api/auth/profile", ({ body, user }) => updateUserProfile(body, user));
-
-    // Grouped routes
-    app.group('/api/sessions', app => sessionRoutes(app));
-    app.group('/api/dashboard', app => dashboardRoutes(app));
-
-    app.listen(3000);
-    logger.info("Server is running at http://localhost:3000");
-
-    return app;
   } catch (error) {
-    logger.error("Server initialization error:", error.message, error.stack);
-    process.exit(1);
+    logger.error("❌ Database connection error:", error);
+    global.dbConnectionIssue = true;
   }
-}
+})();
 
-startServer();
+// Initialize base app first
+const app = new Elysia();
+
+// Apply Swagger
+app.use(
+  swagger({
+    documentation: {
+      info: {
+        title: "Research Project Management API",
+        version: "1.0.0",
+        description:
+          "API documentation for the Research Project Management System. This API provides endpoints for managing research projects, teams, users, and more.",
+        contact: {
+          name: "API Support",
+          email: "support@research-project.example.com",
+          url: "https://research-project.example.com/support",
+        },
+        license: {
+          name: "MIT",
+          url: "https://opensource.org/licenses/MIT",
+        },
+      },
+      tags: [
+        { name: "Auth", description: "Authentication endpoints" },
+        { name: "Users", description: "User management" },
+        { name: "Teams", description: "Team management" },
+        { name: "Projects", description: "Project management" },
+        { name: "Sessions", description: "Academic session management" },
+        { name: "Students", description: "Student-specific operations" },
+        { name: "Supervisors", description: "Supervisor-specific operations" },
+        { name: "Admin", description: "Administrative operations" },
+        { name: "Dashboard", description: "Dashboard data" },
+        { name: "Documentation", description: "API documentation" },
+      ],
+      servers: [
+        {
+          url: process.env.API_URL || "http://localhost:3000",
+          description: "Development server",
+        },
+        {
+          url: "https://api.research-project.example.com",
+          description: "Production server",
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+            description: "Enter your JWT token in the format: Bearer {token}",
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
+    },
+    path: "/swagger",
+    theme: "default",
+    staticCSP: true,
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  })
+);
+
+// Apply CORS middleware - expecting it to return a function that takes app and applies cors
+app.use(elysiaCorsMiddleware());
+
+// Apply static files middleware
+app.use(staticFilesMiddleware());
+
+// Custom response formatter as a decorator/hook
+app.on("afterHandle", ({ response, set }) => {
+  if (response && typeof response === "object" && !response.timestamp) {
+    return {
+      success: !response.error,
+      ...response,
+      timestamp: new Date().toISOString(),
+    };
+  }
+  return response;
+});
+
+// Apply timeout and response time tracking as a decorator/hook
+app.on("request", async ({ request, set }) => {
+  const timeout = parseInt(process.env.REQUEST_TIMEOUT || "30000");
+  const startTime = Date.now();
+  set.responseStartTime = startTime;
+
+  // Set initial headers
+  set.headers = {
+    ...set.headers,
+    "X-Response-Time": "0ms",
+  };
+});
+
+// Apply rate limiting middleware - simplified inline implementation
+const ipRequestCounts = new Map();
+app.on("request", ({ request, set }) => {
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 60; // 60 requests per minute
+
+  const ip = request.headers["x-forwarded-for"] || "unknown";
+  const now = Date.now();
+
+  // Create or get existing record
+  if (!ipRequestCounts.has(ip)) {
+    ipRequestCounts.set(ip, { count: 0, resetTime: now + windowMs });
+  }
+
+  const record = ipRequestCounts.get(ip);
+
+  // Reset if time window has passed
+  if (now > record.resetTime) {
+    record.count = 0;
+    record.resetTime = now + windowMs;
+  }
+
+  // Increment request count
+  record.count++;
+
+  // Set headers
+  set.headers["X-RateLimit-Limit"] = maxRequests.toString();
+  set.headers["X-RateLimit-Remaining"] = Math.max(
+    0,
+    maxRequests - record.count
+  ).toString();
+  set.headers["X-RateLimit-Reset"] = record.resetTime.toString();
+
+  // Return 429 if limit exceeded
+  if (record.count > maxRequests) {
+    set.status = 429;
+    throw new Error("Too many requests, please try again later");
+  }
+});
+
+app.onError(({ code, error, set }) => {
+  const errorContext = {
+    code,
+    error: error.message,
+    stack: error.stack, // Always include stack in error logs
+    service: "project-mgmt-api",
+    timestamp: new Date().toISOString(),
+  };
+
+  if (
+    error.name === "MongooseError" &&
+    error.message.includes("buffering timed out")
+  ) {
+    logger.warn("🔍 Database query timeout - returning empty result:", {
+      queryType: error.message.match(/Operation `(\w+)\./)?.[1] || "unknown",
+      stack: error.stack,
+    });
+
+    // Provide specialized empty responses based on the query type
+    set.status = 200;
+    const queryType = error.message.match(/Operation `(\w+)\./)?.[1] || "";
+
+    // Specific handling for common timeout cases
+    if (queryType === "calendarevents") {
+      return {
+        success: true,
+        data: {
+          events: [],
+          message: "No calendar events available at the moment",
+        },
+      };
+    } else if (queryType === "teams") {
+      return {
+        success: true,
+        data: {
+          teams: [],
+          meetings: [],
+          message: "No team data available at the moment",
+        },
+      };
+    } else if (queryType === "sessions") {
+      return {
+        success: true,
+        data: {
+          events: [],
+          message: "No session data available at the moment",
+        },
+      };
+    } else {
+      // Generic fallback
+      return {
+        success: true,
+        data: [],
+        message: "Operation timed out. Please try again later.",
+      };
+    }
+  }
+
+  if (error.message.includes("Too many requests")) {
+    logger.warn("⚠️ Rate limit exceeded:", {
+      ip: set.request?.headers?.["x-forwarded-for"] || "unknown",
+      path: set.request?.url || "unknown",
+      stack: error.stack,
+    });
+
+    set.status = 429;
+    return {
+      success: false,
+      error: error.message,
+      code: "RATE_LIMIT_EXCEEDED",
+      retryAfter: set.headers["X-RateLimit-Reset"],
+    };
+  }
+
+  let status = error.status || 500;
+  if (error.message.includes("timeout")) status = 504;
+
+  set.status = status;
+
+  if (status >= 500) {
+    logger.error("❌ Server error:", {
+      ...errorContext,
+      request: {
+        url: set.request?.url,
+        method: set.request?.method,
+        headers: set.request?.headers,
+      },
+    });
+  } else {
+    logger.warn("⚠️ Client error:", errorContext);
+  }
+
+  return {
+    success: false,
+    error:
+      status === 500 && process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : error.message,
+    code: code,
+    timestamp: new Date().toISOString(),
+  };
+});
+
+// JWT authentication setup with error handling
+app.derive(({ request }) => {
+  // Skip authentication for documentation routes
+  const publicPaths = ["/swagger", "/api-docs", "/static"];
+  if (publicPaths.some((path) => request.url.startsWith(path))) {
+    return { user: null, skipAuth: true };
+  }
+
+  try {
+    const auth = request.headers?.authorization;
+    if (!auth) return { user: null };
+
+    const token = auth.split(" ")[1];
+    if (!token) return { user: null };
+
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    return { user };
+  } catch (error) {
+    logger.error("🔒 JWT verification failed:", {
+      error: error.message,
+      stack: error.stack,
+      path: request.url,
+    });
+    return { user: null };
+  }
+});
+
+// Define API routes
+app
+  .get("/api", () => "API is running")
+  .get("/api/health/db", async () => {
+    const dbHealth = await import("./utils/dbHealthCheck.js").then((module) =>
+      module.default()
+    );
+    return dbHealth;
+  })
+  .use(authRoutes)
+  .use(userRoutes)
+  .use(sessionRoutes)
+  .use(teamRoutes)
+  .use(adminRoutes)
+  .use(dashboardRoutes)
+  // .use(analyticsRoutes)
+  .use(activityRoutes)
+  .use(calendarRoutes)
+  .use(calendarServiceRoutes)
+  // .use(uploadRoutes)
+  .use(exportRoutes)
+  .use(messageRoutes)
+  .use(notificationRoutes)
+  .use(studentRoutes)
+  .use(supervisorRoutes)
+  .use(apiDocsRoutes);
+// .use(projectRoutes)
+// .use(milestoneRoutes);
+
+// WebSocket setup with enhanced error handling
+app.ws("/ws", {
+  open(ws) {
+    ws.isAlive = true;
+    logger.info("🔌 WebSocket connection opened");
+  },
+  message(ws, message) {
+    try {
+      const data = JSON.parse(message);
+      ws.send(JSON.stringify({ type: "ack", data }));
+    } catch (error) {
+      logger.error("❌ WebSocket message error:", {
+        error: error.message,
+        stack: error.stack,
+        rawMessage:
+          typeof message === "string"
+            ? message.substring(0, 100)
+            : "non-string message",
+      });
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Invalid message format",
+        })
+      );
+    }
+  },
+  close(ws) {
+    logger.info("👋 WebSocket connection closed");
+  },
+  error(ws, error) {
+    logger.error("❌ WebSocket error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+  },
+});
+
+// Track memory usage periodically
+const MEMORY_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+setInterval(() => {
+  const memoryUsage = process.memoryUsage();
+  logger.info("Memory usage stats:", {
+    rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`,
+    heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+    heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+    external: `${Math.round(memoryUsage.external / 1024 / 1024)} MB`,
+  });
+}, MEMORY_CHECK_INTERVAL);
+
+// Export app for testing
+export default app;

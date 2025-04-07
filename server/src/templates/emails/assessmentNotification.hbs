@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assessment Notification</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333;
+      margin: 0; padding: 0; } .container { max-width: 600px; margin: 0 auto;
+      padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px; } .header {
+      background-color: #4a5568; color: white; padding: 15px; text-align:
+      center; border-radius: 5px 5px 0 0; } .content { padding: 20px;
+      background-color: #f9f9f9; } .footer { text-align: center; padding: 10px;
+      font-size: 12px; color: #718096; } .score { font-size: 24px; font-weight:
+      bold; margin: 15px 0; color: #2b6cb0; } .feedback { border-left: 3px solid
+      #4299e1; padding-left: 15px; margin: 15px 0; } .button { display:
+      inline-block; background-color: #4a5568; color: white; padding: 10px 20px;
+      text-decoration: none; border-radius: 5px; margin-top: 15px; } .category {
+      display: inline-block; background-color: #e2e8f0; padding: 3px 8px;
+      border-radius: 3px; margin-right: 5px; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Assessment Notification</h2>
+      </div>
+      <div class="content">
+        <p>Hello {{studentName}},</p>
+
+        <p>Your supervisor,
+          <strong>{{supervisorName}}</strong>, has completed an assessment for
+          your
+          <span class="category">{{category}}</span>
+          submission.</p>
+
+        <div class="score">
+          Score:
+          {{score}}/100
+        </div>
+
+        {{#if feedback}}
+          <h3>Feedback:</h3>
+          <div class="feedback">
+            {{feedback}}
+          </div>
+        {{/if}}
+
+        <p>You can view more details about this assessment in your project
+          management dashboard.</p>
+
+        <a href="{{dashboardUrl}}" class="button">Go to Dashboard</a>
+      </div>
+      <div class="footer">
+        <p>This is an automated message, please do not reply directly to this
+          email.</p>
+        <p>&copy; {{year}} Project Management System</p>
+      </div>
+    </div>
+  </body>
+</html>

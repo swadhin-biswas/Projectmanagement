@@ -1,216 +1,94 @@
-import axios from "/node_modules/.vite/deps/axios.js?v=f99fe3d9";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-
-// Cache configuration
-const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// Create axios instance with auth headers
-const createAuthAxios = () => {
-  const token = localStorage.getItem("token");
-  return axios.create({
-    baseURL: API_URL,
-    headers: {
-      ...(token && { Authorization: `Bearer ${token}` }),
-      "Content-Type": "application/json",
-    },
-  });
-};
-
-// Create initial API instance
-let api = createAuthAxios();
-
-// Request interceptor to refresh auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+// Create axios instance with defaults
+export const api = axios.create({
+  baseURL: "/api",
+  timeout: 30000, // Increase timeout to 30 seconds
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Response interceptor for caching and error handling
+// Cache storage for API responses
+const cache = new Map();
+
+// Function to invalidate cache entries that match a regex pattern
+export const invalidateCache = (pattern) => {
+  const regex = new RegExp(pattern);
+  for (const key of cache.keys()) {
+    if (regex.test(key)) {
+      cache.delete(key);
+    }
+  }
+};
+
+// Add a response interceptor to handle errors globally
 api.interceptors.response.use(
   (response) => {
-    // Cache GET requests
-    if (response.config.method === "get") {
-      const cacheKey = `${response.config.url}${JSON.stringify(
-        response.config.params || {}
-      )}`;
-      cache.set(cacheKey, {
-        data: response.data,
-        timestamp: Date.now(),
-      });
+    // If the response has a controller or timeoutId property, clean it
+    if (
+      response.data &&
+      (response.data.controller || response.data.timeoutId)
+    ) {
+      // Create a clean response with default values if needed
+      const cleanResponse = {
+        ...response,
+        data: {
+          success:
+            response.data.success !== undefined ? response.data.success : true,
+          data: response.data.data || {},
+          message: response.data.message || "Operation completed",
+        },
+      };
+      return cleanResponse;
     }
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear token on auth error
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+    // Handle network errors
+    if (!error.response) {
+      toast.error("Network error. Please check your connection.");
+      return Promise.reject({
+        message: "Network error. Please check your connection.",
+        status: 0,
+      });
     }
-    return Promise.reject(error);
+
+    // Handle timeout errors
+    if (error.code === "ECONNABORTED") {
+      toast.error("Request timed out. Please try again later.");
+      return Promise.reject({
+        message: "Request timed out. Please try again later.",
+        status: 408,
+      });
+    }
+
+    // Handle server errors
+    const errorResponse = error.response;
+
+    // Extract the error message from the response
+    const errorMessage =
+      errorResponse.data?.error ||
+      errorResponse.data?.message ||
+      "An error occurred. Please try again.";
+
+    // Show toast for client errors (4xx) that are not 401 (unauthorized)
+    if (
+      errorResponse.status >= 400 &&
+      errorResponse.status < 500 &&
+      errorResponse.status !== 401
+    ) {
+      toast.error(errorMessage);
+    }
+
+    // Show toast for server errors (5xx)
+    if (errorResponse.status >= 500) {
+      toast.error("Server error. Please try again later.");
+    }
+
+    return Promise.reject(errorResponse.data);
   }
 );
 
-// Helper function to get cached data
-export const getCachedData = (url, params = {}) => {
-  const cacheKey = `${url}${JSON.stringify(params)}`;
-  const cachedItem = cache.get(cacheKey);
-
-  if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
-    return cachedItem.data;
-  }
-
-  return null;
-};
-
-// Helper function to clear cache
-export const clearCache = () => {
-  cache.clear();
-};
-
-// Cached API calls
-export const apiCache = {
-  async get(endpoint, params = {}) {
-    const cacheKey = `${endpoint}${JSON.stringify(params)}`;
-    const cached = cache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return cached.data;
-    }
-
-    const response = await api.get(endpoint, { params });
-    cache.set(cacheKey, {
-      data: response.data,
-      timestamp: Date.now(),
-    });
-    return response.data;
-  },
-
-  async post(endpoint, data) {
-    const response = await api.post(endpoint, data);
-    // Invalidate related GET caches
-    this.invalidateRelated(endpoint);
-    return response.data;
-  },
-
-  async put(endpoint, data) {
-    const response = await api.put(endpoint, data);
-    this.invalidateRelated(endpoint);
-    return response.data;
-  },
-
-  async delete(endpoint) {
-    const response = await api.delete(endpoint);
-    this.invalidateRelated(endpoint);
-    return response.data;
-  },
-
-  invalidateRelated(endpoint) {
-    const basePath = endpoint.split("/")[1]; // e.g., 'users' from '/users/123'
-    for (const key of cache.keys()) {
-      if (key.includes(basePath)) {
-        cache.delete(key);
-      }
-    }
-  },
-
-  clearCache() {
-    cache.clear();
-  },
-};
-
-// Export the base api instance
-export { api };
-
-// Auth API methods
-const authAPI = {
-  isAuthenticated() {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "null");
-    return !!(token && user);
-  },
-
-  async login(credentials) {
-    try {
-      const response = await api.post("/auth/login", credentials);
-      const { token, user } = response.data;
-      if (!token || !user || !user.role) {
-        throw new Error("Invalid response from server");
-      }
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      // Refresh axios instance after token update
-      api = createAuthAxios();
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Login failed");
-    }
-  },
-
-  async register(userData) {
-    try {
-      const response = await api.post("/auth/register", userData);
-      const { token, user } = response.data;
-      if (!token || !user || !user.role) {
-        throw new Error("Invalid response from server");
-      }
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      // Refresh axios instance after token update
-      api = createAuthAxios();
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Registration failed");
-    }
-  },
-
-  async getProfile() {
-    try {
-      if (!this.isAuthenticated()) {
-        throw new Error("Not authenticated");
-      }
-      const response = await api.get("/auth/profile");
-      // Update stored user data
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        this.logout();
-      }
-      throw new Error(error.response?.data?.message || "Failed to fetch profile");
-    }
-  },
-
-  async updateProfile(profileData) {
-    try {
-      if (!this.isAuthenticated()) {
-        throw new Error("Not authenticated");
-      }
-      const response = await api.put("/auth/profile", profileData);
-      // Update stored user data
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to update profile");
-    }
-  },
-
-  logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    // Refresh axios instance after token removal
-    api = createAuthAxios();
-    // Clear any cached data
-    apiCache.clearCache();
-  },
-
-  getUser() {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  }
-};
-
-export default authAPI;
+export default api;

@@ -1,6 +1,6 @@
 // server/src/models/User.js
-import mongoose from 'mongoose';
 import argon2 from '@node-rs/argon2';
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   fullName: {
@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
+    unique: true,
     trim: true,
     lowercase: true,
     match: [/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, 'Please enter a valid email address']
@@ -47,37 +48,37 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: [2, 'Department must be at least 2 characters'],
     maxlength: [50, 'Department cannot exceed 50 characters'],
-    match: [/^[a-zA-Z\s]+$/, 'Department can only contain letters and spaces']
+    match: [/^[a-zA-Z\s&',.]+$/, 'Department can only contain letters, spaces, and basic punctuation']
   },
   isApproved: {
     type: Boolean,
     default: function() {
-      // Only students are auto-approved
-      return this.role === 'student';
+      return this.role === 'student' || this.role === 'admin';
     }
   },
-  // Supervisor specific fields
-  supervisorId: {
-    type: String,
-    sparse: true,
-    validate: {
-      validator: function(v) {
-        if (this.role !== 'supervisor') return true;
-        return /^SUP\d{3,6}$/.test(v);
-      },
-      message: 'Supervisor ID must start with SUP followed by 3-6 digits'
-    }
-  },
-  specialization: {
+  profilePicture: {
     type: String,
     validate: {
       validator: function(v) {
-        if (this.role !== 'supervisor') return true;
-        if (!v && this.isNew) return false;
-        return !v || (v.length >= 2 && v.length <= 50 && /^[a-zA-Z\s]+$/.test(v));
+        return !v || /^https?:\/\/[^\s/$.?#].[^\s]*\.(jpg|jpeg|png|gif|webp)(\?[^\s]*)?$/i.test(v);
       },
-      message: 'Specialization must be 2-50 characters long and contain only letters and spaces'
+      message: 'Profile picture must be a valid image URL (jpg, jpeg, png, gif, or webp)'
     }
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'pending', 'blocked'],
+    default: 'pending'
+  },
+  contactNumber: {
+    type: String,
+    trim: true,
+    match: [/^\+?[\d\s-]{8,}$/, 'Please enter a valid contact number']
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Bio cannot exceed 500 characters']
   },
   // System fields
   createdAt: {
@@ -97,49 +98,11 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+// Hash password before saving (only one middleware)
 userSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) return next();
-
-  try {
-    // Generate a hashed password using argon2
-    this.password = await argon2.hash(this.password);
-    next();
-  } catch (error) {
-    next(error);
+  if (!this.isModified('password')) {
+    return next();
   }
-});
-
-// Method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await argon2.verify(this.password, candidatePassword);
-  } catch (error) {
-    throw new Error('Password comparison failed');
-  }
-};
-
-// Method to validate supervisor fields
-userSchema.methods.validateSupervisorFields = function() {
-  if (this.role === 'supervisor') {
-    if (!this.supervisorId || !this.specialization) {
-      throw new Error('Supervisor ID and specialization are required for supervisor accounts');
-    }
-  }
-};
-
-// Method to check if user is approved
-userSchema.methods.isUserApproved = function() {
-  return this.isApproved || this.role === 'student';
-};
-
-// Create indexes
-userSchema.index({ email: 1 }, { unique: true });
-
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
   try {
     this.password = await argon2.hash(this.password);
     this.passwordChangedAt = Date.now();
@@ -149,27 +112,10 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    // Use argon2 for password hashing
-    this.password = await argon2.hash(this.password);
-    next();
-  } catch (error) {
-    console.error('Password hashing error:', error);
-    next(error);
-  }
-});
-
-// Method to check password
+// Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  if (!this.password) return false;
-
   try {
-    // Use argon2 for password verification
+    if (!this.password) return false;
     return await argon2.verify(this.password, candidatePassword);
   } catch (error) {
     console.error('Password comparison error:', error);
@@ -203,6 +149,11 @@ userSchema.pre('save', function(next) {
   this._previousRole = this.role;
   next();
 });
+
+// Remove duplicate index (index is already defined in email field options)
+// userSchema.index({ email: 1 }, { unique: true });
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Student schema
 const studentSchema = new mongoose.Schema({
@@ -328,7 +279,6 @@ const notificationSchema = new mongoose.Schema({
 });
 
 // Create model (prevent recompilation)
-const User = mongoose.models.User || mongoose.model('User', userSchema);
 const Student = mongoose.models.Student || mongoose.model('Student', studentSchema);
 const Supervisor = mongoose.models.Supervisor || mongoose.model('Supervisor', supervisorSchema);
 const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
@@ -336,4 +286,4 @@ const Project = mongoose.models.Project || mongoose.model('Project', projectSche
 const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
 
 // Export as named export only
-export { User, Student, Supervisor, Message, Project, Notification };
+export { Message, Notification, Project, Student, Supervisor, User };

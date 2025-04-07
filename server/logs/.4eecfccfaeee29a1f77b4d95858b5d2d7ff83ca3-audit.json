@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/swadhin/r/server/logs/.4eecfccfaeee29a1f77b4d95858b5d2d7ff83ca3-audit.json",
+    "files": [
+        {
+            "date": 1744047936737,
+            "name": "/home/swadhin/r/server/logs/error-2025-04-07.log",
+            "hash": "3c333b11f6b4fdd7d1bb99a29671cd722eec8273e3fb360670237e871026ae9b"
+        },
+        {
+            "date": 1744048899736,
+            "name": "/home/swadhin/r/server/logs/error-2025-04-08.log",
+            "hash": "9b20d336cdf5fbadde56fd5bf9b93a104fb3e919fcd438f060b45f6c1afce958"
+        }
+    ],
+    "hashType": "sha256"
+}

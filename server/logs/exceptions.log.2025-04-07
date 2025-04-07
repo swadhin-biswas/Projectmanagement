@@ -1,0 +1,109 @@
+[2025-04-07 23:49:38] ERROR: 🚨 uncaughtException: authorize is not a function. (In 'authorize(["student", "supervisor"])', 'authorize' is an instance of Object)
+Error
+    at <anonymous> (/home/swadhin/r/server/src/routes/activityRoutes.js:37:28)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:284:4
+    at moduleEvaluation (unknown)
+    at moduleEvaluation (unknown)
+    at <anonymous> (unknown:2)
+    at processTicksAndRejections (unknown:7:39)
+{
+  "error": {},
+  "stack": "Error\n    at <anonymous> (/home/swadhin/r/server/src/routes/activityRoutes.js:37:28)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)\n    at /home/swadhin/r/server/src/index.js:284:4\n    at moduleEvaluation (unknown)\n    at moduleEvaluation (unknown)\n    at <anonymous> (unknown:2)\n    at processTicksAndRejections (unknown:7:39)",
+  "exception": true,
+  "date": "Mon Apr 07 2025 23:49:38 GMT+0600 (Bangladesh Standard Time)",
+  "process": {
+    "pid": 299374,
+    "uid": 1000,
+    "gid": 1000,
+    "cwd": "/home/swadhin/r/server",
+    "execPath": "/home/swadhin/.bun/bin/bun",
+    "version": "v22.6.0",
+    "argv": [
+      "/home/swadhin/.bun/bin/bun",
+      "/home/swadhin/r/server/src/index.js"
+    ],
+    "memoryUsage": {
+      "rss": 194027520,
+      "heapTotal": 22462464,
+      "heapUsed": 31933326,
+      "external": 26093229,
+      "arrayBuffers": 18246359
+    }
+  },
+  "os": {
+    "loadavg": [
+      0.48,
+      0.5,
+      0.71
+    ],
+    "uptime": 36385
+  },
+  "trace": [
+    {
+      "column": 28,
+      "file": "/home/swadhin/r/server/src/routes/activityRoutes.js",
+      "function": "<anonymous>",
+      "line": 37,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 38,
+      "file": "/home/swadhin/r/server/node_modules/elysia/src/index.ts",
+      "function": "group",
+      "line": 2919,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 21,
+      "file": "/home/swadhin/r/server/node_modules/elysia/src/index.ts",
+      "function": "_use",
+      "line": 3748,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 4,
+      "file": "/home/swadhin/r/server/src/index.js",
+      "function": null,
+      "line": 284,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": null,
+      "file": null,
+      "function": "moduleEvaluation",
+      "line": null,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": null,
+      "file": null,
+      "function": "moduleEvaluation",
+      "line": null,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": null,
+      "file": "unknown",
+      "function": "<anonymous>",
+      "line": 2,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 39,
+      "file": "unknown",
+      "function": "processTicksAndRejections",
+      "line": 7,
+      "method": null,
+      "native": false
+    }
+  ]
+}

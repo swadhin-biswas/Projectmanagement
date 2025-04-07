@@ -1,209 +1,493 @@
-import React, { useState, useEffect } from 'react';
-import authAPI from '../../lib/authAPI'; // Adjust the import based on your project structure
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { motion } from "framer-motion";
+import {
+  AlertTriangle,
+  BookOpen,
+  Camera,
+  Check,
+  GraduationCap,
+  LinkIcon,
+  Mail,
+  Save,
+  User,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/AuthContext";
 
 const ProfilePage = () => {
-  const [profile, setProfile] = useState(null);
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    department: ''
+  const [isSaving, setIsSaving] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [formState, setFormState] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    department: "",
+    bio: "",
+    profilePicture: "",
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
 
+  // Initialize form with user data
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setIsLoading(true);
-        const userData = await authAPI.getProfile();
-        setProfile(userData);
-        setFormData({
-          fullName: userData.fullName,
-          email: userData.email,
-          department: userData.department || ''
-        });
-        setIsLoading(false);
-      } catch (err) {
-        setError('Failed to load profile data');
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+    if (user) {
+      setFormState({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        department: user.department || "",
+        bio: user.bio || "",
+        profilePicture: user.profilePicture || "",
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     try {
-      setIsLoading(true);
-      await authAPI.updateProfile(formData);
-      setProfile({ ...profile, ...formData });
-      setIsEditing(false);
-      setSuccessMessage('Profile updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
-      setIsLoading(false);
-    } catch (err) {
-      setError('Failed to update profile');
-      setIsLoading(false);
+      setIsSaving(true);
+      const result = await updateProfile(formState);
+
+      if (result.success) {
+        toast.success("Profile updated successfully!");
+        setIsEditing(false);
+      } else {
+        toast.error("Failed to update profile", {
+          description: result.error || "Please try again later",
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to update profile", {
+        description: error.message || "Please try again later",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  if (isLoading && !profile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-900"></div>
-      </div>
+  const handleCancel = () => {
+    // Reset form to original values
+    if (user) {
+      setFormState({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        department: user.department || "",
+        bio: user.bio || "",
+        profilePicture: user.profilePicture || "",
+      });
+    }
+    setIsEditing(false);
+  };
+
+  const handleSetProfileImage = () => {
+    if (!imageUrl) {
+      toast.error("Please enter a valid image URL");
+      return;
+    }
+
+    // Simple image URL validation
+    const isValid = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(
+      imageUrl
     );
-  }
+
+    if (!isValid) {
+      toast.error(
+        "Please enter a valid image URL (jpg, jpeg, png, gif, or webp)"
+      );
+      return;
+    }
+
+    setFormState((prev) => ({
+      ...prev,
+      profilePicture: imageUrl,
+    }));
+
+    setShowImageDialog(false);
+    toast.success("Profile image updated");
+  };
+
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4 },
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto py-10 px-4">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header */}
-          <div className="bg-blue-900 text-white p-6">
-            <h1 className="text-2xl font-bold">Profile</h1>
-            <p className="text-blue-100">Manage your account information</p>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {error && (
-              <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-                {error}
-              </div>
-            )}
-
-            {successMessage && (
-              <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
-                {successMessage}
-              </div>
-            )}
-
-            {!isEditing ? (
-              <div>
-                <div className="mb-8 flex items-center">
-                  <div className="bg-blue-900 text-white rounded-full h-20 w-20 flex items-center justify-center text-2xl font-bold mr-4">
-                    {profile?.fullName?.charAt(0) || '?'}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">{profile?.fullName}</h2>
-                    <p className="text-gray-600">{profile?.email}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="border-b border-gray-200 pb-2">
-                    <p className="text-sm text-gray-500 font-medium">Department</p>
-                    <p className="text-gray-800">{profile?.department || 'Not specified'}</p>
-                  </div>
-                  <div className="border-b border-gray-200 pb-2">
-                    <p className="text-sm text-gray-500 font-medium">Role</p>
-                    <p className="text-gray-800">{profile?.role || 'Not specified'}</p>
-                  </div>
-                  <div className="border-b border-gray-200 pb-2">
-                    <p className="text-sm text-gray-500 font-medium">Account Status</p>
-                    <p className="text-gray-800">
-                      {profile?.isApproved ? (
-                        <span className="text-green-600">Approved</span>
-                      ) : (
-                        <span className="text-red-600">Pending Approval</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="border-b border-gray-200 pb-2">
-                    <p className="text-sm text-gray-500 font-medium">Joined</p>
-                    <p className="text-gray-800">
-                      {new Date(profile?.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
+    <motion.div {...fadeIn} className="space-y-6">
+      <Card className="overflow-hidden border-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 backdrop-blur-md">
+        <CardHeader className="border-b border-blue-100/10 dark:border-blue-900/10 pb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="relative group">
+              <Avatar className="w-24 h-24 border-4 border-white dark:border-gray-800 shadow-xl">
+                <AvatarImage
+                  src={
+                    formState.profilePicture ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      formState.fullName || user?.fullName
+                    )}&background=0D8ABC&color=fff&size=256`
+                  }
+                  alt={formState.fullName || user?.fullName}
+                />
+                <AvatarFallback className="text-2xl">
+                  {(formState.fullName || user?.fullName)?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              {isEditing && (
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="mt-4 px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors"
+                  onClick={() => setShowImageDialog(true)}
+                  className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
                 >
-                  Edit Profile
+                  <Camera className="h-4 w-4" />
                 </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">
+                  {formState.fullName || user?.fullName}
+                </h2>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400"
+                >
+                  Student
+                </Badge>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
+              <div className="flex flex-wrap gap-4 text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span>{formState.email || user?.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Student ID: {user?.studentId}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-6">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="w-full justify-start border-b rounded-none px-0 mb-4">
+              <TabsTrigger
+                value="details"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+              >
+                Personal Details
+              </TabsTrigger>
+              <TabsTrigger
+                value="academic"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+              >
+                Academic Info
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  {isEditing ? (
+                    <Input
                       id="fullName"
                       name="fullName"
-                      value={formData.fullName}
+                      value={formState.fullName}
                       onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-900 focus:border-blue-900"
-                      required
+                      className="border-gray-300 dark:border-gray-600"
+                      placeholder="Enter your full name"
                     />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
+                  ) : (
+                    <Input
+                      value={formState.fullName || user?.fullName}
+                      readOnly
+                      className="bg-white/50 dark:bg-gray-800/50"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    value={formState.email || user?.email}
+                    readOnly
+                    className="bg-white/50 dark:bg-gray-800/50"
+                  />
+                  {isEditing && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Email cannot be changed
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={formState.phone}
                       onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-900 focus:border-blue-900"
-                      required
+                      className="border-gray-300 dark:border-gray-600"
+                      placeholder="Enter your phone number"
                     />
-                  </div>
-
-                  <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-700">
-                      Department
-                    </label>
-                    <input
-                      type="text"
+                  ) : (
+                    <Input
+                      value={formState.phone || "Not provided"}
+                      readOnly
+                      className="bg-white/50 dark:bg-gray-800/50"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  {isEditing ? (
+                    <Input
                       id="department"
                       name="department"
-                      value={formData.department}
+                      value={formState.department}
                       onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-900 focus:border-blue-900"
+                      className="border-gray-300 dark:border-gray-600"
+                      placeholder="Enter your department"
                     />
-                  </div>
+                  ) : (
+                    <Input
+                      value={
+                        formState.department ||
+                        user?.department ||
+                        "Not provided"
+                      }
+                      readOnly
+                      className="bg-white/50 dark:bg-gray-800/50"
+                    />
+                  )}
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  {isEditing ? (
+                    <Textarea
+                      id="bio"
+                      name="bio"
+                      value={formState.bio}
+                      onChange={handleChange}
+                      className="border-gray-300 dark:border-gray-600 min-h-[100px]"
+                      placeholder="Tell us about yourself..."
+                    />
+                  ) : (
+                    <div className="p-3 bg-white/50 dark:bg-gray-800/50 rounded-md border border-gray-200 dark:border-gray-700 min-h-[100px]">
+                      {formState.bio || user?.bio || "No bio provided"}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                {isEditing ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={handleCancel}
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {isSaving ? (
+                        <>
+                          <span className="animate-spin mr-2">
+                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          </span>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+            </TabsContent>
 
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+            <TabsContent value="academic" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border border-blue-100/20 dark:border-blue-900/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-500" />
+                      Current Semester
+                    </CardTitle>
+                    <CardDescription>
+                      Academic progress tracking
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Semester
+                        </span>
+                        <Badge>4th Semester</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Credits Completed
+                        </span>
+                        <Badge variant="outline">45/120</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-blue-100/20 dark:border-blue-900/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5 text-blue-500" />
+                      Academic Status
+                    </CardTitle>
+                    <CardDescription>Current standing and GPA</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          CGPA
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="bg-green-500/10 border-green-500/20 text-green-600"
+                        >
+                          3.75
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Status
+                        </span>
+                        <Badge className="bg-green-500">Good Standing</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Image URL Dialog */}
+      <AlertDialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set Profile Picture</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter a direct link to an image (JPG, PNG, GIF or WebP).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="mt-1"
+                />
+              </div>
+              <div className="mt-7">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Test image URL"
+                  onClick={() => window.open(imageUrl, "_blank")}
+                  disabled={!imageUrl}
+                >
+                  <LinkIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1 mt-1">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span>
+                Make sure the URL is from a trusted source and leads directly to
+                an image file.
+              </span>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSetProfileImage}>
+              <Check className="mr-2 h-4 w-4" />
+              Set Image
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </motion.div>
   );
 };
 

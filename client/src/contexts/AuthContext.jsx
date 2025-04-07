@@ -1,88 +1,123 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import authAPI from "../lib/api"; // Ensure this file correctly exports API functions
+// AuthContext.jsx
+import { loginUser, registerUser } from "@/api/auth";
+import { api, invalidateCache } from "@/lib/api";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-export const AuthContext = createContext();
+const CACHE_KEYS = {
+  TOKEN: "token",
+  USER: "user",
+  THEME: "theme",
+  PREFERENCES: "preferences",
+};
+
+export const AuthContext = createContext(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch (error) {
-      console.error("Error parsing stored user:", error);
-      return null;
-    }
-  });
-
-  const [loading, setLoading] = useState(!user);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastTokenCheck, setLastTokenCheck] = useState(0);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token && !user) {
-      loadUserData();
-    } else {
-      setLoading(false);
-    }
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem(CACHE_KEYS.TOKEN);
+    localStorage.removeItem(CACHE_KEYS.USER);
+    setUser(null);
+    setError(null);
+    delete api.defaults.headers.common["Authorization"];
   }, []);
 
-  const loadUserData = async () => {
-    try {
-      setLoading(true);
-      const response = await authAPI.getProfile();
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem(CACHE_KEYS.TOKEN);
+      const cachedUser = localStorage.getItem(CACHE_KEYS.USER);
 
-      if (!response || !response.user) {
-        throw new Error("Invalid response format");
+      if (token && cachedUser) {
+        try {
+          // Use cached user data initially
+          setUser(JSON.parse(cachedUser));
+          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+          // Check token validity if it hasn't been checked recently (5 minutes)
+          const now = Date.now();
+          if (now - lastTokenCheck > 5 * 60 * 1000) {
+            const response = await api.get("/api/auth/profile", {
+              noCache: true,
+            });
+            if (response.data?.success) {
+              setUser(response.data.user);
+              localStorage.setItem(
+                CACHE_KEYS.USER,
+                JSON.stringify(response.data.user)
+              );
+              setLastTokenCheck(now);
+            }
+          }
+        } catch (error) {
+          // Only clear auth if it's an auth-related error
+          if (error.response?.status === 401) {
+            clearAuth();
+          }
+        }
       }
-
-      const userData = response.user;
-
-      if (!userData || typeof userData !== "object") {
-        throw new Error("Invalid user data format");
-      }
-
-      if (!userData.role) {
-        console.warn("User data missing role, setting default 'student' role");
-        userData.role = "student";
-      }
-
-      setUser(userData);
-    } catch (error) {
-      console.error("Auth error:", error.message || error);
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      setError("Authentication failed. Please login again.");
-      setUser(null);
-    } finally {
       setLoading(false);
-    }
-  };
+    };
+
+    initializeAuth();
+  }, [clearAuth, lastTokenCheck]);
 
   const login = async (credentials) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.login(credentials);
+      const result = await loginUser(credentials);
 
-      if (!response.success || !response.user || !response.token) {
-        throw new Error("Invalid response data");
+      if (result.success && result.token && result.user) {
+        // Set auth token
+        api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
+        localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
+        localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(result.user));
+        setUser(result.user);
+        setLastTokenCheck(Date.now());
+
+        toast.success("Welcome back!", {
+          description: `Logged in as ${result.user.fullName}`,
+        });
+
+        return { success: true, user: result.user };
+      } else {
+        const errorMessage = result.error || "Login failed";
+        setError(errorMessage);
+        toast.error("Login failed", {
+          description: errorMessage,
+        });
+        return { success: false, error: errorMessage };
       }
-
-      localStorage.setItem("authToken", response.token);
-      setUser(response.user);
-
-      return { success: true, user: response.user };
     } catch (error) {
-      console.error("Login error:", error.message || error);
-      setError(error.message || "Login failed. Please try again.");
-      return { success: false, error: error.message };
+      const errorMessage = error.response?.data?.error || error.message;
+      setError(errorMessage);
+      toast.error("Login failed", {
+        description: errorMessage,
+      });
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -92,42 +127,164 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await authAPI.register(userData);
 
-      if (!response.success || !response.user || !response.token) {
-        throw new Error("Invalid response data");
+      const result = await registerUser(userData);
+
+      if (result.success && result.token && result.user) {
+        // Set auth token
+        api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
+        localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
+        localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(result.user));
+        setUser(result.user);
+        setLastTokenCheck(Date.now());
+
+        // Show success message
+        toast.success("Registration successful!", {
+          description: "Your account has been created",
+        });
+
+        // Redirect based on role and approval status
+        if (result.user.role === "supervisor" && !result.user.isApproved) {
+          navigate("/pending-approval");
+        } else {
+          navigate(`/${result.user.role}/dashboard`);
+        }
+
+        return { success: true, user: result.user };
+      } else {
+        const errorMessage = result.error || "Registration failed";
+        setError(errorMessage);
+        toast.error("Registration failed", {
+          description: errorMessage,
+        });
+        return { success: false, error: errorMessage };
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      // Improved error handling to extract the error message from the response
+      let errorMessage = "Registration failed";
+      let field = null;
+
+      if (error.response?.data) {
+        // Handle structured API errors
+        if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        }
+
+        // Check for field-specific errors
+        if (error.response.data.field) {
+          field = error.response.data.field;
+        }
+
+        // Check for validation errors array
+        if (
+          error.response.data.errors &&
+          Array.isArray(error.response.data.errors) &&
+          error.response.data.errors.length > 0
+        ) {
+          errorMessage = error.response.data.errors[0].message || errorMessage;
+          field = error.response.data.errors[0].field || field;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
-      localStorage.setItem("authToken", response.token);
-      setUser(response.user);
+      setError(errorMessage);
+      toast.error("Registration failed", {
+        description: errorMessage,
+      });
 
-      return { success: true, user: response.user };
-    } catch (error) {
-      console.error("Registration error:", error.message || error);
-      setError(error.message || "Registration failed. Please try again.");
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage, field };
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-    setUser(null);
-    setError(null);
-  };
+  const logout = useCallback(() => {
+    // Invalidate all cached API responses
+    invalidateCache(".*");
+    clearAuth();
+    navigate("/login");
+    toast.success("Logged out successfully");
+  }, [clearAuth, navigate]);
+
+  const refreshUserData = useCallback(async () => {
+    try {
+      const response = await api.get("/auth/profile", { noCache: true });
+      const responseData = response.data;
+
+      // Handle different response structures
+      let userData;
+
+      if (responseData.success === true && responseData.user) {
+        userData = responseData.user;
+      } else if (
+        responseData.success === true &&
+        responseData.data &&
+        responseData.data.user
+      ) {
+        userData = responseData.data.user;
+      } else {
+        return {
+          success: false,
+          error: responseData.error || "Failed to refresh user data",
+        };
+      }
+
+      setUser(userData);
+      localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(userData));
+      setLastTokenCheck(Date.now());
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error("Refresh user data error:", error);
+      // Only clear auth if it's an auth-related error
+      if (error.response?.status === 401) {
+        clearAuth();
+      }
+      return { success: false, error: error.message };
+    }
+  }, [clearAuth]);
 
   const updateProfile = async (profileData) => {
     try {
       setLoading(true);
       setError(null);
-      const updatedUser = await authAPI.updateProfile(profileData);
-      setUser((prev) => ({ ...prev, ...updatedUser }));
-      return updatedUser;
+
+      const response = await api.put("/auth/profile", profileData);
+      const responseData = response.data;
+
+      // Handle both response formats
+      if (responseData.success === false) {
+        throw new Error(responseData.error || "Failed to update profile");
+      }
+
+      // Extract user data, handling different response structures
+      let updatedUser;
+
+      if (responseData.user) {
+        // Direct structure: { user }
+        updatedUser = responseData.user;
+      } else if (responseData.data && responseData.data.user) {
+        // Nested structure: { data: { user } }
+        updatedUser = responseData.data.user;
+      } else {
+        throw new Error("Invalid response structure from server");
+      }
+
+      setUser(updatedUser);
+      localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(updatedUser));
+
+      toast.success("Profile updated successfully");
+      return { success: true, user: updatedUser };
     } catch (error) {
-      setError(error.message || "Profile update failed. Please try again.");
-      return null;
+      console.error("Profile update error:", error);
+      const errorMessage = error.response?.data?.error || error.message;
+      setError(errorMessage);
+      toast.error("Failed to update profile", {
+        description: errorMessage,
+      });
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -141,19 +298,12 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    refreshUserData,
     isAuthenticated: !!user,
-    isAdmin: user?.role === "admin" || user?.role === "superAdmin",
+    isAdmin: user?.role === "admin" || user?.role === "super_admin",
     isSupervisor: user?.role === "supervisor",
     isStudent: user?.role === "student",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };

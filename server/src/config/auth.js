@@ -1,5 +1,12 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import { verifyToken } from "../utils/generateToken.js";
+
+export const config = {
+  jwtSecret: process.env.JWT_SECRET || "your_jwt_secret"
+};
+
+export { verifyToken };
 
 export const protect = async (req, res, next) => {
   try {
@@ -20,20 +27,16 @@ export const protect = async (req, res, next) => {
       }
 
       // Verify token
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || "your_jwt_secret"
-      );
+      const decoded = jwt.verify(token, config.jwtSecret);
 
-      // Get user from the token.
-      // Check multiple possible ID fields in the JWT payload
-      const userId = decoded._id || decoded.id || decoded.userId;
-
+      // Get userId from token payload
+      const userId = decoded.userId;
       if (!userId) {
         res.status(401);
         throw new Error("Not authorized, invalid token payload");
       }
 
+      // Get user from the token
       req.user = await User.findById(userId).select("-password");
 
       if (!req.user) {

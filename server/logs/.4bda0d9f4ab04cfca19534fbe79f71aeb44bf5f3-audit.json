@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/home/swadhin/r/server/logs/.4bda0d9f4ab04cfca19534fbe79f71aeb44bf5f3-audit.json",
+    "files": [
+        {
+            "date": 1744047936722,
+            "name": "/home/swadhin/r/server/logs/exceptions.log.2025-04-07",
+            "hash": "1c836a56a8f8afe1ed9e56cc0ab613e9fc6b6b74292009685c879dee67cec11a"
+        },
+        {
+            "date": 1744048899734,
+            "name": "/home/swadhin/r/server/logs/exceptions.log.2025-04-08",
+            "hash": "365f68675ac312f1b1b511eac0f240403b32985dd658042462b1614e5b85379e"
+        }
+    ],
+    "hashType": "sha256"
+}

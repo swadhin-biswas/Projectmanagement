@@ -2,13 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { faSpinner, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
@@ -17,6 +10,10 @@ import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { register, user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -24,66 +21,126 @@ const Register = () => {
     confirmPassword: "",
     role: "student",
     department: "",
+    studentId: "",
+    supervisorId: "",
     specialization: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
+    // If user is already logged in, redirect based on role
     if (user) {
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (user.role === "supervisor") {
-        navigate("/supervisor/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
+      redirectBasedOnRole(user);
     }
-  }, [user, navigate]);
+  }, [user]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const redirectBasedOnRole = (user) => {
+    if (user.role === "admin" || user.role === "superadmin") {
+      navigate("/admin/dashboard");
+    } else if (user.role === "supervisor") {
+      navigate("/supervisor/dashboard");
+    } else if (user.role === "student") {
+      navigate("/student/dashboard");
+    }
   };
 
-  const handleRoleChange = (value) => {
-    setFormData((prev) => ({ ...prev, role: value }));
+  const validateForm = () => {
+    const errors = {};
+
+    // Required fields
+    if (!formData.fullName) errors.fullName = "Full name is required";
+    if (!formData.email) errors.email = "Email is required";
+    if (!formData.password) errors.password = "Password is required";
+    if (!formData.confirmPassword) errors.confirmPassword = "Please confirm your password";
+    if (!formData.department) errors.department = "Department is required";
+
+    // Email validation
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (formData.password && !passwordRegex.test(formData.password)) {
+      errors.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
+    }
+
+    // Password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    // Role-specific validation
+    if (formData.role === "supervisor") {
+      if (!formData.specialization) {
+        errors.specialization = "Specialization is required for supervisors";
+      } else if (!/^[a-zA-Z\s&',.]{2,50}$/.test(formData.specialization)) {
+        errors.specialization = "Specialization must be 2-50 characters and contain only letters and spaces";
+      }
+    }
+
+    // Optional ID validation
+    if (formData.studentId && !/^STU\d{3,6}$/.test(formData.studentId)) {
+      errors.studentId = "Student ID must start with STU followed by 3-6 digits";
+    }
+    if (formData.supervisorId && !/^SUP\d{3,6}$/.test(formData.supervisorId)) {
+      errors.supervisorId = "Supervisor ID must start with SUP followed by 3-6 digits";
+    }
+
+    return { isValid: Object.keys(errors).length === 0, errors };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+    // Validate form
+    const { isValid, errors } = validateForm();
+    if (!isValid) {
+      setError(errors);
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      const { confirmPassword, ...submissionData } = formData;
+      const { confirmPassword, ...registrationData } = formData;
+      const result = await register(registrationData);
 
-      if (formData.role === "student") {
-        submissionData.studentId = `STU${Date.now().toString().slice(-5)}`;
-      } else if (formData.role === "supervisor") {
-        submissionData.supervisorId = `SUP${Date.now().toString().slice(-5)}`;
-      }
-
-      const result = await register(submissionData);
       if (result.success) {
-        toast.success(
-          formData.role === "supervisor"
-            ? "Registration successful. Your account will be reviewed by an admin."
-            : "Registration successful!"
-        );
+        if (formData.role === "supervisor") {
+          toast.success("Registration successful! Your account will be reviewed by an admin.");
+          navigate("/login");
+        } else {
+          toast.success("Registration successful!");
+          // Redirect will be handled by useEffect when user state updates
+        }
       } else {
-        toast.error(result.error || "Registration failed");
+        setError(result.error);
+        if (result.field) {
+          toast.error(`${result.field}: ${result.error}`);
+        } else {
+          toast.error(result.error);
+        }
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      console.error("Registration error:", error);
+      const errorMessage = error.message || "Registration failed";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field-specific error when user starts typing
+    if (error?.[name]) {
+      setError((prev) => ({ ...prev, [name]: null }));
     }
   };
 
@@ -98,22 +155,20 @@ const Register = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label
-                htmlFor="fullName"
-                className="text-blue-800 dark:text-white"
-              >
+              <Label htmlFor="fullName" className="text-blue-800 dark:text-white">
                 Full Name
               </Label>
               <Input
                 id="fullName"
                 name="fullName"
-                type="text"
-                placeholder="John Doe"
                 value={formData.fullName}
                 onChange={handleChange}
                 required
                 className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
               />
+              {error?.fullName && (
+                <p className="text-red-500 text-sm">{error.fullName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -124,144 +179,174 @@ const Register = () => {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="your.email@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
                 className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
               />
+              {error?.email && (
+                <p className="text-red-500 text-sm">{error.email}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-blue-800 dark:text-white">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                />
+                {error?.password && (
+                  <p className="text-red-500 text-sm">{error.password}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-blue-800 dark:text-white">
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                />
+                {error?.confirmPassword && (
+                  <p className="text-red-500 text-sm">{error.confirmPassword}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="role" className="text-blue-800 dark:text-white">
                 Role
               </Label>
-              <Select
+              <select
+                id="role"
+                name="role"
                 value={formData.role}
-                onValueChange={handleRoleChange}
-                required
+                onChange={handleChange}
+                className="w-full p-2 border rounded border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
               >
-                <SelectTrigger className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="student">Student</option>
+                <option value="supervisor">Supervisor</option>
+              </select>
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="department"
-                className="text-blue-800 dark:text-white"
-              >
+              <Label htmlFor="department" className="text-blue-800 dark:text-white">
                 Department
               </Label>
               <Input
                 id="department"
                 name="department"
-                type="text"
-                placeholder="Computer Science"
                 value={formData.department}
                 onChange={handleChange}
                 required
                 className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
               />
+              {error?.department && (
+                <p className="text-red-500 text-sm">{error.department}</p>
+              )}
             </div>
 
-            {formData.role === "supervisor" && (
+            {formData.role === "student" && (
               <div className="space-y-2">
-                <Label
-                  htmlFor="specialization"
-                  className="text-blue-800 dark:text-white"
-                >
-                  Specialization
+                <Label htmlFor="studentId" className="text-blue-800 dark:text-white">
+                  Student ID (Optional)
                 </Label>
                 <Input
-                  id="specialization"
-                  name="specialization"
-                  type="text"
-                  placeholder="Machine Learning, Web Development, etc."
-                  value={formData.specialization}
+                  id="studentId"
+                  name="studentId"
+                  value={formData.studentId}
                   onChange={handleChange}
+                  placeholder="e.g., STU123456"
                   className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
                 />
+                {error?.studentId && (
+                  <p className="text-red-500 text-sm">{error.studentId}</p>
+                )}
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-blue-800 dark:text-white"
-              >
-                Password
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength={8}
-                className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+            {formData.role === "supervisor" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="supervisorId" className="text-blue-800 dark:text-white">
+                    Supervisor ID (Optional)
+                  </Label>
+                  <Input
+                    id="supervisorId"
+                    name="supervisorId"
+                    value={formData.supervisorId}
+                    onChange={handleChange}
+                    placeholder="e.g., SUP123456"
+                    className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                  />
+                  {error?.supervisorId && (
+                    <p className="text-red-500 text-sm">{error.supervisorId}</p>
+                  )}
+                </div>
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="confirmPassword"
-                className="text-blue-800 dark:text-white"
-              >
-                Confirm Password
-              </Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                minLength={8}
-                className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="specialization" className="text-blue-800 dark:text-white">
+                    Specialization
+                  </Label>
+                  <Input
+                    id="specialization"
+                    name="specialization"
+                    value={formData.specialization}
+                    onChange={handleChange}
+                    required
+                    className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                  />
+                  {error?.specialization && (
+                    <p className="text-red-500 text-sm">{error.specialization}</p>
+                  )}
+                </div>
+              </>
+            )}
 
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                    Registering...
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                    Register
-                  </>
-                )}
-              </Button>
+            <Button
+              type="submit"
+              className="w-full bg-blue-700 hover:bg-blue-800 text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                  Register
+                </>
+              )}
+            </Button>
+
+            <div className="text-center mt-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                >
+                  Login here
+                </Link>
+              </p>
             </div>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                Login here
-              </Link>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

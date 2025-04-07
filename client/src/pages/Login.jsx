@@ -1,132 +1,185 @@
 // Login.jsx
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { faSignInAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useAuth } from "../contexts/AuthContext";
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the redirect path from location state or default to dashboard
+  const from = location.state?.from || '/';
 
   useEffect(() => {
-    if (user) {
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (user.role === "supervisor") {
-        navigate("/supervisor/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
+    // Check for session expired message
+    const params = new URLSearchParams(location.search);
+    const sessionExpired = params.get("session") === "expired";
+    if (sessionExpired) {
+      toast.error("Your session has expired. Please login again.");
     }
-  }, [user, navigate]);
+
+    // If user is already logged in, redirect based on role
+    if (user) {
+      redirectAfterLogin(user);
+    }
+  }, [user, location]);
+
+  const redirectAfterLogin = (user) => {
+    const dashboardRoutes = {
+      admin: '/admin/dashboard',
+      superadmin: '/admin/dashboard',
+      supervisor: '/supervisor/dashboard',
+      student: '/student/dashboard'
+    };
+
+    const dashboardRoute = dashboardRoutes[user.role];
+
+    if (user.role === 'supervisor' && !user.isApproved) {
+      toast.info('Your account is pending approval. You will be notified once approved.');
+      return;
+    }
+
+    if (dashboardRoute) {
+      // Animate transition
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        navigate(dashboardRoute);
+        document.body.style.opacity = '1';
+      }, 300);
+    } else {
+      navigate(from);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
+    // Basic validation
+    if (!credentials.email || !credentials.password) {
+      toast.error('Please fill in all fields');
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
-      const result = await login({ email, password });
+      setIsSubmitting(true);
+      const result = await login(credentials);
+
       if (result.success) {
-        toast.success("Login successful");
+        // Login successful - redirection handled by useEffect
       } else {
-        toast.error(result.error || "Login failed");
+        toast.error(result.error || 'Login failed');
       }
     } catch (error) {
-      // Error is handled by the AuthContext
+      toast.error(error.message || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg">
-        <CardHeader className="pb-4 text-center">
-          <CardTitle className="text-2xl font-bold text-blue-800 dark:text-white">
-            Login to Your Account
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-blue-800 dark:text-white">
-                Email
-              </Label>
-              <Input
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-black to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-2xl transform transition-all hover:scale-[1.02] duration-300">
+        <div className="text-center">
+          <h2 className="mt-6 text-4xl font-bold tracking-tight text-white">
+            Welcome Back
+          </h2>
+          <p className="mt-2 text-sm text-gray-300">
+            Sign in to access your account
+          </p>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-1">
+                Email address
+              </label>
+              <input
                 id="email"
+                name="email"
                 type="email"
-                placeholder="your.email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white rounded-lg bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+                placeholder="Enter your email"
+                value={credentials.email}
+                onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-blue-800 dark:text-white"
-              >
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-1">
                 Password
-              </Label>
-              <Input
+              </label>
+              <input
                 id="password"
+                name="password"
                 type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
-                className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white rounded-lg bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+                placeholder="Enter your password"
+                value={credentials.password}
+                onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
               />
             </div>
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                    Logging in...
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faSignInAlt} className="mr-2" />
-                    Login
-                  </>
-                )}
-              </Button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <a href="#" className="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200">
+                Forgot your password?
+              </a>
             </div>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="text-blue-600 hover:underline dark:text-blue-400"
+          </div>
+
+          <div className="space-y-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white transition-all duration-200 ${
+                isSubmitting
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+              }`}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">Signing in...</span>
+                </span>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 text-gray-300 bg-[#000b18]">or</span>
+              </div>
+            </div>
+
+            <p className="text-center">
+              <span className="text-gray-300">Don't have an account? </span>
+              <a
+                href="/register"
+                className="font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200"
               >
-                Register here
-              </Link>
+                Sign up now
+              </a>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </form>
+      </div>
     </div>
   );
 };

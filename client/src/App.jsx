@@ -1,45 +1,70 @@
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Toaster } from 'react-hot-toast';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import AppRoutes from './routes';
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { QueryProvider } from "@/components/QueryProvider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import Routes from "@/routes";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { Toaster } from "react-hot-toast";
+import { BrowserRouter } from "react-router-dom";
 
-// Create a client
+// Configure React Query with better error and retry handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-      cacheTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
-      retry: 1,
+      staleTime: 60 * 1000, // 1 minute
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors
+        if (error?.status >= 400 && error?.status < 500) {
+          return false;
+        }
+        // Retry up to 3 times on other errors
+        return failureCount < 3;
+      },
       refetchOnWindowFocus: false,
+      onError: (error) => {
+        // Global error handling for queries (already handled by axios interceptor)
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        // Global error handling for mutations (already handled by axios interceptor)
+      },
     },
   },
 });
 
-const App = () => {
+export default function App() {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <div className="min-h-screen transition-colors duration-200">
-              <AppRoutes />
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  className: 'dark:bg-gray-800 dark:text-white',
-                }}
-              />
-            </div>
-          </AuthProvider>
-        </ThemeProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <NextThemesProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem={true}
+            storageKey="project-management-theme"
+          >
+            <ThemeProvider>
+              <ToastProvider />
+              <QueryProvider>
+                <AuthProvider>
+                  <WebSocketProvider>
+                    <NotificationProvider>
+                      <Routes />
+                    </NotificationProvider>
+                  </WebSocketProvider>
+                </AuthProvider>
+              </QueryProvider>
+            </ThemeProvider>
+          </NextThemesProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
+      <Toaster position="top-right" />
+    </QueryClientProvider>
   );
-};
-
-export default App;
+}

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Research Project Management API Documentation</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <style>
+      :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --accent-color: #4895ef;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: var(--dark-color);
+        background-color: #f8f9fc;
+        padding-top: 56px;
+      }
+      .navbar {
+        background-color: var(--primary-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .navbar-brand {
+        font-weight: 700;
+        color: white !important;
+      }
+      .nav-link {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 500;
+      }
+      .nav-link:hover {
+        color: white !important;
+      }
+      .hero {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+        padding: 4rem 0;
+        border-radius: 0 0 10px 10px;
+        margin-bottom: 2rem;
+      }
+      .hero h1 {
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .hero p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+      .btn-primary {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+      }
+      .btn-primary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+      }
+      .btn-outline-light:hover {
+        color: var(--primary-color);
+      }
+      .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      }
+      .card-header {
+        background-color: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+      }
+      .card-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+      }
+      .endpoint-list {
+        list-style: none;
+        padding-left: 0;
+      }
+      .endpoint-list li {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 0.5rem 0;
+      }
+      .endpoint-list li:last-child {
+        border-bottom: none;
+      }
+      .endpoint-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+        min-width: 60px;
+        text-align: center;
+        font-weight: 600;
+      }
+      .endpoint-badge.get {
+        background-color: #e3f2fd;
+        color: #0d6efd;
+      }
+      .endpoint-badge.post {
+        background-color: #e8f5e9;
+        color: #198754;
+      }
+      .endpoint-badge.put,
+      .endpoint-badge.patch {
+        background-color: #fff3cd;
+        color: #ffc107;
+      }
+      .endpoint-badge.delete {
+        background-color: #f8d7da;
+        color: #dc3545;
+      }
+      .footer {
+        background-color: var(--light-color);
+        padding: 2rem 0;
+        margin-top: 3rem;
+      }
+      .code-box {
+        background-color: #2d3748;
+        color: #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        font-family: "Courier New", Courier, monospace;
+        overflow-x: auto;
+      }
+      .code-box .comment {
+        color: #a0aec0;
+      }
+      .code-box .string {
+        color: #68d391;
+      }
+      .code-box .keyword {
+        color: #f687b3;
+      }
+      .code-box .method {
+        color: #63b3ed;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">Research Project Management API</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#overview">Overview</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#endpoints">Endpoints</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#authentication">Authentication</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#examples">Examples</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link btn btn-outline-light ms-2" href="/swagger"
+                >Swagger UI</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="container text-center">
+        <h1>Research Project Management API</h1>
+        <p class="lead">
+          Comprehensive API documentation for managing research projects, teams,
+          and users
+        </p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+          <a href="/swagger" class="btn btn-light">Explore with Swagger UI</a>
+          <a href="#authentication" class="btn btn-outline-light"
+            >Learn about Authentication</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <div class="container" id="overview">
+      <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+          <h2 class="mb-4">API Overview</h2>
+          <p class="lead">
+            The Research Project Management API provides a comprehensive set of
+            endpoints to manage academic research projects, teams, and users in
+            an educational institution.
+          </p>
+          <p>
+            This API is designed for educational institutions to streamline the
+            research project management process, facilitate collaboration
+            between students and supervisors, and provide administrative
+            oversight.
+          </p>
+        </div>
+      </div>
+
+      <div class="row mb-5">
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="card-icon">
+                <i class="bi bi-shield-lock"></i>
+              </div>
+              <h5 class="card-title">Authentication</h5>
+              <p class="card-text">
+                Secure JWT-based authentication with role-based access control
+                for students, supervisors, and administrators.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="card-icon">
+                <i class="bi bi-people"></i>
+              </div>
+              <h5 class="card-title">Team Management</h5>
+              <p class="card-text">
+                Create and manage teams, assign supervisors, and facilitate
+                collaboration between team members.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="card-icon">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <h5 class="card-title">Project Management</h5>
+              <p class="card-text">
+                Create, track, and evaluate research projects throughout their
+                lifecycle, from proposal to completion.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" id="endpoints">
+      <h2 class="text-center mb-4">API Endpoints</h2>
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-key me-2"></i> Authentication
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/auth/register</code> - Register a new user
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/auth/login</code> - Log in an existing user
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/auth/profile</code> - Get the current user's profile
+                </li>
+                <li>
+                  <span class="endpoint-badge put">PUT</span>
+                  <code>/auth/profile</code> - Update the current user's profile
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-people me-2"></i> Team Management
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/teams</code> - Get all teams
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/teams</code> - Create a new team
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/teams/:id</code> - Get team by ID
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/teams/:teamId/assign-supervisor</code> - Assign
+                  supervisor to team
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-mortarboard me-2"></i> Students
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/students/profile</code> - Get student profile
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/students/deadlines</code> - Get deadlines for student
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/students/submit-report</code> - Submit a report
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/students/results</code> - Get all student results
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-person-workspace me-2"></i> Supervisors
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/supervisor/profile</code> - Get supervisor profile
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/supervisor/projects</code> - Get supervised projects
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/supervisor/projects/:projectId/evaluate</code> -
+                  Evaluate project
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/supervisor/teams</code> - Get supervised teams
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-calendar3 me-2"></i> Sessions
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/sessions</code> - Get all sessions
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/sessions/current</code> - Get current active session
+                </li>
+                <li>
+                  <span class="endpoint-badge post">POST</span>
+                  <code>/sessions</code> - Create a new session
+                </li>
+                <li>
+                  <span class="endpoint-badge patch">PATCH</span>
+                  <code>/sessions/:id</code> - Update a session
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex align-items-center">
+              <i class="bi bi-graph-up me-2"></i> Dashboard & Analytics
+            </div>
+            <div class="card-body">
+              <ul class="endpoint-list">
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/dashboard/student</code> - Get student dashboard data
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/dashboard/supervisor</code> - Get supervisor dashboard
+                  data
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/dashboard/admin</code> - Get admin dashboard data
+                </li>
+                <li>
+                  <span class="endpoint-badge get">GET</span>
+                  <code>/admin/analytics</code> - Get system analytics
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <a href="/swagger" class="btn btn-primary">
+          View Complete API Reference in Swagger UI
+        </a>
+      </div>
+    </div>
+
+    <div class="container mt-5" id="authentication">
+      <h2 class="text-center mb-4">Authentication</h2>
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="mb-3">JWT Authentication</h5>
+              <p>
+                The API uses JWT (JSON Web Token) for authentication. To access
+                protected endpoints, you must include a valid JWT token in the
+                Authorization header of your requests.
+              </p>
+              <p>
+                <strong>How to authenticate:</strong>
+              </p>
+              <ol>
+                <li>Login with your credentials to obtain a JWT token</li>
+                <li>
+                  Include the token in the Authorization header of your
+                  requests:
+                </li>
+              </ol>
+              <div class="code-box mb-3">
+                <span class="comment">// Login to obtain token</span><br />
+                <span class="method">POST</span> /auth/login<br />
+                <span class="comment">// Request body</span><br />
+                {<br />
+                &nbsp;&nbsp;<span class="string">"email"</span>:
+                <span class="string">"user@example.com"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"password"</span>:
+                <span class="string">"yourpassword"</span><br />
+                }<br /><br />
+                <span class="comment">// Response with token</span><br />
+                {<br />
+                &nbsp;&nbsp;<span class="string">"success"</span>:
+                <span class="keyword">true</span>,<br />
+                &nbsp;&nbsp;<span class="string">"token"</span>:
+                <span class="string"
+                  >"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span
+                >,<br />
+                &nbsp;&nbsp;<span class="string">"user"</span>: { ... }<br />
+                }<br />
+              </div>
+              <p>
+                <strong>Using the token:</strong>
+              </p>
+              <div class="code-box">
+                <span class="comment"
+                  >// Include token in Authorization header</span
+                ><br />
+                <span class="method">GET</span> /auth/profile<br />
+                <span class="keyword">Authorization</span>:
+                <span class="string"
+                  >Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</span
+                ><br />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-5" id="examples">
+      <h2 class="text-center mb-4">Usage Examples</h2>
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <div class="card mb-4">
+            <div class="card-header">Register a New User</div>
+            <div class="card-body">
+              <div class="code-box">
+                <span class="method">POST</span> /auth/register<br />
+                <span class="comment">// Request body</span><br />
+                {<br />
+                &nbsp;&nbsp;<span class="string">"fullName"</span>:
+                <span class="string">"John Doe"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"email"</span>:
+                <span class="string">"john.doe@example.com"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"password"</span>:
+                <span class="string">"securePassword123"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"role"</span>:
+                <span class="string">"student"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"department"</span>:
+                <span class="string">"Computer Science"</span><br />
+                }<br />
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header">Create a Team</div>
+            <div class="card-body">
+              <div class="code-box">
+                <span class="method">POST</span> /teams<br />
+                <span class="keyword">Authorization</span>:
+                <span class="string"
+                  >Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</span
+                ><br />
+                <span class="comment">// Request body</span><br />
+                {<br />
+                &nbsp;&nbsp;<span class="string">"name"</span>:
+                <span class="string">"Research Innovators"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"description"</span>:
+                <span class="string">"AI research team"</span>,<br />
+                &nbsp;&nbsp;<span class="string">"members"</span>: [<span
+                  class="string"
+                  >"60d5ec66f682d273c8f2f123"</span
+                >]<br />
+                }<br />
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Get Student Dashboard</div>
+            <div class="card-body">
+              <div class="code-box">
+                <span class="method">GET</span> /dashboard/student<br />
+                <span class="keyword">Authorization</span>:
+                <span class="string"
+                  >Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</span
+                ><br />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Research Project Management API</h5>
+            <p>
+              A comprehensive API for managing academic research projects,
+              teams, and users in educational institutions.
+            </p>
+          </div>
+          <div class="col-md-3">
+            <h5>Resources</h5>
+            <ul class="list-unstyled">
+              <li><a href="/swagger">Swagger UI</a></li>
+              <li><a href="/api-docs">API Reference</a></li>
+              <li><a href="#">API Status</a></li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <h5>Support</h5>
+            <ul class="list-unstyled">
+              <li><a href="#">Documentation</a></li>
+              <li><a href="#">GitHub Repository</a></li>
+              <li><a href="#">Contact Support</a></li>
+            </ul>
+          </div>
+        </div>
+        <hr />
+        <div class="text-center">
+          <p>
+            &copy; 2025 Research Project Management System. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

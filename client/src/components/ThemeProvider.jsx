@@ -1,15 +1,17 @@
 // ThemeProvider.jsx
-import { ThemeProvider as ShadcnThemeProvider } from "next-themes"
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import React from "react";
 
 const ThemeProvider = ({ children }) => {
   return (
-    <ShadcnThemeProvider
-      defaultTheme="dark"
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem={true}
       storageKey="project-management-theme"
     >
       {children}
-    </ShadcnThemeProvider>
+    </NextThemesProvider>
   );
 };
 

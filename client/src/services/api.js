@@ -18,25 +18,25 @@ const createAuthAxios = () => {
 export const adminService = {
   getUsers: async () => {
     const api = createAuthAxios();
-    const response = await api.get('/admin/users');
+    const response = await api.get('/api/admin/users');
     return response.data;
   },
 
   getPendingSupervisors: async () => {
     const api = createAuthAxios();
-    const response = await api.get('/admin/pending-supervisors');
+    const response = await api.get('/api/admin/pending-supervisors');
     return response.data;
   },
 
   approveSupervisor: async (id) => {
     const api = createAuthAxios();
-    const response = await api.put(`/admin/approve-supervisor/${id}`);
+    const response = await api.put(`/api/admin/approve-supervisor/${id}`);
     return response.data;
   },
 
   deleteUser: async (id) => {
     const api = createAuthAxios();
-    const response = await api.delete(`/admin/users/${id}`);
+    const response = await api.delete(`/api/admin/users/${id}`);
     return response.data;
   }
 };
@@ -45,37 +45,37 @@ export const adminService = {
 export const supervisorService = {
   getStudents: async () => {
     const api = createAuthAxios();
-    const response = await api.get('/supervisor/students');
+    const response = await api.get('/api/supervisor/students');
     return response.data;
   },
 
   getTeams: async () => {
     const api = createAuthAxios();
-    const response = await api.get('/supervisor/teams');
+    const response = await api.get('/api/supervisor/teams');
     return response.data;
   },
 
   updateStudentProgress: async (data) => {
     const api = createAuthAxios();
-    const response = await api.put('/supervisor/student-progress', data);
+    const response = await api.put('/api/supervisor/student-progress', data);
     return response.data;
   },
 
   markStudent: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/supervisor/mark-student', data);
+    const response = await api.post('/api/supervisor/mark-student', data);
     return response.data;
   },
 
   sendMessage: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/supervisor/send-message', data);
+    const response = await api.post('/api/supervisor/send-message', data);
     return response.data;
   },
 
   reviewReport: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/supervisor/review-report', data);
+    const response = await api.post('/api/supervisor/review-report', data);
     return response.data;
   }
 };
@@ -84,37 +84,37 @@ export const supervisorService = {
 export const studentService = {
   createTeam: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/student/create-team', data);
+    const response = await api.post('/api/student/create-team', data);
     return response.data;
   },
 
   joinTeam: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/student/join-team', data);
+    const response = await api.post('/api/student/join-team', data);
     return response.data;
   },
 
   inviteToTeam: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/student/invite-to-team', data);
+    const response = await api.post('/api/student/invite-to-team', data);
     return response.data;
   },
 
   createProject: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/student/create-project', data);
+    const response = await api.post('/api/student/create-project', data);
     return response.data;
   },
 
   submitReport: async (data) => {
     const api = createAuthAxios();
-    const response = await api.post('/student/submit-report', data);
+    const response = await api.post('/api/student/submit-report', data);
     return response.data;
   },
 
   getMessages: async () => {
     const api = createAuthAxios();
-    const response = await api.get('/student/messages');
+    const response = await api.get('/api/student/messages');
     return response.data;
   },
 

@@ -1,0 +1,186 @@
+2025-04-07 23:45:36.748 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:45:37.360 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:45:41.095Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07T17:45:47.963Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07T17:46:05.887Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07 23:48:35.225 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:48:35.834 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:49:38.956 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:49:38.979 [ERROR]: Uncaught Exception:
+Error
+    at <anonymous> (/home/swadhin/r/server/src/routes/activityRoutes.js:37:28)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:284:4
+    at moduleEvaluation (unknown)
+    at moduleEvaluation (unknown)
+    at <anonymous> (unknown:2)
+    at processTicksAndRejections (unknown:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "authorize is not a function. (In 'authorize([\"student\", \"supervisor\"])', 'authorize' is an instance of Object)",
+  "location": "uncaughtException handler"
+}
+2025-04-07 23:49:39.605 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:50:09.423 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:50:09.982 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:53:15.755Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07 23:53:18.943 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:53:19.544 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:53:39.092Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07T17:54:05.684Z [WARN]: ⚠️ Client error:
+ValidationError: Only administrators can access this resource
+    at new ValidationError (/home/swadhin/r/server/src/utils/errors.js:8:5)
+    at <anonymous> (/home/swadhin/r/server/src/routes/adminRoutes.js:46:17)
+    at handle (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:10:27)
+    at <anonymous> (/home/swadhin/r/server/node_modules/elysia/src/index.ts:817:17)
+    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:127:101)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "project-mgmt-api",
+  "code": "UNKNOWN",
+  "error": "Only administrators can access this resource"
+}
+2025-04-07 23:54:21.653 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:54:22.308 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:55:13.743Z [WARN]: ⚠️ Client error:
+Error: NOT_FOUND
+    at new NotFoundError (/home/swadhin/r/server/node_modules/elysia/src/error.ts:77:3)
+    at anonymous (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:11:33)
+    at fetch (/home/swadhin/r/server/node_modules/elysia/src/index.ts:6311:6)
+{
+  "service": "project-mgmt-api",
+  "code": "NOT_FOUND",
+  "error": "NOT_FOUND"
+}
+2025-04-07 23:56:04.917 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:56:05.697 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:56:16.363Z [WARN]: ⚠️ Client error:
+ValidationError: Only administrators can access this resource
+    at new ValidationError (/home/swadhin/r/server/src/utils/errors.js:8:5)
+    at <anonymous> (/home/swadhin/r/server/src/routes/adminRoutes.js:46:17)
+    at handle (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:10:27)
+    at <anonymous> (/home/swadhin/r/server/node_modules/elysia/src/index.ts:817:17)
+    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:127:101)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "project-mgmt-api",
+  "code": "UNKNOWN",
+  "error": "Only administrators can access this resource"
+}
+2025-04-07 23:58:49.359 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:58:50.093 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07T17:59:19.232Z [WARN]: ⚠️ Client error:
+ValidationError: Only administrators can access this resource
+    at new ValidationError (/home/swadhin/r/server/src/utils/errors.js:8:5)
+    at <anonymous> (/home/swadhin/r/server/src/routes/adminRoutes.js:46:17)
+    at handle (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:10:27)
+    at <anonymous> (/home/swadhin/r/server/node_modules/elysia/src/index.ts:817:17)
+    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:129:102)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "project-mgmt-api",
+  "code": "UNKNOWN",
+  "error": "Only administrators can access this resource"
+}
+2025-04-07 23:59:53.764 [INFO]: Attempting to connect to MongoDB database
+{
+  "service": "research-mgmt-api"
+}
+2025-04-07 23:59:54.482 [INFO]: ✅ MongoDB connection established successfully
+{
+  "service": "research-mgmt-api"
+}

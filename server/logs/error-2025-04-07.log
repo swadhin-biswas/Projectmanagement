@@ -1,0 +1,15 @@
+2025-04-07 23:49:38.979 [ERROR]: Uncaught Exception:
+Error
+    at <anonymous> (/home/swadhin/r/server/src/routes/activityRoutes.js:37:28)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:284:4
+    at moduleEvaluation (unknown)
+    at moduleEvaluation (unknown)
+    at <anonymous> (unknown:2)
+    at processTicksAndRejections (unknown:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "authorize is not a function. (In 'authorize([\"student\", \"supervisor\"])', 'authorize' is an instance of Object)",
+  "location": "uncaughtException handler"
+}

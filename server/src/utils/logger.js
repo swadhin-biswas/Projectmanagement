@@ -1,108 +1,146 @@
-// Fancy logger with chalk and emojis
-import chalk from 'chalk';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import winston from "winston";
+import "winston-daily-rotate-file";
 
-// Define theme colors using chalk
-const colors = {
-  reset: chalk.reset,
-  bold: chalk.bold,
-  dim: chalk.dim,
-  red: chalk.rgb(255, 99, 99),
-  green: chalk.rgb(41, 204, 106),
-  yellow: chalk.rgb(255, 204, 41),
-  blue: chalk.rgb(39, 144, 255),
-  magenta: chalk.rgb(220, 110, 250),
-  cyan: chalk.rgb(44, 204, 204),
-  gray: chalk.rgb(150, 150, 150)
-};
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const icons = {
-  info: '🔵',
-  success: '✅',
-  error: '❌',
-  warn: '⚠️',
-  debug: '🔍',
-  db: '🗃️',
-  auth: '🔐',
-  user: '👤',
-  team: '👥',
-  project: '📋',
-  api: '🌐',
-  time: '⏱️'
-};
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, "../../logs");
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
-const getTimestamp = () => {
-  const now = new Date();
-  const time = now.toLocaleTimeString('en-US', { 
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3
+// Define log format
+const logFormat = winston.format.combine(
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.json(),
+  winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
+    // Format additional metadata
+    const metaStr = Object.keys(meta).length
+      ? "\n" + JSON.stringify(meta, null, 2)
+      : "";
+
+    // Include stack trace if available
+    const stackStr = stack ? `\n${stack}` : "";
+
+    return `${timestamp} [${level.toUpperCase()}]: ${message}${stackStr}${metaStr}`;
+  })
+);
+
+// Define console format with colors for better readability
+const consoleFormat = winston.format.combine(
+  winston.format.colorize(),
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
+  winston.format.errors({ stack: true }),
+  winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
+    // Format additional metadata
+    const metaStr = Object.keys(meta).length
+      ? "\n" + JSON.stringify(meta, null, 2)
+      : "";
+
+    // Include stack trace if available
+    const stackStr = stack ? `\n${stack}` : "";
+
+    return `${timestamp} [${level}]: ${message}${stackStr}${metaStr}`;
+  })
+);
+
+// Create file transports for different log levels
+const fileTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logsDir, "application-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  level: "info",
+});
+
+const errorFileTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logsDir, "error-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  level: "error",
+});
+
+// Create console transport
+const consoleTransport = new winston.transports.Console({
+  format: consoleFormat,
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+});
+
+// Create the logger
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || "info",
+  format: logFormat,
+  defaultMeta: { service: "research-mgmt-api" },
+  transports: [consoleTransport, fileTransport, errorFileTransport],
+  exitOnError: false,
+});
+
+// Create a separate transport specifically for uncaught exceptions
+const exceptionTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logsDir, "exceptions-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  format: logFormat,
+});
+
+// Handle uncaught exceptions and unhandled rejections with better formatting
+logger.exceptions.handle(
+  exceptionTransport,
+  new winston.transports.Console({
+    format: consoleFormat,
+  })
+);
+
+// Setting up unhandled rejection logging with improved handling
+process.on("unhandledRejection", (reason, promise) => {
+  // Extract stack trace if available
+  const stack =
+    reason?.stack ||
+    (reason instanceof Error ? reason.toString() : JSON.stringify(reason));
+
+  logger.error("Unhandled Rejection:", {
+    reason: reason instanceof Error ? reason.message : reason,
+    stack: stack,
+    // Add more details that might be useful for debugging
+    location: "unhandledRejection handler",
   });
-  return time;
-};
+});
 
-const formatMeta = (meta) => {
-  if (!meta || Object.keys(meta).length === 0) return '';
-  return Object.entries(meta)
-    .map(([key, value]) => `${colors.gray(`${key}=`)}${colors.cyan(value)}`)
-    .join(' ');
-};
+// Add handler for uncaught exceptions to provide better context
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught Exception:", {
+    error: error.message,
+    stack: error.stack,
+    location: "uncaughtException handler",
+  });
 
-const logger = {
-  info: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.info} ${colors.blue(message)} ${formatMeta(meta)}`);
-  },
-  success: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.success} ${colors.green(message)} ${formatMeta(meta)}`);
-  },
-  error: (message, meta = {}) => {
-    console.error(`${colors.dim(getTimestamp())} ${icons.error} ${colors.red(message)} ${formatMeta(meta)}`);
-  },
-  warn: (message, meta = {}) => {
-    console.warn(`${colors.dim(getTimestamp())} ${icons.warn} ${colors.yellow(message)} ${formatMeta(meta)}`);
-  },
-  debug: (message, meta = {}) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug(`${colors.dim(getTimestamp())} ${icons.debug} ${colors.magenta(message)} ${formatMeta(meta)}`);
-    }
-  },
-  db: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.db} ${colors.cyan(message)} ${formatMeta(meta)}`);
-  },
-  auth: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.auth} ${colors.magenta(message)} ${formatMeta(meta)}`);
-  },
-  user: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.user} ${colors.cyan(message)} ${formatMeta(meta)}`);
-  },
-  team: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.team} ${colors.blue(message)} ${formatMeta(meta)}`);
-  },
-  project: (message, meta = {}) => {
-    console.log(`${colors.dim(getTimestamp())} ${icons.project} ${colors.green(message)} ${formatMeta(meta)}`);
-  },
-  api: (method, path, status, time) => {
-    const statusColor = status >= 400 ? colors.red : status >= 300 ? colors.yellow : colors.green;
-    const methodColor = method === 'GET' ? colors.blue : 
-                      method === 'POST' ? colors.green : 
-                      method === 'PUT' ? colors.yellow : 
-                      method === 'DELETE' ? colors.red : colors.magenta;
-    
-    console.log(`${colors.dim(getTimestamp())} ${icons.api} ${methodColor(method)} ${path} ${statusColor(status.toString())} ${icons.time} ${colors.cyan(time + 'ms')}`);
-  }
-};
+  // For critical exceptions, we may want to exit after logging
+  // Giving time for the log to be written
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
 
-// Create a middleware for HTTP request logging
-export const requestLogger = {
-  name: 'request-logger',
-  beforeHandle: ({ request, store }) => {
-    store.requestStart = Date.now();
-  },
-  afterHandle: ({ request, set, store }) => {
-    const responseTime = Date.now() - store.requestStart;
-    logger.api(request.method, request.url, set.status, responseTime);
-  }
-};
+// Add handler for SIGTERM and SIGINT to gracefully log before shutdown
+process.on("SIGTERM", () => {
+  logger.info("SIGTERM received. Shutting down gracefully");
+  process.exit(0);
+});
 
+process.on("SIGINT", () => {
+  logger.info("SIGINT received. Shutting down gracefully");
+  process.exit(0);
+});
+
+// Export both as default and named export for compatibility
+export { logger };
 export default logger;

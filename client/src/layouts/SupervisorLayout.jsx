@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SupervisorLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -10,9 +10,12 @@ const SupervisorLayout = () => {
   const location = useLocation();
 
   const navigation = [
-    { name: 'Dashboard', path: '/supervisor/dashboard' },
-    { name: 'Team Evaluation', path: '/supervisor/teams' },
-    { name: 'Project Evaluation', path: '/supervisor/projects' },
+    { name: "Dashboard", path: "/supervisor/dashboard" },
+    { name: "Team Evaluation", path: "/supervisor/teams" },
+    { name: "Project Evaluation", path: "/supervisor/projects" },
+    { name: "Communications", path: "/supervisor/notifications" },
+    { name: "Analytics", path: "/supervisor/analytics" },
+    { name: "Reports", path: "/supervisor/reports" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -21,10 +24,14 @@ const SupervisorLayout = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b dark:border-gray-700">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Supervisor Panel</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Supervisor Panel
+          </h1>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="p-1 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
@@ -39,9 +46,11 @@ const SupervisorLayout = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${isActive(item.path)
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive(item.path)
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  }`}
                 >
                   {item.name}
                 </Link>
@@ -52,13 +61,19 @@ const SupervisorLayout = () => {
       </div>
 
       {/* Main content */}
-      <div className={`transition-margin duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div
+        className={`transition-margin duration-300 ease-in-out ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
+      >
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow">
           <div className="flex items-center justify-between h-16 px-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className={`p-1 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 ${isSidebarOpen ? 'hidden' : 'block'}`}
+              className={`p-1 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 ${
+                isSidebarOpen ? "hidden" : "block"
+              }`}
             >
               →
             </button>
@@ -68,7 +83,7 @@ const SupervisorLayout = () => {
                 onClick={toggleTheme}
                 className="p-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
               >
-                {isDark ? '☀️' : '🌙'}
+                {isDark ? "☀️" : "🌙"}
               </button>
 
               <div className="relative group">

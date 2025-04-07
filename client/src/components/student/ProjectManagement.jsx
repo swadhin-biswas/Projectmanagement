@@ -1,285 +1,679 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import { studentService } from "../../services/api";
+import { format } from "date-fns";
+import {
+  Calendar,
+  ClipboardCheck,
+  FileText,
+  Link,
+  PlusCircle,
+  Upload,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { api } from "../../lib/api";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Textarea } from "../ui/textarea";
 
-const ProjectManagement = () => {
-  const { user } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [projectData, setProjectData] = useState({
-    title: "",
-    description: "",
-    category: "project", // Default to project
-    team: "",
-    supervisor: "",
-  });
-  const [currentProject, setCurrentProject] = useState(null);
-  const [hasProject, setHasProject] = useState(false);
-  const [teamMembers, setTeamMembers] = useState([]);
+const ProjectManagement = ({ team, session, user, onProjectUpdate }) => {
+  const [project, setProject] = useState(team?.project || null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [supervisors, setSupervisors] = useState([]);
+  const [isLoadingSupervisors, setIsLoadingSupervisors] = useState(false);
 
-  // Check if the student's team has a project already
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: "",
+    type: "project",
+    supervisorId: "",
+  });
+
+  const [submissionForm, setSubmissionForm] = useState({
+    submissionLink: "",
+    submissionNote: "",
+  });
+
   useEffect(() => {
-    if (user?.studentId) {
-      fetchProjectData();
-      // Fetch team members and supervisors (mock data for now)
-      setTeamMembers([
-        { id: "1", fullName: "Team Member 1" },
-        { id: "2", fullName: "Team Member 2" },
-      ]);
-      setSupervisors([
-        { id: "101", fullName: "Dr. Smith" },
-        { id: "102", fullName: "Prof. Johnson" },
-      ]);
+    if (team?.project) {
+      setProject(team.project);
     }
-  }, [user]);
 
-  const fetchProjectData = async () => {
+    if (!supervisors.length) {
+      fetchSupervisors();
+    }
+  }, [team]);
+
+  const fetchSupervisors = async () => {
     try {
-      setLoading(true);
-      // Mock fetching project data
-      // In a real app, you'd have a specific endpoint for this
-      setHasProject(false); // This would be determined by your API
-      setCurrentProject(null); // This would come from your API
-      setLoading(false);
+      setIsLoadingSupervisors(true);
+      const response = await api.get("/api/supervisors");
+      setSupervisors(response.data || []);
     } catch (error) {
-      console.error("Error fetching project data:", error);
-      setError("Failed to load project data");
-      setLoading(false);
+      console.error("Failed to fetch supervisors:", error);
+      toast.error("Could not load available supervisors");
+    } finally {
+      setIsLoadingSupervisors(false);
     }
   };
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+
+    if (!validateProjectForm()) {
+      return;
+    }
 
     try {
-      const response = await studentService.createProject(projectData);
-      setSuccess("Project created successfully!");
-      setHasProject(true);
-      setCurrentProject(response); // Assuming response contains project details
-      setProjectData({
-        title: "",
-        description: "",
-        category: "project",
-        team: "",
-        supervisor: "",
+      setIsLoading(true);
+      const response = await api.post("/api/projects", {
+        ...projectForm,
+        teamId: team._id,
       });
+
+      setProject(response.data);
+      toast.success("Project created successfully");
+      setIsCreateDialogOpen(false);
+
+      if (onProjectUpdate) {
+        onProjectUpdate(response.data);
+      }
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to create project");
+      console.error("Failed to create project:", error);
+      toast.error(error.response?.data?.message || "Failed to create project");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const handleSubmitProject = async (e) => {
+    e.preventDefault();
+
+    if (!submissionForm.submissionLink.trim()) {
+      toast.error("Submission link is required");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await api.post(
+        `/api/projects/${project._id}/submit`,
+        submissionForm
+      );
+
+      setProject(response.data);
+      toast.success("Project submitted successfully");
+      setIsSubmitDialogOpen(false);
+
+      if (onProjectUpdate) {
+        onProjectUpdate(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to submit project:", error);
+      toast.error(error.response?.data?.message || "Failed to submit project");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const validateProjectForm = () => {
+    if (!projectForm.name.trim()) {
+      toast.error("Project name is required");
+      return false;
+    }
+
+    if (!projectForm.supervisorId) {
+      toast.error("Please select a supervisor");
+      return false;
+    }
+
+    return true;
+  };
+
+  const resetProjectForm = () => {
+    setProjectForm({
+      name: "",
+      description: "",
+      type: "project",
+      supervisorId: "",
+    });
+  };
+
+  const resetSubmissionForm = () => {
+    setSubmissionForm({
+      submissionLink: "",
+      submissionNote: "",
+    });
+  };
+
+  const isTeamLeader = team?.members?.find(
+    (member) => member.user._id === user._id && member.role === "leader"
+  );
+
+  const getDeadlineStatus = (deadline) => {
+    const now = new Date();
+    const deadlineDate = new Date(deadline.date);
+
+    if (deadlineDate < now) {
+      return "expired";
+    }
+
+    // If deadline is within 72 hours
+    const hours = (deadlineDate - now) / (1000 * 60 * 60);
+    if (hours <= 72) {
+      return "upcoming";
+    }
+
+    return "future";
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "in-progress":
+        return <Badge className="bg-blue-500">In Progress</Badge>;
+      case "submitted":
+        return <Badge className="bg-amber-500">Submitted</Badge>;
+      case "reviewed":
+        return <Badge className="bg-purple-500">Reviewed</Badge>;
+      case "completed":
+        return <Badge className="bg-green-500">Completed</Badge>;
+      default:
+        return <Badge className="bg-gray-500">{status}</Badge>;
+    }
+  };
+
+  const getDeadlineBadge = (deadline) => {
+    const status = getDeadlineStatus(deadline);
+
+    switch (status) {
+      case "expired":
+        return <Badge className="bg-red-500">Expired</Badge>;
+      case "upcoming":
+        return <Badge className="bg-amber-500">Upcoming</Badge>;
+      case "future":
+        return <Badge className="bg-green-500">Scheduled</Badge>;
+      default:
+        return <Badge className="bg-gray-500">Unknown</Badge>;
+    }
+  };
+
+  if (!team) {
+    return (
+      <Card>
+        <CardContent className="py-10">
+          <div className="text-center">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Team Assigned</h3>
+            <p className="text-gray-500 mb-4">
+              You need to join a team before creating a project.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Project Management</h2>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          {success}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      ) : hasProject ? (
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3">
-            {currentProject?.title || "Your Project"}
-          </h3>
-
-          <div className="mb-4">
-            <p className="font-medium">Category:</p>
-            <p>
-              {currentProject?.category === "research"
-                ? "Research Project"
-                : "Course Project"}
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <p className="font-medium">Description:</p>
-            <p className="mt-1">
-              {currentProject?.description || "No description provided"}
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <p className="font-medium">Status:</p>
-            <span
-              className={`inline-block px-2 py-1 text-xs rounded ${
-                currentProject?.status === "approved"
-                  ? "bg-green-100 text-green-800"
-                  : currentProject?.status === "in-progress"
-                  ? "bg-blue-100 text-blue-800"
-                  : currentProject?.status === "proposed"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : currentProject?.status === "completed"
-                  ? "bg-purple-100 text-purple-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {currentProject?.status || "Unknown"}
-            </span>
-          </div>
-
-          <div className="mb-4">
-            <p className="font-medium">Supervisor:</p>
-            <p>{currentProject?.supervisor?.fullName || "Not assigned"}</p>
-          </div>
-
-          <div>
-            <p className="font-medium">Team Members:</p>
-            {currentProject?.team?.members?.length > 0 ? (
-              <ul className="list-disc list-inside mt-1">
-                {currentProject.team.members.map((member, index) => (
-                  <li key={index}>{member.fullName || "Unknown Member"}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 mt-1">No team members listed</p>
-            )}
-          </div>
-        </div>
+    <div className="space-y-6">
+      {!project ? (
+        <Card>
+          <CardContent className="py-10">
+            <div className="text-center">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Project Created</h3>
+              <p className="text-gray-500 mb-4">
+                Create a new project for your team.
+              </p>
+              {isTeamLeader ? (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" /> Create Project
+                </Button>
+              ) : (
+                <p className="text-amber-500">
+                  Only the team leader can create a project.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Create a New Project</h3>
-          <form onSubmit={handleCreateProject}>
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="projectTitle"
-              >
-                Project Title
-              </label>
-              <input
-                type="text"
-                id="projectTitle"
-                value={projectData.title}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>{project.name}</CardTitle>
+                <CardDescription>
+                  <Badge className="mr-2">
+                    {project.type === "research"
+                      ? "Research Based"
+                      : "Project Based"}
+                  </Badge>
+                  {getStatusBadge(project.status)}
+                </CardDescription>
+              </div>
+
+              {isTeamLeader && project.status === "in-progress" && (
+                <Button
+                  onClick={() => setIsSubmitDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Upload className="mr-2 h-4 w-4" /> Submit
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <Tabs defaultValue="details">
+              <TabsList className="mb-4">
+                <TabsTrigger value="details">
+                  <FileText className="h-4 w-4 mr-2" /> Project Details
+                </TabsTrigger>
+                <TabsTrigger value="deadlines">
+                  <Calendar className="h-4 w-4 mr-2" /> Deadlines
+                </TabsTrigger>
+                <TabsTrigger value="feedback">
+                  <ClipboardCheck className="h-4 w-4 mr-2" /> Submission &
+                  Feedback
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-4">
+                <div className="space-y-4">
+                  {project.description && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Description</h3>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {project.description}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Supervisor</h3>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                      <p className="font-medium">
+                        {project.supervisor?.fullName || "Not assigned"}
+                      </p>
+                      {project.supervisor && (
+                        <p className="text-sm text-gray-500">
+                          {project.supervisor.email}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Team Members</h3>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                      <ul className="space-y-2">
+                        {team.members.map((member) => (
+                          <li
+                            key={member.user._id}
+                            className="flex items-center"
+                          >
+                            <span className="font-medium">
+                              {member.user.fullName}
+                            </span>
+                            {member.role === "leader" && (
+                              <Badge className="ml-2 bg-blue-500">
+                                Team Leader
+                              </Badge>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="deadlines" className="space-y-4">
+                {session?.deadlines?.length > 0 ? (
+                  <div className="space-y-3">
+                    {session.deadlines
+                      .sort((a, b) => new Date(a.date) - new Date(b.date))
+                      .map((deadline) => (
+                        <Card key={deadline._id}>
+                          <CardContent className="p-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                              <div>
+                                <h3 className="font-medium">{deadline.name}</h3>
+                                <p className="text-sm text-gray-500">
+                                  Due: {format(new Date(deadline.date), "PPP")}
+                                </p>
+                                {deadline.description && (
+                                  <p className="text-sm mt-1">
+                                    {deadline.description}
+                                  </p>
+                                )}
+                              </div>
+                              {getDeadlineBadge(deadline)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Deadlines</h3>
+                    <p className="text-gray-500">
+                      There are no deadlines set for this session yet.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="feedback" className="space-y-4">
+                {project.status === "in-progress" ? (
+                  <div className="text-center py-6">
+                    <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">
+                      No Submission Yet
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Your project has not been submitted yet.
+                    </p>
+                    {isTeamLeader && (
+                      <Button
+                        onClick={() => setIsSubmitDialogOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> Submit Project
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Submission</h3>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                        <p>
+                          <a
+                            href={project.submissionLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline flex items-center"
+                          >
+                            <Link className="h-4 w-4 mr-2" /> View Submission
+                          </a>
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Submitted on:{" "}
+                          {format(new Date(project.submittedAt), "PPP")}
+                        </p>
+                        {project.submissionNote && (
+                          <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-700 rounded">
+                            <p className="text-sm">{project.submissionNote}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {project.status === "reviewed" ||
+                    project.status === "completed" ? (
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">Feedback</h3>
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                          {project.feedback ? (
+                            <>
+                              <p className="font-medium">
+                                Grade: {project.grade}/100
+                              </p>
+                              <div className="mt-2">
+                                <p>{project.feedback}</p>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-gray-500">
+                              No feedback provided yet.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <Alert className="bg-amber-50 dark:bg-amber-900/20">
+                        <AlertTitle className="text-amber-800 dark:text-amber-300">
+                          Waiting for Review
+                        </AlertTitle>
+                        <AlertDescription className="text-amber-700 dark:text-amber-400">
+                          Your submission is waiting to be reviewed by your
+                          supervisor.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Project Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Project</DialogTitle>
+            <DialogDescription>
+              Create a new project for your team. You'll need to select a
+              supervisor.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateProject} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="projectName">Project Name</Label>
+              <Input
+                id="projectName"
+                value={projectForm.name}
                 onChange={(e) =>
-                  setProjectData({ ...projectData, title: e.target.value })
+                  setProjectForm({ ...projectForm, name: e.target.value })
                 }
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
+                placeholder="Enter project name"
               />
             </div>
 
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="projectCategory"
-              >
-                Project Category
-              </label>
-              <select
-                id="projectCategory"
-                value={projectData.category}
-                onChange={(e) =>
-                  setProjectData({ ...projectData, category: e.target.value })
+            <div className="space-y-2">
+              <Label htmlFor="projectType">Project Type</Label>
+              <Select
+                value={projectForm.type}
+                onValueChange={(value) =>
+                  setProjectForm({ ...projectForm, type: value })
                 }
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
               >
-                <option value="project">Course Project</option>
-                <option value="research">Research Project</option>
-              </select>
+                <SelectTrigger id="projectType" className="w-full">
+                  <SelectValue placeholder="Select project type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="project">Project Based</SelectItem>
+                  <SelectItem value="research">Research Based</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="projectDescription"
+            <div className="space-y-2">
+              <Label htmlFor="supervisorId">Supervisor</Label>
+              <Select
+                value={projectForm.supervisorId}
+                onValueChange={(value) =>
+                  setProjectForm({ ...projectForm, supervisorId: value })
+                }
               >
-                Project Description
-              </label>
-              <textarea
+                <SelectTrigger id="supervisorId" className="w-full">
+                  <SelectValue placeholder="Select a supervisor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingSupervisors ? (
+                    <SelectItem value="loading" disabled>
+                      Loading supervisors...
+                    </SelectItem>
+                  ) : supervisors.length > 0 ? (
+                    supervisors.map((supervisor) => (
+                      <SelectItem key={supervisor._id} value={supervisor._id}>
+                        {supervisor.fullName} - {supervisor.department}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      No supervisors available
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="projectDescription">Description (Optional)</Label>
+              <Textarea
                 id="projectDescription"
-                value={projectData.description}
+                value={projectForm.description}
                 onChange={(e) =>
-                  setProjectData({
-                    ...projectData,
+                  setProjectForm({
+                    ...projectForm,
                     description: e.target.value,
                   })
                 }
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                rows="4"
-                required
-              ></textarea>
+                placeholder="Enter project description"
+                rows={4}
+              />
             </div>
 
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="supervisorSelect"
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isLoading}
               >
-                Supervisor
-              </label>
-              <select
-                id="supervisorSelect"
-                value={projectData.supervisor}
-                onChange={(e) =>
-                  setProjectData({ ...projectData, supervisor: e.target.value })
-                }
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
-              >
-                <option value="">Select a supervisor</option>
-                {supervisors.map((supervisor) => (
-                  <option key={supervisor.id} value={supervisor.id}>
-                    {supervisor.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-6">
-              <p className="block text-gray-700 text-sm font-bold mb-2">
-                Team Members
-              </p>
-              <div className="bg-gray-100 p-4 rounded">
-                {teamMembers.length > 0 ? (
-                  <ul className="list-disc list-inside">
-                    {teamMembers.map((member) => (
-                      <li key={member.id}>{member.fullName}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500">
-                    No team members available. Please create or join a team
-                    first.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <button
+                Cancel
+              </Button>
+              <Button
                 type="submit"
-                disabled={loading || teamMembers.length === 0}
-                className={`${
-                  teamMembers.length === 0
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-700"
-                } text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline`}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
               >
-                Create Project
-              </button>
-            </div>
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></div>
+                    Creating...
+                  </>
+                ) : (
+                  "Create Project"
+                )}
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Submit Project Dialog */}
+      <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Submit Project</DialogTitle>
+            <DialogDescription>
+              Submit your project work. Please provide a link to your project
+              files or documentation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitProject} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="submissionLink">Submission Link</Label>
+              <Input
+                id="submissionLink"
+                value={submissionForm.submissionLink}
+                onChange={(e) =>
+                  setSubmissionForm({
+                    ...submissionForm,
+                    submissionLink: e.target.value,
+                  })
+                }
+                placeholder="https://github.com/username/project or Google Drive link"
+              />
+              <p className="text-xs text-gray-500">
+                Please provide a link to your GitHub repository, Google Drive
+                folder, or any other location where your project files are
+                hosted.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="submissionNote">Notes (Optional)</Label>
+              <Textarea
+                id="submissionNote"
+                value={submissionForm.submissionNote}
+                onChange={(e) =>
+                  setSubmissionForm({
+                    ...submissionForm,
+                    submissionNote: e.target.value,
+                  })
+                }
+                placeholder="Any additional notes for your supervisor"
+                rows={3}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsSubmitDialogOpen(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Project"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

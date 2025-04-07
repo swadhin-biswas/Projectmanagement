@@ -1,144 +1,92 @@
 // API functions for project management
-import { api } from '../lib/api'; // Correct import path
+import { api } from '../lib/api';
 
 export const projectAPI = {
-  // Create a new project (Team Leader)
+  // Create a new project
   createProject: async (projectData) => {
     try {
-      const response = await api.post('/student/create-project', projectData);
+      const response = await api.post('/api/projects', projectData);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to create project', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to create project' };
     }
   },
 
-  // Get all projects for a supervisor (only available to supervisors)
+  // Get all projects
   getAllProjects: async () => {
     try {
-      const response = await api.get('/supervisor/teams');
+      const response = await api.get('/api/projects');
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to fetch projects', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to fetch projects' };
     }
   },
 
-  // Get student dashboard (includes student projects)
-  getStudentProjects: async () => {
+  // Get project by ID
+  getProject: async (projectId) => {
     try {
-      const response = await api.get('/dashboard/student');
+      const response = await api.get(`/api/projects/${projectId}`);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to fetch student projects', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to fetch project' };
     }
   },
 
-  // Submit a report for a project
-  submitReport: async (reportData) => {
+  // Update project
+  updateProject: async (projectId, data) => {
     try {
-      const response = await api.post('/student/submit-report', reportData);
+      const response = await api.patch(`/api/projects/${projectId}`, data);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to submit report', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to update project' };
     }
   },
 
-  // Update a student's progress (Supervisor)
-  updateStudentProgress: async (progressData) => {
+  // Submit project files
+  submitProject: async (projectId, data) => {
     try {
-      const response = await api.put('/supervisor/student-progress', progressData);
+      const response = await api.post(`/api/projects/${projectId}/submissions`, data);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to update student progress', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to submit project' };
     }
   },
 
-  // Add marks for a student (Supervisor)
-  addMarks: async (marksData) => {
+  // Get project submissions
+  getSubmissions: async (projectId) => {
     try {
-      const response = await api.post('/supervisor/mark-student', marksData);
+      const response = await api.get(`/api/projects/${projectId}/submissions`);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to add marks', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to fetch submissions' };
     }
   },
 
-  // Review a report (Supervisor)
-  reviewReport: async (reviewData) => {
+  // Milestone management
+  createMilestone: async (projectId, data) => {
     try {
-      const response = await api.post('/supervisor/review-report', reviewData);
+      const response = await api.post(`/api/projects/${projectId}/milestones`, data);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to review report', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to create milestone' };
     }
   },
 
-  // Send a message (Supervisor)
-  sendMessage: async (messageData) => {
+  updateMilestone: async (projectId, milestoneId, data) => {
     try {
-      const response = await api.post('/supervisor/send-message', messageData);
+      const response = await api.patch(`/api/projects/${projectId}/milestones/${milestoneId}`, data);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to send message', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to update milestone' };
     }
   },
 
-  // Get student messages
-  getStudentMessages: async () => {
+  deleteMilestone: async (projectId, milestoneId) => {
     try {
-      const response = await api.get('/student/messages');
+      const response = await api.delete(`/api/projects/${projectId}/milestones/${milestoneId}`);
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to fetch messages', ...error };
-      }
-    }
-  },
-
-  // Mark a message as read
-  markMessageAsRead: async (messageId) => {
-    try {
-      const response = await api.put(`/student/messages/${messageId}/read`);
-      return response.data;
-    } catch (error) {
-      if (error.response && error.response.data) {
-        throw error.response.data;
-      } else {
-        throw { message: 'Failed to mark message as read', ...error };
-      }
+      throw error.response?.data || { message: 'Failed to delete milestone' };
     }
   }
 };

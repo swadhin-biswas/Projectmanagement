@@ -1,62 +1,106 @@
-import logger from '../utils/logger.js';
+import logger from "../utils/logger.js";
 
-export const errorHandler = {
-  name: 'error-handler',
-  error: ({ code, error, set }) => {
-      // Handle validation errors with proper status code and logging
-      if (error.name === 'ValidationError') {
-        set.status = 400;
-        logger.error('Validation error:', { 
-          error: error.message,
-          path: error.path,
-          field: error.field
-        });
-        return {
-          error: true,
-          message: error.message,
-          field: error.field // Help client identify which field failed
-        };
-      }
+const errorHandler = (err, req, res, next) => {
+  // Log the error with detailed context
+  logger.error(`API Error: ${err.message}`, {
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+    },
+    request: {
+      path: req.path,
+      method: req.method,
+      query: req.query,
+      body: sanitizeRequestBody(req.body),
+      ip: req.ip,
+      headers: sanitizeHeaders(req.headers),
+    },
+    user: req.user ? req.user.id : "unauthenticated",
+  });
 
-      // Handle unauthorized access
-      if (error.name === 'UnauthorizedError') {
-        set.status = 401;
-        logger.error('Unauthorized access:', {
-          error: error.message,
-          path: error.path
-        });
-        return {
-          error: true,
-          message: error.message
-        };
-      }
+  // Prevent controller objects from being sent in the response
+  const safeError = {
+    name: err.name,
+    message: err.message,
+    status: err.status || 500,
+    error:
+      process.env.NODE_ENV === "development" ? err.message : "Server Error",
+  };
 
-      // Handle forbidden access
-      if (error.name === 'ForbiddenError') {
-        set.status = 403;
-        logger.error('Forbidden access:', {
-          error: error.message,
-          path: error.path
-        });
-        return {
-          error: true,
-          message: error.message
-        };
-      }
+  // Handle specific error types
+  if (err.name === "ValidationError") {
+    safeError.status = 400;
+    safeError.errors = Object.values(err.errors).map((val) => val.message);
+  } else if (err.name === "MongoServerError" && err.code === 11000) {
+    safeError.status = 400;
+    safeError.message = "Duplicate key error - record already exists";
+  } else if (err.name === "TokenExpiredError") {
+    safeError.status = 401;
+    safeError.message = "Your session has expired. Please log in again.";
+  } else if (err.name === "JsonWebTokenError") {
+    safeError.status = 401;
+    safeError.message = "Invalid token. Please log in again.";
+  }
 
-      // Handle other errors
-      logger.error('Server error:', {
-        code,
-        error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      });
+  // Handle timeout errors explicitly
+  if (err.message && err.message.includes("buffering timed out")) {
+    safeError.status = 503;
+    safeError.message = "Database operation timed out. Please try again later.";
+  }
 
-      set.status = code === 'NOT_FOUND' ? 404 : 500;
-      return {
-        error: true,
-        message: process.env.NODE_ENV === 'production' 
-          ? 'Internal server error' 
-          : error.message
-      };
-    }
+  // For critical errors, log additional debug info
+  if (safeError.status >= 500) {
+    logger.error("Critical error details:", {
+      processInfo: {
+        memoryUsage: process.memoryUsage(),
+        uptime: process.uptime(),
+      },
+    });
+  }
+
+  return res.status(safeError.status).json({
+    success: false,
+    error: safeError.message,
+    errors: safeError.errors,
+    status: safeError.status,
+  });
 };
+
+// Helper function to sanitize sensitive data from request bodies
+function sanitizeRequestBody(body) {
+  if (!body) return null;
+
+  const sanitized = { ...body };
+
+  // Remove sensitive fields
+  const sensitiveFields = [
+    "password",
+    "token",
+    "secret",
+    "apiKey",
+    "creditCard",
+  ];
+  sensitiveFields.forEach((field) => {
+    if (sanitized[field]) sanitized[field] = "[REDACTED]";
+  });
+
+  return sanitized;
+}
+
+// Helper function to sanitize headers
+function sanitizeHeaders(headers) {
+  if (!headers) return null;
+
+  const sanitized = { ...headers };
+
+  // Remove sensitive headers
+  const sensitiveHeaders = ["authorization", "cookie", "x-api-key"];
+  sensitiveHeaders.forEach((header) => {
+    if (sanitized[header]) sanitized[header] = "[REDACTED]";
+  });
+
+  return sanitized;
+}
+
+export default errorHandler;

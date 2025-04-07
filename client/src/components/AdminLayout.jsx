@@ -1,20 +1,20 @@
 // AdminLayout.jsx
-import React, { useState, useContext } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faUserShield,
-  faUsers,
-  faUserClock,
+  faBars,
   faCog,
   faSignOutAlt,
-  faBars,
-  faTimes
+  faTimes,
+  faUserClock,
+  faUserShield,
+  faUsers
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminLayout = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

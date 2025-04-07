@@ -5,7 +5,7 @@ export default {
   // Get student dashboard data
   getStudentDashboard: async () => {
     try {
-      const response = await api.get('/dashboard/student');
+      const response = await api.get('/api/dashboard/student');
       return response.data;
     } catch (error) {
       console.error("Student dashboard fetch error:", error);
@@ -19,7 +19,7 @@ export default {
   // Get supervisor dashboard data
   getSupervisorDashboard: async () => {
     try {
-      const response = await api.get('/dashboard/supervisor');
+      const response = await api.get('/api/dashboard/supervisor');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -33,7 +33,7 @@ export default {
   // Get admin dashboard data
   getAdminDashboard: async () => {
     try {
-      const response = await api.get('/dashboard/admin');
+      const response = await api.get('/api/dashboard/admin');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -47,7 +47,7 @@ export default {
   // Get system overview (Admin/Supervisor)
   getSystemOverview: async () => {
     try {
-      const response = await api.get('/analytics/overview');
+      const response = await api.get('/api/analytics/overview');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -61,7 +61,7 @@ export default {
   // Get team statistics (Admin/Supervisor)
   getTeamStatistics: async () => {
     try {
-      const response = await api.get('/analytics/teams');
+      const response = await api.get('/api/analytics/teams');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -75,7 +75,7 @@ export default {
   // Get submission statistics (Admin/Supervisor)
   getSubmissionStatistics: async () => {
     try {
-      const response = await api.get('/analytics/submissions');
+      const response = await api.get('/api/analytics/submissions');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -89,7 +89,7 @@ export default {
   // Get performance metrics (Admin/Supervisor)
   getPerformanceMetrics: async () => {
     try {
-      const response = await api.get('/analytics/performance');
+      const response = await api.get('/api/analytics/performance');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
