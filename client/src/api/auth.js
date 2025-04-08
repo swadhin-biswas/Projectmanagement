@@ -25,7 +25,13 @@ authInstance.interceptors.request.use(
 const registerUser = async (userData) => {
   try {
     const response = await authInstance.post("/api/auth/register", userData);
-    return response.data;
+    if (response.data.success) {
+      return response.data;
+    }
+    return {
+      success: false,
+      error: response.data.error || "Registration failed"
+    };
   } catch (error) {
     if (error.response?.data) {
       return error.response.data;
@@ -40,14 +46,11 @@ const registerUser = async (userData) => {
 const loginUser = async (credentials) => {
   try {
     const response = await authInstance.post("/api/auth/login", credentials);
-    // Transform the response to match expected structure
-    if (response.data.success && response.data.data) {
-      // Server returns { success: true, data: { user, token } }
-      // Transform to { success: true, token, user }
+    if (response.data.success) {
       return {
         success: true,
-        token: response.data.data.token,
-        user: response.data.data.user,
+        token: response.data.token,
+        user: response.data.user,
       };
     }
     return response.data;

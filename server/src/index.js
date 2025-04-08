@@ -3,64 +3,74 @@ import { config } from "dotenv";
 import { Elysia } from "elysia";
 import jwt from "jsonwebtoken";
 import connectToDatabase from "./config/database.js";
-import logger from "./utils/logger.js";
+import { DatabaseError, ValidationError } from "./utils/errors.js";
+import logger, { logApiCall } from "./utils/logger.js";
 
 // Import middleware
 import { elysiaCorsMiddleware } from "./middleware/cors.js";
 import staticFilesMiddleware from "./middleware/staticFiles.js";
 
 // Import routes
-import dashboardRoutes from "./routes/dashboardRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
 
 // Import additional routes
 import activityRoutes from "./routes/activityRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import apiDocsRoutes from "./routes/apiDocsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import calendarRoutes from "./routes/calendarRoutes.js";
 import calendarServiceRoutes from "./routes/calendarServiceRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import exportRoutes from "./routes/exportRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import milestoneRoutes from "./routes/milestoneRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
+import setupRoutes from "./routes/setupRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 // Load environment variables
 config();
 
-// Connect to the database with proper error handling
-(async () => {
-  try {
-    logger.info("Attempting to connect to MongoDB database");
+// Initialize express app with error handling
+const app = new Elysia().use(swagger()).onError(({ error, set }) => {
+  logger.error("Application error:", error);
 
-    // Call the connectToDatabase function without parameters since it now handles
-    // reading the URI from environment variables internally
-    const connection = await connectToDatabase();
-
-    if (connection) {
-      logger.info("✅ MongoDB connection established successfully");
-
-      // Store the connection for potential later use
-      global.mongoConnection = connection;
-    } else {
-      logger.error(
-        "❌ Could not establish MongoDB connection - server will continue but database operations may fail"
-      );
-      // The global flag is now set inside connectToDatabase function
-    }
-  } catch (error) {
-    logger.error("❌ Database connection error:", error);
-    global.dbConnectionIssue = true;
+  if (error instanceof ValidationError) {
+    set.status = 400;
+    return {
+      success: false,
+      error: error.message,
+      code: "VALIDATION_ERROR",
+    };
   }
-})();
 
-// Initialize base app first
-const app = new Elysia();
+  if (error instanceof DatabaseError) {
+    set.status = 503;
+    return {
+      success: false,
+      error: "Database operation failed. Please try again.",
+      code: "DB_ERROR",
+    };
+  }
 
-// Apply Swagger
+  set.status = error.status || 500;
+  return {
+    success: false,
+    error:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : error.message,
+    code: "INTERNAL_ERROR",
+  };
+});
+
+// Apply Swagger before any other middleware or routes
 app.use(
   swagger({
     documentation: {
@@ -96,10 +106,6 @@ app.use(
           url: process.env.API_URL || "http://localhost:3000",
           description: "Development server",
         },
-        {
-          url: "https://api.research-project.example.com",
-          description: "Production server",
-        },
       ],
       components: {
         securitySchemes: {
@@ -114,8 +120,6 @@ app.use(
       security: [{ bearerAuth: [] }],
     },
     path: "/swagger",
-    theme: "default",
-    staticCSP: true,
     swaggerOptions: {
       persistAuthorization: true,
     },
@@ -128,17 +132,103 @@ app.use(elysiaCorsMiddleware());
 // Apply static files middleware
 app.use(staticFilesMiddleware());
 
-// Custom response formatter as a decorator/hook
-app.on("afterHandle", ({ response, set }) => {
-  if (response && typeof response === "object" && !response.timestamp) {
-    return {
-      success: !response.error,
-      ...response,
-      timestamp: new Date().toISOString(),
-    };
-  }
-  return response;
+// Add request logging middleware to log all API calls with timing and error details
+app.derive(({ request }) => {
+  // Store start time for calculating duration
+  const startTime = performance.now();
+  const url = new URL(request.url);
+  const method = request.method;
+  const path = url.pathname;
+
+  // Store these to access them in the afterHandle hook
+  return {
+    startTime,
+    requestMethod: method,
+    requestPath: path,
+  };
 });
+
+// Custom response formatter as a decorator/hook
+app.on(
+  "afterHandle",
+  ({ response, set, startTime, requestMethod, requestPath }) => {
+    // Calculate request duration
+    const duration = Math.round(performance.now() - startTime);
+
+    // Log the API call
+    const status = set.status || 200;
+    let error = null;
+
+    // Check if response contains an error
+    if (response && typeof response === "object" && response.error) {
+      error = response.error;
+    }
+
+    // Log the API call with duration and status
+    logApiCall(requestMethod, requestPath, status, duration, error);
+
+    // Handle empty or null responses
+    if (!response) {
+      return {
+        success: true,
+        data: {},
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Format response if needed, but preserve original fields
+    if (typeof response === "object" && !response.timestamp) {
+      // For registration and login responses, preserve all fields (token, user, message, etc.)
+      if (
+        requestPath.includes("/api/auth/register") ||
+        requestPath.includes("/api/auth/login")
+      ) {
+        // Ensure necessary fields exist for auth responses
+        return {
+          success: response.success !== undefined ? response.success : true,
+          token: response.token || null,
+          user: response.user || null,
+          error: response.error || null,
+          ...response, // Include any other fields from the original response
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      // For other responses, ensure we have success and data fields
+      // Only add data field if it doesn't already exist to avoid overwriting
+      const result = {
+        success: response.success !== undefined ? response.success : true,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Add other fields from the original response
+      Object.keys(response).forEach((key) => {
+        result[key] = response[key];
+      });
+
+      // Only add data field if it doesn't already exist
+      if (!response.data) {
+        result.data = response.message
+          ? { message: response.message }
+          : { ...response };
+      }
+
+      return result;
+    }
+
+    // For primitive responses, wrap them
+    if (typeof response !== "object") {
+      return {
+        success: true,
+        data: { value: response },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // If response already has timestamp, just return it as is
+    return response;
+  }
+);
 
 // Apply timeout and response time tracking as a decorator/hook
 app.on("request", async ({ request, set }) => {
@@ -194,139 +284,87 @@ app.on("request", ({ request, set }) => {
 });
 
 app.onError(({ code, error, set }) => {
-  const errorContext = {
-    code,
-    error: error.message,
-    stack: error.stack, // Always include stack in error logs
-    service: "project-mgmt-api",
-    timestamp: new Date().toISOString(),
-  };
+  logger.error(`Error: ${error.message}`, { code, stack: error.stack });
 
-  if (
-    error.name === "MongooseError" &&
-    error.message.includes("buffering timed out")
-  ) {
-    logger.warn("🔍 Database query timeout - returning empty result:", {
-      queryType: error.message.match(/Operation `(\w+)\./)?.[1] || "unknown",
-      stack: error.stack,
-    });
-
-    // Provide specialized empty responses based on the query type
-    set.status = 200;
-    const queryType = error.message.match(/Operation `(\w+)\./)?.[1] || "";
-
-    // Specific handling for common timeout cases
-    if (queryType === "calendarevents") {
-      return {
-        success: true,
-        data: {
-          events: [],
-          message: "No calendar events available at the moment",
-        },
-      };
-    } else if (queryType === "teams") {
-      return {
-        success: true,
-        data: {
-          teams: [],
-          meetings: [],
-          message: "No team data available at the moment",
-        },
-      };
-    } else if (queryType === "sessions") {
-      return {
-        success: true,
-        data: {
-          events: [],
-          message: "No session data available at the moment",
-        },
-      };
-    } else {
-      // Generic fallback
-      return {
-        success: true,
-        data: [],
-        message: "Operation timed out. Please try again later.",
-      };
-    }
-  }
-
-  if (error.message.includes("Too many requests")) {
-    logger.warn("⚠️ Rate limit exceeded:", {
-      ip: set.request?.headers?.["x-forwarded-for"] || "unknown",
-      path: set.request?.url || "unknown",
-      stack: error.stack,
-    });
-
-    set.status = 429;
+  if (error instanceof ValidationError) {
+    set.status = 400;
     return {
       success: false,
       error: error.message,
-      code: "RATE_LIMIT_EXCEEDED",
-      retryAfter: set.headers["X-RateLimit-Reset"],
+      code: "VALIDATION_ERROR",
     };
   }
 
-  let status = error.status || 500;
-  if (error.message.includes("timeout")) status = 504;
-
-  set.status = status;
-
-  if (status >= 500) {
-    logger.error("❌ Server error:", {
-      ...errorContext,
-      request: {
-        url: set.request?.url,
-        method: set.request?.method,
-        headers: set.request?.headers,
-      },
-    });
-  } else {
-    logger.warn("⚠️ Client error:", errorContext);
+  if (code === "UNAUTHORIZED" || error.message.includes("Not authorized")) {
+    set.status = 401;
+    return {
+      success: false,
+      error: error.message || "Authentication required",
+      code: "UNAUTHORIZED",
+    };
   }
 
+  if (code === "FORBIDDEN" || error.message.includes("Access denied")) {
+    set.status = 403;
+    return {
+      success: false,
+      error: error.message || "Access denied",
+      code: "FORBIDDEN",
+    };
+  }
+
+  set.status = error.status || 500;
   return {
     success: false,
     error:
-      status === 500 && process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "production"
         ? "Internal server error"
         : error.message,
-    code: code,
-    timestamp: new Date().toISOString(),
+    code: code || "INTERNAL_ERROR",
   };
 });
 
 // JWT authentication setup with error handling
-app.derive(({ request }) => {
-  // Skip authentication for documentation routes
-  const publicPaths = ["/swagger", "/api-docs", "/static"];
-  if (publicPaths.some((path) => request.url.startsWith(path))) {
-    return { user: null, skipAuth: true };
-  }
-
+app.derive(async ({ request }) => {
   try {
-    const auth = request.headers?.authorization;
-    if (!auth) return { user: null };
+    const path = new URL(request.url).pathname;
 
-    const token = auth.split(" ")[1];
-    if (!token) return { user: null };
+    // Skip auth for public routes
+    const publicPaths = [
+      "/",
+      "/health",
+      "/health/db",
+      "/api/auth/register",
+      "/api/auth/login",
+      "/api/auth/reset-password",
+      "/api/auth/verify-email",
+      "/api-docs",
+      "/swagger",
+      "/api/health",
+    ];
 
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    return { user };
+    if (publicPaths.some((p) => path.startsWith(p) || path === p)) {
+      return {};
+    }
+
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new Error("Authentication required");
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    return { user: decoded };
   } catch (error) {
-    logger.error("🔒 JWT verification failed:", {
-      error: error.message,
-      stack: error.stack,
-      path: request.url,
-    });
-    return { user: null };
+    throw new Error("Authentication failed: " + error.message);
   }
 });
 
 // Define API routes
 app
-  .get("/api", () => "API is running")
-  .get("/api/health/db", async () => {
+  .get("/", () => ({ success: true, message: "API is running" }))
+  .get("/health/db", async () => {
     const dbHealth = await import("./utils/dbHealthCheck.js").then((module) =>
       module.default()
     );
@@ -338,19 +376,106 @@ app
   .use(teamRoutes)
   .use(adminRoutes)
   .use(dashboardRoutes)
+  .use(analyticsRoutes)
   // .use(analyticsRoutes)
   .use(activityRoutes)
   .use(calendarRoutes)
   .use(calendarServiceRoutes)
-  // .use(uploadRoutes)
+  .use(uploadRoutes)
   .use(exportRoutes)
   .use(messageRoutes)
   .use(notificationRoutes)
   .use(studentRoutes)
   .use(supervisorRoutes)
-  .use(apiDocsRoutes);
-// .use(projectRoutes)
-// .use(milestoneRoutes);
+  .use(apiDocsRoutes)
+  .use(projectRoutes)
+  .use(milestoneRoutes)
+  .use(setupRoutes);
+
+// Handle 404 for undefined routes
+app.all("*", ({ set }) => {
+  set.status = 404;
+  return {
+    success: false,
+    error: "Route not found",
+    code: "NOT_FOUND",
+  };
+});
+
+// Replace hardcoded port with configurable port
+const PORT = process.env.PORT || 3000;
+const MAX_PORT_RETRIES = 10;
+
+// Function to check if a port is in use
+const isPortInUse = async (port) => {
+  try {
+    await app.listen(port);
+    return false;
+  } catch (error) {
+    return error.code === "EADDRINUSE";
+  }
+};
+
+// Function to start server with error handling and port retry
+const startServer = async (startPort, retryCount = 0) => {
+  try {
+    // First establish database connection
+    logger.info("Attempting to connect to MongoDB database");
+    const connection = await connectToDatabase();
+
+    if (!connection) {
+      throw new Error("Failed to establish database connection");
+    }
+
+    logger.info("✅ MongoDB connection established successfully");
+
+    // Try to start the server
+    const port = await findAvailablePort(startPort, retryCount);
+    await app.listen(port);
+
+    logger.info(`🚀 Server running on port ${port}`);
+    return true;
+  } catch (error) {
+    logger.error("Server startup error:", error);
+
+    if (retryCount < MAX_PORT_RETRIES) {
+      const nextPort = startPort + retryCount + 1;
+      logger.info(
+        `⚠️ Port ${
+          startPort + retryCount
+        } is not available. Trying port ${nextPort}...`
+      );
+      return startServer(startPort, retryCount + 1);
+    }
+
+    logger.error(`Failed to start server after ${MAX_PORT_RETRIES} attempts`);
+    throw error;
+  }
+};
+
+// Function to find an available port
+const findAvailablePort = async (startPort, offset = 0) => {
+  const port = startPort + offset;
+  if (await isPortInUse(port)) {
+    if (offset >= MAX_PORT_RETRIES) {
+      throw new Error(
+        `No available ports found after ${MAX_PORT_RETRIES} attempts`
+      );
+    }
+    return findAvailablePort(startPort, offset + 1);
+  }
+  return port;
+};
+
+// Single combined MongoDB connection and server startup with proper error handling
+(async () => {
+  try {
+    await startServer(PORT);
+  } catch (error) {
+    logger.error("❌ Application startup failed:", error);
+    process.exit(1);
+  }
+})();
 
 // WebSocket setup with enhanced error handling
 app.ws("/ws", {

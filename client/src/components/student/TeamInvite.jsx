@@ -1,42 +1,47 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { api } from '../../lib/api';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, UserPlus } from "lucide-react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-// Form validation schema
-const inviteSchema = z.object({
-  studentId: z.string()
-    .min(3, 'Student ID must be at least 3 characters')
-    .regex(/^STU\d{6}$/, 'Student ID must be in format STU followed by 6 digits'),
-  message: z.string().max(200, 'Message must be less than 200 characters').optional(),
-});
+const TeamInvite = ({ teamId, onInviteSent }) => {
+  const [isInviting, setIsInviting] = useState(false);
 
-export const TeamInvite = ({ teamId, onInviteSent }) => {
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting }
+    formState: { errors },
   } = useForm({
-    resolver: zodResolver(inviteSchema),
     defaultValues: {
-      studentId: '',
-      message: ''
-    }
+      studentId: "",
+      message: "",
+    },
   });
 
   const onSubmit = async (data) => {
     try {
-      const response = await api.post(`/teams/${teamId}/invite`, data);
+      setIsInviting(true);
+      const response = await api.post(
+        `/api/student/teams/${teamId}/invite`,
+        data
+      );
 
       if (response.data.success) {
-        toast.success("Invitation sent successfully");
         reset();
+        toast.success("Invitation sent successfully!");
         if (onInviteSent) {
           onInviteSent(response.data.data);
         }
@@ -44,59 +49,116 @@ export const TeamInvite = ({ teamId, onInviteSent }) => {
         toast.error(response.data.error || "Failed to send invitation");
       }
     } catch (error) {
-      const message = error.response?.data?.error || "Failed to send invitation";
-      toast.error(message);
+      const errorMessage =
+        error.response?.data?.error || "Failed to send invitation";
+      toast.error(errorMessage);
 
       // Show specific error messages based on error type
-      if (message.includes("already in a team")) {
+      if (errorMessage.includes("already in a team")) {
         toast.error("This student is already in another team");
-      } else if (message.includes("already invited")) {
-        toast.error("You have already invited this student");
-      } else if (message.includes("team is full")) {
+      } else if (errorMessage.includes("already invited")) {
+        toast.error("This student has already been invited");
+      } else if (errorMessage.includes("team is full")) {
         toast.error("Your team is already at maximum capacity");
       }
+    } finally {
+      setIsInviting(false);
     }
   };
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.3 },
+  };
+
   return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Invite Student</h3>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <Input
-            {...register('studentId')}
-            placeholder="Student ID (e.g., STU123456)"
-            className={errors.studentId ? 'border-red-500' : ''}
-          />
-          {errors.studentId && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors.studentId.message}
-            </p>
-          )}
-        </div>
+    <AnimatePresence>
+      <motion.div
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={fadeIn}
+      >
+        <Card className="border-gray-200 dark:border-gray-800 shadow-md">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+                <UserPlus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle>Invite Team Member</CardTitle>
+                <CardDescription>
+                  Invite other students to join your team (max 4 members)
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID</Label>
+                <Input
+                  id="studentId"
+                  placeholder="Enter student ID (e.g., S12345)"
+                  {...register("studentId", {
+                    required: "Student ID is required",
+                    pattern: {
+                      value: /^[A-Za-z0-9-]+$/,
+                      message: "Please enter a valid student ID",
+                    },
+                  })}
+                />
+                {errors.studentId && (
+                  <p className="text-red-500 text-sm">
+                    {errors.studentId.message}
+                  </p>
+                )}
+              </div>
 
-        <div>
-          <Textarea
-            {...register('message')}
-            placeholder="Add a personal message (optional)"
-            className={errors.message ? 'border-red-500' : ''}
-            rows={3}
-          />
-          {errors.message && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors.message.message}
-            </p>
-          )}
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="message">Personal Message (Optional)</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Add a message to your invitation"
+                  className="h-24"
+                  {...register("message", {
+                    maxLength: {
+                      value: 200,
+                      message: "Message cannot exceed 200 characters",
+                    },
+                  })}
+                />
+                {errors.message && (
+                  <p className="text-red-500 text-sm">
+                    {errors.message.message}
+                  </p>
+                )}
+              </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          {isSubmitting ? 'Sending...' : 'Send Invitation'}
-        </Button>
-      </form>
-    </Card>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={isInviting}
+                >
+                  {isInviting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending Invitation...
+                    </>
+                  ) : (
+                    "Send Invitation"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </AnimatePresence>
   );
 };
+
+export default TeamInvite;

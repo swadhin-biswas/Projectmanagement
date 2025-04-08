@@ -1,0 +1,68 @@
+2025-04-08 09:17:56.657 [ERROR]: Uncaught Exception:
+TypeError: next is not a function. (In 'next()', 'next' is undefined)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:73:14)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:64:9)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:359:4
+    at moduleEvaluation (native)
+    at moduleEvaluation (native)
+    at <anonymous> (native:2)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "next is not a function. (In 'next()', 'next' is undefined)",
+  "location": "uncaughtException handler"
+}
+2025-04-08 09:18:37.747 [ERROR]: Uncaught Exception:
+TypeError: next is not a function. (In 'next()', 'next' is undefined)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:73:14)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:64:9)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:359:4
+    at moduleEvaluation (native)
+    at moduleEvaluation (native)
+    at <anonymous> (native:2)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "next is not a function. (In 'next()', 'next' is undefined)",
+  "location": "uncaughtException handler"
+}
+2025-04-08 09:21:19.167 [ERROR]: Uncaught Exception:
+TypeError: next is not a function. (In 'next()', 'next' is undefined)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:73:14)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:64:9)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:359:4
+    at moduleEvaluation (native)
+    at moduleEvaluation (native)
+    at <anonymous> (native:2)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "next is not a function. (In 'next()', 'next' is undefined)",
+  "location": "uncaughtException handler"
+}
+2025-04-08 09:29:52.405 [ERROR]: Uncaught Exception:
+TypeError: next is not a function. (In 'next()', 'next' is undefined)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:73:14)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at <anonymous> (/home/swadhin/r/server/src/routes/authRoutes.js:64:9)
+    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)
+    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)
+    at /home/swadhin/r/server/src/index.js:359:4
+    at moduleEvaluation (native)
+    at moduleEvaluation (native)
+    at <anonymous> (native:2)
+    at processTicksAndRejections (native:7:39)
+{
+  "service": "research-mgmt-api",
+  "error": "next is not a function. (In 'next()', 'next' is undefined)",
+  "location": "uncaughtException handler"
+}

@@ -1,16 +1,19 @@
 import { ValidationError } from '../utils/errors.js';
 
-// Validate request body against schema
 export const validateRequest = (schema) => {
   return async (context, next) => {
     try {
+      // Check database connection status first
+      if (global.dbConnectionIssue) {
+        throw new Error('Database connection error. Please try again later.');
+      }
+
       if (!schema) {
         return next();
       }
 
       const { body, query, params } = context;
 
-      // Validate body if schema has body validation rules
       if (schema.body && body) {
         const { error } = schema.body.validate(body, { abortEarly: false });
         if (error) {
@@ -18,7 +21,6 @@ export const validateRequest = (schema) => {
         }
       }
 
-      // Validate query parameters if schema has query validation rules
       if (schema.query && query) {
         const { error } = schema.query.validate(query, { abortEarly: false });
         if (error) {
@@ -26,7 +28,6 @@ export const validateRequest = (schema) => {
         }
       }
 
-      // Validate URL parameters if schema has params validation rules
       if (schema.params && params) {
         const { error } = schema.params.validate(params, { abortEarly: false });
         if (error) {
@@ -36,7 +37,12 @@ export const validateRequest = (schema) => {
 
       return next();
     } catch (error) {
-      throw error;
+      context.set.status = error instanceof ValidationError ? 400 : 503;
+      return {
+        success: false,
+        error: error.message,
+        code: error instanceof ValidationError ? 'VALIDATION_ERROR' : 'SERVICE_UNAVAILABLE'
+      };
     }
   };
 };
@@ -133,11 +139,10 @@ export const validateMarking = () => {
 
 // Helper functions
 const formatValidationErrors = (error) => {
-  return error.details.reduce((acc, detail) => {
-    const key = detail.path.join('.');
-    acc[key] = detail.message;
-    return acc;
-  }, {});
+  return error.details.map(detail => ({
+    field: detail.path.join('.'),
+    message: detail.message
+  }));
 };
 
 const isValidUrl = (url) => {

@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
 
       const result = await loginUser(credentials);
 
-      if (result.success && result.token && result.user) {
+      if (result.success) {
         // Set auth token
         api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
         localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
@@ -104,12 +104,11 @@ export const AuthProvider = ({ children }) => {
 
         return { success: true, user: result.user };
       } else {
-        const errorMessage = result.error || "Login failed";
-        setError(errorMessage);
+        setError(result.error);
         toast.error("Login failed", {
-          description: errorMessage,
+          description: result.error,
         });
-        return { success: false, error: errorMessage };
+        return { success: false, error: result.error };
       }
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.message;
@@ -130,7 +129,7 @@ export const AuthProvider = ({ children }) => {
 
       const result = await registerUser(userData);
 
-      if (result.success && result.token && result.user) {
+      if (result.success) {
         // Set auth token
         api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
         localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
@@ -138,63 +137,23 @@ export const AuthProvider = ({ children }) => {
         setUser(result.user);
         setLastTokenCheck(Date.now());
 
-        // Show success message
-        toast.success("Registration successful!", {
-          description: "Your account has been created",
-        });
-
-        // Redirect based on role and approval status
-        if (result.user.role === "supervisor" && !result.user.isApproved) {
-          navigate("/pending-approval");
-        } else {
-          navigate(`/${result.user.role}/dashboard`);
-        }
-
         return { success: true, user: result.user };
-      } else {
-        const errorMessage = result.error || "Registration failed";
-        setError(errorMessage);
-        toast.error("Registration failed", {
-          description: errorMessage,
-        });
-        return { success: false, error: errorMessage };
       }
-    } catch (error) {
-      console.error("Registration error:", error);
 
-      // Improved error handling to extract the error message from the response
+      // Handle registration failure
+      const errorMessage = result.error || "Registration failed";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } catch (error) {
       let errorMessage = "Registration failed";
       let field = null;
 
       if (error.response?.data) {
-        // Handle structured API errors
-        if (error.response.data.error) {
-          errorMessage = error.response.data.error;
-        }
-
-        // Check for field-specific errors
-        if (error.response.data.field) {
-          field = error.response.data.field;
-        }
-
-        // Check for validation errors array
-        if (
-          error.response.data.errors &&
-          Array.isArray(error.response.data.errors) &&
-          error.response.data.errors.length > 0
-        ) {
-          errorMessage = error.response.data.errors[0].message || errorMessage;
-          field = error.response.data.errors[0].field || field;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
+        errorMessage = error.response.data.error || errorMessage;
+        field = error.response.data.field;
       }
 
       setError(errorMessage);
-      toast.error("Registration failed", {
-        description: errorMessage,
-      });
-
       return { success: false, error: errorMessage, field };
     } finally {
       setLoading(false);

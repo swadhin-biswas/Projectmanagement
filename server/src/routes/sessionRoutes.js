@@ -1,15 +1,15 @@
 import { t } from "elysia";
 import {
-  createSession,
-  getAllSessions,
-  getCurrentSession,
-  updateSession,
+    createSession,
+    getAllSessions,
+    getCurrentSession,
+    updateSession,
 } from "../controllers/sessionController.js";
 import { authorize } from "../middleware/auth.js";
 import logger from "../utils/logger.js";
 
 export default function sessionRoutes(app) {
-  return app.group("/sessions", (app) => {
+  return app.group("/api/sessions", (app) => {
     // Common session validation schema
     const sessionSchema = {
       name: t.String({ minLength: 3 }),

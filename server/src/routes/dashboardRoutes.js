@@ -1,14 +1,14 @@
 import { t } from "elysia";
 import {
-  getAdminDashboard,
-  getStudentDashboard,
-  getSupervisorDashboard,
+    getAdminDashboard,
+    getStudentDashboard,
+    getSupervisorDashboard,
 } from "../controllers/dashboardController.js";
 import { authorize } from "../middleware/auth.js";
 import logger from "../utils/logger.js";
 
 export default function dashboardRoutes(app) {
-  return app.group("/dashboard", (app) => {
+  return app.group("/api/dashboard", (app) => {
     // Common response schemas
     const deadlineSchema = t.Object({
       id: t.String(),

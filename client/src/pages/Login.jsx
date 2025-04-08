@@ -1,6 +1,6 @@
 // Login.jsx
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,6 +28,29 @@ const Login = () => {
       redirectAfterLogin(user);
     }
   }, [user, location]);
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Email validation
+    if (!credentials.email?.trim()) {
+      errors.email = "Email is required";
+    } else {
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(credentials.email.trim())) {
+        errors.email = "Please enter a valid email address";
+      }
+    }
+
+    // Password validation
+    if (!credentials.password) {
+      errors.password = "Password is required";
+    } else if (credentials.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+    }
+
+    return { isValid: Object.keys(errors).length === 0, errors };
+  };
 
   const redirectAfterLogin = (user) => {
     const dashboardRoutes = {
@@ -59,9 +82,11 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
-    if (!credentials.email || !credentials.password) {
-      toast.error('Please fill in all fields');
+    // Validate form
+    const { isValid, errors } = validateForm();
+    if (!isValid) {
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
       return;
     }
 
@@ -133,9 +158,9 @@ const Login = () => {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <a href="#" className="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200">
+              <Link to="/forgot-password" className="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200">
                 Forgot your password?
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -168,15 +193,15 @@ const Login = () => {
               </div>
             </div>
 
-            <p className="text-center">
+            <div className="text-center">
               <span className="text-gray-300">Don't have an account? </span>
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200"
               >
                 Sign up now
-              </a>
-            </p>
+              </Link>
+            </div>
           </div>
         </form>
       </div>

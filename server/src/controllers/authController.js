@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import mongoose from "mongoose";
+import connectDatabase from "../config/database.js";
 import { Student, Supervisor, User } from "../models/User.js";
 import {
   ConflictError,
@@ -10,233 +12,442 @@ import { generateToken } from "../utils/generateToken.js";
 import logger from "../utils/logger.js";
 import { validateLogin, validateRegistration } from "../utils/validation.js";
 
-// Check database connection status
-const checkDatabaseConnection = () => {
-  if (global.dbConnectionIssue) {
-    throw new DatabaseError(
-      "Database connection issue. Please try again later."
-    );
+// Helper function to check database connection
+const checkDatabaseConnection = async () => {
+  try {
+    await connectDatabase();
+
+    // Verify connection state after attempting connection
+    const connectionState = mongoose.connection.readyState;
+    logger.info(`MongoDB connection state: ${connectionState}`);
+
+    if (connectionState !== 1) {
+      throw new DatabaseError(
+        `Database not connected. Connection state: ${connectionState}`
+      );
+    }
+  } catch (error) {
+    logger.error("Database connection error:", error);
+    throw new DatabaseError("Database connection failed. Please try again.");
   }
 };
 
-// Register user with improved error handling and timeout management
-export const registerUser = async ({ body, set = {} }) => {
-  try {
-    // Check database connection first
-    checkDatabaseConnection();
+// Helper function to generate a student ID
+const generateStudentId = async () => {
+  const currentYear = new Date().getFullYear().toString().slice(-2);
+  const prefix = `S${currentYear}-`;
+  const latestStudent = await Student.findOne().sort({ studentId: -1 });
 
-    // Set a shorter timeout for Mongoose operations
+  let nextNumber = 1000;
+  if (latestStudent && latestStudent.studentId.startsWith(prefix)) {
+    const currentNumber = parseInt(
+      latestStudent.studentId.replace(prefix, ""),
+      10
+    );
+    nextNumber = currentNumber + 1;
+  }
+
+  return `${prefix}${nextNumber}`;
+};
+
+// Helper function to generate a supervisor ID
+const generateSupervisorId = async () => {
+  const currentYear = new Date().getFullYear().toString().slice(-2);
+  const prefix = `SUP${currentYear}-`;
+  const latestSupervisor = await Supervisor.findOne().sort({
+    supervisorId: -1,
+  });
+
+  let nextNumber = 100;
+  if (latestSupervisor && latestSupervisor.supervisorId.startsWith(prefix)) {
+    const currentNumber = parseInt(
+      latestSupervisor.supervisorId.replace(prefix, ""),
+      10
+    );
+    nextNumber = currentNumber + 1;
+  }
+
+  return `${prefix}${nextNumber}`;
+};
+
+// Register user with fixed error handling and status codes
+export const registerUser = async ({ body, set }) => {
+  try {
+    // Ensure DB is connected before anything else
+    await checkDatabaseConnection();
+    logger.info(
+      `MongoDB connection verified. State: ${mongoose.connection.readyState}`
+    );
+
+    // Test argon2 functionality
+    try {
+      const argon2 = await import("@node-rs/argon2");
+      const testHash = await argon2.hash("test");
+      logger.info("Argon2 hashing verified to be working correctly");
+    } catch (argonError) {
+      logger.error("Argon2 hashing error:", argonError);
+      if (set) set.status(500);
+      return {
+        success: false,
+        error: "Server configuration error. Please contact support.",
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Validate registration data
+    const validationResult = validateRegistration(body);
+    if (validationResult.errors) {
+      if (set) set.status(400);
+      return {
+        success: false,
+        error: validationResult.errors[0].message,
+        field: validationResult.errors[0].field,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    const {
+      email,
+      password,
+      fullName,
+      role,
+      department,
+      specialization,
+      studentId,
+    } = body;
+
+    // Check for existing user
+    try {
+      logger.info(`Checking for existing user with email: ${email}`);
+      const existingUser = await User.findOne({ email }).maxTimeMS(5000);
+
+      if (existingUser) {
+        logger.warn(`Email already registered: ${email}`);
+        if (set) set.status(409);
+        return {
+          success: false,
+          error: "Email already registered",
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      logger.info(
+        `No existing user found with email: ${email}. Proceeding with registration.`
+      );
+    } catch (error) {
+      if (error instanceof ConflictError) {
+        if (set) set.status(409);
+        return {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      logger.error("Error checking for existing user:", error);
+      if (set) set.status(503);
+      return {
+        success: false,
+        error: "Failed to check for existing user. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Create user object
+    logger.info(`Creating new user object for: ${email}`);
+    const user = new User({
+      email,
+      password,
+      fullName,
+      role,
+      department,
+      isApproved: role === "student",
+      status: role === "student" ? "active" : "pending",
+      isEmailVerified: true,
+    });
+
+    try {
+      // Log the connection state right before saving
+      logger.info(
+        `MongoDB connection state before save: ${mongoose.connection.readyState}`
+      );
+      logger.info(`About to save user to database: ${user.email}`);
+
+      const savedUser = await Promise.race([
+        user.save(),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Database operation timed out")),
+            10000
+          )
+        ),
+      ]);
+
+      logger.info(
+        `User successfully saved to database. ID: ${savedUser._id}, Email: ${savedUser.email}`
+      );
+
+      // Create role-specific profile
+      if (role === "student") {
+        const finalStudentId = studentId || (await generateStudentId());
+        logger.info(`Creating student profile with ID: ${finalStudentId}`);
+
+        try {
+          const student = new Student({
+            user: savedUser._id,
+            studentId: finalStudentId,
+          });
+
+          await student.save();
+          logger.info(
+            `Student profile created successfully: ${finalStudentId}`
+          );
+        } catch (studentError) {
+          logger.error(
+            `Failed to create student profile: ${studentError.message}`,
+            studentError
+          );
+          // Continue execution - user is created but student profile failed
+          // We could consider rolling back the user here
+        }
+      } else if (role === "supervisor") {
+        if (!specialization) {
+          if (set) set.status(400);
+          return {
+            success: false,
+            error: "Specialization is required for supervisors",
+            field: "specialization",
+            timestamp: new Date().toISOString(),
+          };
+        }
+
+        const supervisorId = await generateSupervisorId();
+        logger.info(`Creating supervisor profile with ID: ${supervisorId}`);
+
+        try {
+          const supervisor = new Supervisor({
+            user: savedUser._id,
+            supervisorId,
+            specialization,
+          });
+
+          await supervisor.save();
+          logger.info(
+            `Supervisor profile created successfully: ${supervisorId}`
+          );
+        } catch (supervisorError) {
+          logger.error(
+            `Failed to create supervisor profile: ${supervisorError.message}`,
+            supervisorError
+          );
+          // Continue execution - user is created but supervisor profile failed
+        }
+      }
+
+      const token = role === "student" ? generateToken(savedUser._id) : null;
+
+      logger.info("New user registered successfully", {
+        userId: savedUser._id,
+        email: savedUser.email,
+        role: savedUser.role,
+      });
+
+      if (set) set.status(201);
+      return {
+        success: true,
+        message:
+          role === "supervisor"
+            ? "Registration successful. Your account will be reviewed by an administrator."
+            : "Registration successful.",
+        token,
+        user: {
+          _id: savedUser._id,
+          fullName: savedUser.fullName,
+          email: savedUser.email,
+          role: savedUser.role,
+          department: savedUser.department,
+          isApproved: savedUser.isApproved,
+          status: savedUser.status,
+          isEmailVerified: savedUser.isEmailVerified,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    } catch (saveError) {
+      logger.error(
+        `Error during user save operation: ${saveError.message}`,
+        saveError
+      );
+
+      if (saveError.name === "ValidationError") {
+        logger.error("Validation error during registration:", saveError);
+        if (set) set.status(400);
+        const firstErrorField = Object.keys(saveError.errors)[0];
+        const firstErrorMessage = saveError.errors[firstErrorField].message;
+        return {
+          success: false,
+          error: firstErrorMessage,
+          field: firstErrorField,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      if (saveError.code === 11000) {
+        const field = Object.keys(saveError.keyPattern)[0];
+        logger.error(`Duplicate ${field} error during registration`);
+        if (set) set.status(409);
+        return {
+          success: false,
+          error: `This ${field} is already registered`,
+          field,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      if (saveError.message.includes("timed out")) {
+        logger.error("Registration timed out:", saveError);
+        if (set) set.status(504);
+        return {
+          success: false,
+          error: "Registration request timed out. Please try again.",
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      logger.error("Error saving user during registration:", saveError);
+      if (set) set.status(500);
+      return {
+        success: false,
+        error: "Failed to complete registration. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+    }
+  } catch (error) {
+    logger.error("Registration error:", error);
+
+    if (error instanceof ValidationError) {
+      if (set) set.status(400);
+      return {
+        success: false,
+        error: error.message,
+        field: error.field,
+        timestamp: new Date().toISOString(),
+      };
+    } else if (error instanceof ConflictError) {
+      if (set) set.status(409);
+      return {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      };
+    } else if (error instanceof DatabaseError) {
+      if (set) set.status(503);
+      return {
+        success: false,
+        error: "Service temporarily unavailable. Please try again later.",
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Ensure status code is always set for any error
+    if (set) set.status(error.status || 500);
+    return {
+      success: false,
+      error: error.message || "Registration failed. Please try again.",
+      timestamp: new Date().toISOString(),
+    };
+  }
+};
+
+export const loginUser = async ({ body, set }) => {
+  try {
+    await checkDatabaseConnection();
+    validateLogin(body);
+
+    const { email, password } = body;
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("Database operation timed out")), 5000)
     );
 
-    // Validate all fields
-    validateRegistration(body);
+    // Find user with timeout safety
+    logger.info(`Login attempt for user: ${email}`);
+    const userPromise = User.findOne({ email })
+      .select("+password")
+      .maxTimeMS(3000)
+      .exec();
 
-    const { fullName, email, password, role, department, studentId, supervisorId, specialization } = body;
+    const user = await Promise.race([userPromise, timeoutPromise]);
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new ConflictError("User already exists with this email");
+    if (!user) {
+      logger.warn(`Login failed: No user found with email ${email}`);
+      if (set) set.status = 401;
+      return {
+        success: false,
+        error: "Invalid email or password",
+        timestamp: new Date().toISOString(),
+      };
     }
 
-    // Create user
-    const user = await User.create({
-      fullName,
-      email,
-      password,
-      role,
-      department,
-      isApproved: role === "supervisor" ? false : true,
-    });
-
-    // Generate IDs and create role-specific profiles
-    let generatedStudentId, generatedSupervisorId;
-
-    if (role === "student") {
-      generatedStudentId = studentId || await generateStudentId();
-      const createStudentPromise = Student.create({
-        user: user._id,
-        studentId: generatedStudentId,
-        department
-      });
-      await Promise.race([createStudentPromise, timeoutPromise]);
-    } else if (role === "supervisor") {
-      generatedSupervisorId = supervisorId || await generateSupervisorId();
-      const createSupervisorPromise = Supervisor.create({
-        user: user._id,
-        supervisorId: generatedSupervisorId,
-        department,
-        specialization: specialization || []
-      });
-      await Promise.race([createSupervisorPromise, timeoutPromise]);
+    // Verify password
+    logger.info(`Verifying password for user: ${email}`);
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      logger.warn(`Login failed: Invalid password for user ${email}`);
+      if (set) set.status = 401;
+      return {
+        success: false,
+        error: "Invalid email or password",
+        timestamp: new Date().toISOString(),
+      };
     }
 
     // Generate token
     const token = generateToken(user._id);
 
-    // Only set status if set object exists
-    if (set) {
-      set.status = 201;
-    }
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
 
-    // Return response in the client-expected format
+    // Remove sensitive data from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    logger.info(`Login successful for user: ${email}`);
+
+    // Return the response in a flattened format that matches what the route handler expects
     return {
       success: true,
       token,
       user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        isApproved: user.isApproved,
-        studentId: role === "student" ? generatedStudentId : undefined,
-        supervisorId: role === "supervisor" ? generatedSupervisorId : undefined,
-        profilePicture: user.profilePicture
-      }
-    };
-  } catch (error) {
-    logger.error("Registration error:", error);
-
-    // Handle specific error types
-    if (error instanceof ConflictError) {
-      if (set) set.status = 409;
-      return {
-        success: false,
-        error: error.message,
-        code: "USER_EXISTS"
-      };
-    } else if (error instanceof ValidationError) {
-      if (set) set.status = 400;
-      return {
-        success: false,
-        error: error.message,
-        code: "VALIDATION_ERROR"
-      };
-    } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
-      return {
-        success: false,
-        error: "Service temporarily unavailable. Please try again later.",
-        code: "DB_ERROR"
-      };
-    } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
-      return {
-        success: false,
-        error: "Request timed out. Please try again later.",
-        code: "TIMEOUT_ERROR"
-      };
-    }
-
-    // Generic error handler
-    if (set) set.status = 500;
-    return {
-      success: false,
-      error: "An unexpected error occurred during registration. Please try again.",
-      code: "INTERNAL_ERROR"
-    };
-  }
-};
-
-// Login user with improved error handling and timeout management
-export const loginUser = async ({ body, set }) => {
-  try {
-    // Check database connection first
-    checkDatabaseConnection();
-
-    // Set a shorter timeout for Mongoose operations
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Database operation timed out")), 5000)
-    );
-
-    validateLogin(body);
-    const { email, password } = body;
-
-    // Find user and include password for verification with timeout safety
-    const userPromise = User.findOne({ email })
-      .select("+password")
-      .maxTimeMS(3000)
-      .exec();
-    const user = await Promise.race([userPromise, timeoutPromise]);
-
-    if (!user) {
-      if (set) set.status = 401;
-      return {
-        success: false,
-        error: "Invalid email or password",
-      };
-    }
-
-    // Verify password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      if (set) set.status = 401;
-      return {
-        success: false,
-        error: "Invalid email or password",
-      };
-    }
-
-    // Check supervisor approval
-    if (user.role === "supervisor" && !user.isApproved) {
-      if (set) set.status = 403;
-      return {
-        success: false,
-        error:
-          "Your account is pending approval. Please wait for admin approval.",
-      };
-    }
-
-    // Generate token with userId
-    const token = generateToken(user._id);
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    return {
-      success: true,
-      data: {
-        user: userResponse,
-        token,
+        _id: userResponse._id,
+        fullName: userResponse.fullName,
+        email: userResponse.email,
+        role: userResponse.role,
+        department: userResponse.department,
+        isApproved: userResponse.isApproved,
+        isEmailVerified: userResponse.isEmailVerified,
       },
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     logger.error("Login error:", error);
 
-    // Handle specific error types
+    // Set specific status codes based on error type
     if (error instanceof ValidationError) {
       if (set) set.status = 400;
-      return {
-        success: false,
-        error: error.message,
-        code: "VALIDATION_ERROR",
-      };
+    } else if (error instanceof UnauthorizedError) {
+      if (set) set.status = 401;
     } else if (error instanceof DatabaseError) {
       if (set) set.status = 503;
-      return {
-        success: false,
-        error: "Service temporarily unavailable. Please try again later.",
-        code: "DB_ERROR",
-      };
     } else if (error.message.includes("timed out")) {
       if (set) set.status = 504;
-      return {
-        success: false,
-        error: "Request timed out. Please try again later.",
-        code: "TIMEOUT_ERROR",
-      };
+    } else {
+      if (set) set.status = error.status || 500;
     }
 
-    // Generic error handler
-    if (set) set.status = 500;
     return {
       success: false,
-      error: "An unexpected error occurred during login. Please try again.",
-      code: "INTERNAL_ERROR",
+      error: error.message || "Login failed. Please try again.",
+      timestamp: new Date().toISOString(),
     };
   }
 };
@@ -276,28 +487,28 @@ export const getUserProfile = async ({ user, set }) => {
 
     // Handle specific error types
     if (error instanceof UnauthorizedError) {
-      if (set) set.status = 401;
+      if (set) set.status(401);
       return {
         success: false,
         error: error.message,
         code: "UNAUTHORIZED",
       };
     } else if (error instanceof ValidationError) {
-      if (set) set.status = 404;
+      if (set) set.status(404);
       return {
         success: false,
         error: error.message,
         code: "NOT_FOUND",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -306,7 +517,7 @@ export const getUserProfile = async ({ user, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",
@@ -397,35 +608,35 @@ export const updateProfile = async ({ user, body, set }) => {
 
     // Handle specific error types
     if (error instanceof UnauthorizedError) {
-      if (set) set.status = 401;
+      if (set) set.status(401);
       return {
         success: false,
         error: error.message,
         code: "UNAUTHORIZED",
       };
     } else if (error instanceof ValidationError) {
-      if (set) set.status = 400;
+      if (set) set.status(400);
       return {
         success: false,
         error: error.message,
         code: "VALIDATION_ERROR",
       };
     } else if (error instanceof ConflictError) {
-      if (set) set.status = 409;
+      if (set) set.status(409);
       return {
         success: false,
         error: error.message,
         code: "CONFLICT_ERROR",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -434,7 +645,7 @@ export const updateProfile = async ({ user, body, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error:
@@ -501,21 +712,21 @@ export const resetPassword = async ({ body, set }) => {
 
     // Handle specific error types
     if (error instanceof ValidationError) {
-      if (set) set.status = 400;
+      if (set) set.status(400);
       return {
         success: false,
         error: error.message,
         code: "VALIDATION_ERROR",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -524,7 +735,7 @@ export const resetPassword = async ({ body, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error:
@@ -592,21 +803,21 @@ export const forgotPassword = async ({ body, set }) => {
 
     // Handle specific error types
     if (error instanceof ValidationError) {
-      if (set) set.status = 400;
+      if (set) set.status(400);
       return {
         success: false,
         error: error.message,
         code: "VALIDATION_ERROR",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -615,7 +826,7 @@ export const forgotPassword = async ({ body, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",
@@ -683,21 +894,21 @@ export const requestPasswordReset = async ({ body, set }) => {
 
     // Handle specific error types
     if (error instanceof ValidationError) {
-      if (set) set.status = 400;
+      if (set) set.status(400);
       return {
         success: false,
         error: error.message,
         code: "VALIDATION_ERROR",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -706,7 +917,7 @@ export const requestPasswordReset = async ({ body, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",
@@ -767,21 +978,21 @@ export const verifyEmail = async ({ body, set }) => {
 
     // Handle specific error types
     if (error instanceof ValidationError) {
-      if (set) set.status = 400;
+      if (set) set.status(400);
       return {
         success: false,
         error: error.message,
         code: "VALIDATION_ERROR",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -790,7 +1001,7 @@ export const verifyEmail = async ({ body, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error:
@@ -861,28 +1072,28 @@ export const sendVerificationEmail = async ({ user, set }) => {
 
     // Handle specific error types
     if (error instanceof UnauthorizedError) {
-      if (set) set.status = 401;
+      if (set) set.status(401);
       return {
         success: false,
         error: error.message,
         code: "UNAUTHORIZED",
       };
     } else if (error instanceof ValidationError) {
-      if (set) set.status = 404;
+      if (set) set.status(404);
       return {
         success: false,
         error: error.message,
         code: "NOT_FOUND",
       };
     } else if (error instanceof DatabaseError) {
-      if (set) set.status = 503;
+      if (set) set.status(503);
       return {
         success: false,
         error: "Service temporarily unavailable. Please try again later.",
         code: "DB_ERROR",
       };
     } else if (error.message.includes("timed out")) {
-      if (set) set.status = 504;
+      if (set) set.status(504);
       return {
         success: false,
         error: "Request timed out. Please try again later.",
@@ -891,7 +1102,7 @@ export const sendVerificationEmail = async ({ user, set }) => {
     }
 
     // Generic error handler
-    if (set) set.status = 500;
+    if (set) set.status(500);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",
@@ -899,46 +1110,3 @@ export const sendVerificationEmail = async ({ user, set }) => {
     };
   }
 };
-
-// Helper functions with timeout handling
-async function generateStudentId() {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Operation timed out")), 3000)
-  );
-
-  const lastStudentPromise = Student.findOne()
-    .sort("-studentId")
-    .maxTimeMS(2000)
-    .exec();
-  const lastStudent = await Promise.race([lastStudentPromise, timeoutPromise]);
-
-  const newId = lastStudent
-    ? String(Number(lastStudent.studentId.replace("STU", "")) + 1).padStart(
-        6,
-        "0"
-      )
-    : "000001";
-  return `STU${newId}`;
-}
-
-async function generateSupervisorId() {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Operation timed out")), 3000)
-  );
-
-  const lastSupervisorPromise = Supervisor.findOne()
-    .sort("-supervisorId")
-    .maxTimeMS(2000)
-    .exec();
-  const lastSupervisor = await Promise.race([
-    lastSupervisorPromise,
-    timeoutPromise,
-  ]);
-
-  const newId = lastSupervisor
-    ? String(
-        Number(lastSupervisor.supervisorId.replace("SUP", "")) + 1
-      ).padStart(6, "0")
-    : "000001";
-  return `SUP${newId}`;
-}

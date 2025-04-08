@@ -5,7 +5,7 @@ import logger from "../utils/logger.js";
 export const authorize = (roles = []) => {
   return async (context) => {
     try {
-      const { request } = context;
+      const { request, set } = context;
       const authorization = request.headers?.authorization;
 
       if (!authorization) {
@@ -13,6 +13,7 @@ export const authorize = (roles = []) => {
           path: request.url,
           method: request.method,
         });
+        set.status = 401;
         throw new UnauthorizedError("Authentication required");
       }
 
@@ -22,6 +23,7 @@ export const authorize = (roles = []) => {
           path: request.url,
           method: request.method,
         });
+        set.status = 401;
         throw new UnauthorizedError("Authentication token required");
       }
 
@@ -37,6 +39,7 @@ export const authorize = (roles = []) => {
             userRole: decoded.role,
             userId: decoded.userId,
           });
+          set.status = 403;
           throw new ForbiddenError(`Required role: ${roles.join(" or ")}`);
         }
 
@@ -49,6 +52,7 @@ export const authorize = (roles = []) => {
             path: request.url,
             method: request.method,
           });
+          set.status = 401;
           throw new UnauthorizedError("Token expired");
         }
 
@@ -57,6 +61,7 @@ export const authorize = (roles = []) => {
           method: request.method,
           error: jwtError.message,
         });
+        set.status = 401;
         throw new UnauthorizedError("Invalid token");
       }
     } catch (error) {
@@ -64,6 +69,7 @@ export const authorize = (roles = []) => {
         error instanceof UnauthorizedError ||
         error instanceof ForbiddenError
       ) {
+        // Status code should already be set above
         throw error;
       }
 
@@ -72,6 +78,7 @@ export const authorize = (roles = []) => {
         stack: error.stack,
         path: context.request?.url,
       });
+      context.set.status = 401;
       throw new UnauthorizedError("Authentication failed");
     }
   };

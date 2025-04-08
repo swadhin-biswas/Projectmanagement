@@ -1,272 +1,309 @@
-import { formatDistanceToNow } from 'date-fns';
-import { PaperClipIcon, SendIcon } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import { useAuth } from '../../contexts/AuthContext';
-import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
-import { useTeamChat } from '../../hooks/useTeamChat';
-import { api } from '../../lib/api';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { ScrollArea } from '../ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { AnimatePresence, motion } from "framer-motion";
+import { Info, Loader2, Send } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-export const TeamChat = ({ teamId }) => {
+const TeamChat = ({ teamId }) => {
   const { user } = useAuth();
-  const {
-    messages,
-    sendMessage,
-    loadMoreMessages,
-    hasMore,
-    isLoading,
-    markAsRead
-  } = useTeamChat(teamId);
-
-  const [newMessage, setNewMessage] = useState('');
-  const [isAnnouncement, setIsAnnouncement] = useState(false);
-  const [attachments, setAttachments] = useState([]);
-  const chatEndRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
 
-  // Auto scroll to bottom when new messages arrive
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    watch,
+  } = useForm({
+    defaultValues: {
+      content: "",
+      isAnnouncement: false,
+    },
+  });
+
+  const messageContent = watch("content");
+
+  // Fetch messages
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const fetchMessages = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get(`/api/student/teams/${teamId}/chat`);
+
+        if (response.data.success) {
+          setMessages(response.data.data);
+        } else {
+          toast.error(response.data.error || "Failed to load chat messages");
+        }
+      } catch (error) {
+        toast.error("Failed to load chat messages");
+        console.error("Chat loading error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (teamId) {
+      fetchMessages();
+    }
+
+    // Set up polling for new messages
+    const interval = setInterval(() => {
+      if (teamId) {
+        fetchMessages();
+      }
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [teamId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Mark messages as read when chat is opened
+  // Mark messages as read
   useEffect(() => {
+    const markAsRead = async () => {
+      if (teamId && messages.length > 0) {
+        try {
+          await api.post(`/api/student/teams/${teamId}/chat/read`);
+        } catch (error) {
+          console.error("Failed to mark messages as read:", error);
+        }
+      }
+    };
+
     markAsRead();
-  }, []);
+  }, [teamId, messages]);
 
-  // Handle infinite scroll
-  const { loadMore, containerRef } = useInfiniteScroll({
-    onLoadMore: loadMoreMessages,
-    hasMore,
-    isLoading
-  });
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() && attachments.length === 0) return;
+  const onSubmit = async (data) => {
+    if (!data.content.trim()) return;
 
     try {
-      await sendMessage({
-        content: newMessage.trim(),
-        isAnnouncement,
-        attachments
-      });
-      setNewMessage('');
-      setAttachments([]);
-      setIsAnnouncement(false);
-    } catch (error) {
-      toast.error('Failed to send message');
-    }
-  };
+      setIsSending(true);
+      const response = await api.post(
+        `/api/student/teams/${teamId}/chat`,
+        data
+      );
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 5) {
-      toast.error('Maximum 5 files allowed');
-      return;
-    }
-
-    // Check file sizes
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const invalidFiles = files.filter(file => file.size > maxSize);
-    if (invalidFiles.length > 0) {
-      toast.error(`Files must be under 10MB: ${invalidFiles.map(f => f.name).join(', ')}`);
-      return;
-    }
-
-    // Show loading state for uploads
-    toast.loading('Uploading files...', { id: 'upload' });
-
-    // Upload files and get URLs
-    Promise.all(files.map(async file => {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await api.post('/api/upload', formData);
-        return {
-          url: response.data.url,
-          type: file.type.startsWith('image/') ? 'image' : 'file',
-          name: file.name
-        };
-      } catch (error) {
-        console.error('File upload error:', error);
-        toast.error(`Failed to upload ${file.name}`);
-        return null;
+      if (response.data.success) {
+        // Add the new message to the chat
+        setMessages((prev) => [...prev, response.data.data]);
+        reset({ content: "", isAnnouncement: false });
+      } else {
+        toast.error(response.data.error || "Failed to send message");
       }
-    })).then(results => {
-      const validUploads = results.filter(Boolean);
-      setAttachments(prev => [...prev, ...validUploads]);
-      toast.success('Files uploaded successfully', { id: 'upload' });
-    });
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to send message");
+      console.error("Chat send error:", error);
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const removeAttachment = (index) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+  const formatTime = (timestamp) => {
+    if (!timestamp) return "";
+
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else {
+      return (
+        date.toLocaleDateString([], { month: "short", day: "numeric" }) +
+        " " +
+        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    }
   };
 
-  const renderMessage = (message) => (
-    <div
-      key={message._id}
-      className={`flex gap-3 mb-4 ${
-        message.isAnnouncement ? 'bg-yellow-50 p-3 rounded' : ''
-      }`}
-    >
-      <Avatar>
-        <AvatarImage src={message.sender.profilePicture} />
-        <AvatarFallback>
-          {message.sender.fullName.split(' ').map(n => n[0]).join('')}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="font-semibold">
-            {message.sender.fullName}
-          </span>
-          <span className="text-sm text-gray-500">
-            {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
-          </span>
-          {message.isAnnouncement && (
-            <span className="text-xs bg-yellow-200 px-2 py-0.5 rounded">
-              Announcement
-            </span>
-          )}
-        </div>
-        <p className="mt-1">{message.content}</p>
-        {message.attachments?.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {message.attachments.map((attachment, index) => (
-              <div
-                key={index}
-                className="relative group"
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const isCurrentUser = (senderId) => {
+    return senderId === user?._id;
+  };
+
+  const fadeIn = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: 0.2 },
+  };
+
+  const renderMessage = (message) => {
+    const isMine = isCurrentUser(message.sender?._id);
+
+    return (
+      <motion.div
+        key={message._id}
+        className={`flex mb-4 ${isMine ? "justify-end" : "justify-start"}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div
+          className={`flex ${
+            isMine ? "flex-row-reverse" : "flex-row"
+          } max-w-[80%]`}
+        >
+          <Avatar className={`h-8 w-8 ${isMine ? "ml-2" : "mr-2"}`}>
+            {message.sender?.profilePicture ? (
+              <AvatarImage
+                src={message.sender.profilePicture}
+                alt={message.sender.fullName}
+              />
+            ) : (
+              <AvatarFallback
+                className={isMine ? "bg-blue-600" : "bg-gray-600"}
               >
-                {attachment.type === 'image' ? (
-                  <img
-                    src={attachment.url}
-                    alt=""
-                    className="max-w-[200px] rounded"
-                  />
-                ) : (
-                  <a
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    <PaperClipIcon size={16} />
-                    <span className="text-sm">{attachment.name}</span>
-                  </a>
-                )}
-              </div>
-            ))}
+                {getInitials(message.sender?.fullName)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+
+          <div>
+            <div
+              className={`flex items-center mb-1 ${
+                isMine ? "justify-end" : "justify-start"
+              }`}
+            >
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatTime(message.timestamp)}
+              </span>
+              <span
+                className={`text-sm font-medium mx-2 ${
+                  isMine ? "text-blue-600 dark:text-blue-400" : ""
+                }`}
+              >
+                {message.sender?.fullName || "Unknown User"}
+              </span>
+              {message.isAnnouncement && (
+                <Badge
+                  variant="outline"
+                  className="border-blue-300 text-blue-600 text-xs"
+                >
+                  Announcement
+                </Badge>
+              )}
+            </div>
+
+            <div
+              className={`p-3 rounded-lg ${
+                message.isAnnouncement
+                  ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                  : isMine
+                  ? "bg-blue-100 dark:bg-blue-900/30"
+                  : "bg-gray-100 dark:bg-gray-800"
+              }`}
+            >
+              <p className="text-sm whitespace-pre-wrap break-words">
+                {message.content}
+              </p>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <Tabs defaultValue="chat" className="flex-1">
-        <TabsList className="px-4 py-2">
-          <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger value="announcements">Announcements</TabsTrigger>
-        </TabsList>
+    <AnimatePresence>
+      <motion.div
+        className="h-full flex flex-col"
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={fadeIn}
+      >
+        <Card className="border-gray-200 dark:border-gray-800 shadow-md flex-1 flex flex-col overflow-hidden">
+          <CardHeader className="border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+            <CardTitle className="text-lg">Team Chat</CardTitle>
+          </CardHeader>
 
-        <TabsContent value="chat" className="flex-1 flex flex-col">
-          <ScrollArea
-            ref={containerRef}
-            className="flex-1 p-4"
-            onScroll={loadMore}
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4"
+            style={{ maxHeight: "calc(100vh - 300px)", minHeight: "300px" }}
           >
-            {isLoading && <div className="text-center">Loading...</div>}
-            {messages.map(renderMessage)}
-            <div ref={chatEndRef} />
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="announcements" className="flex-1">
-          <ScrollArea className="h-full p-4">
-            {messages
-              .filter(m => m.isAnnouncement)
-              .map(renderMessage)}
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
-
-      <form onSubmit={handleSend} className="p-4 border-t">
-        {attachments.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {attachments.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 bg-gray-100 p-1 rounded"
-              >
-                <span className="text-sm">{file.name}</span>
-                <button
-                  type="button"
-                  onClick={() => removeAttachment(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </button>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               </div>
-            ))}
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <Info className="h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  No messages yet. Start the conversation!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map(renderMessage)}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
-        )}
 
-        <div className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            multiple
-            className="hidden"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <PaperClipIcon size={20} />
-          </Button>
-          <Button type="submit" disabled={!newMessage.trim() && !attachments.length}>
-            <SendIcon size={20} />
-          </Button>
-        </div>
+          <CardContent className="border-t border-gray-200 dark:border-gray-800 p-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+              <Textarea
+                {...register("content", { required: true })}
+                placeholder="Type your message..."
+                className="w-full resize-none"
+                rows={3}
+              />
 
-        {/* Announcement toggle for team leaders */}
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="announcement"
-            checked={isAnnouncement}
-            onChange={(e) => setIsAnnouncement(e.target.checked)}
-          />
-          <label htmlFor="announcement" className="text-sm">
-            Send as announcement
-          </label>
-        </div>
-      </form>
-    </Card>
+              <div className="flex justify-end items-center gap-2">
+                <Button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={isSending || !messageContent?.trim()}
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
-// Export as default for compatibility with existing imports
 export default TeamChat;

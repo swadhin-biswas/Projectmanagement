@@ -47,19 +47,24 @@ const Register = () => {
     const errors = {};
 
     // Required fields
-    if (!formData.fullName) errors.fullName = "Full name is required";
-    if (!formData.email) errors.email = "Email is required";
+    if (!formData.fullName?.trim()) errors.fullName = "Full name is required";
+    if (!formData.email?.trim()) errors.email = "Email is required";
     if (!formData.password) errors.password = "Password is required";
     if (!formData.confirmPassword) errors.confirmPassword = "Please confirm your password";
-    if (!formData.department) errors.department = "Department is required";
+    if (!formData.department?.trim()) errors.department = "Department is required";
+
+    // Name validation
+    if (formData.fullName && !/^[a-zA-Z0-9\s\-\.,']{2,50}$/.test(formData.fullName.trim())) {
+      errors.fullName = "Name should be 2-50 characters and contain only letters, numbers, spaces, and basic punctuation";
+    }
 
     // Email validation
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
+    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/;
+    if (formData.email && !emailRegex.test(formData.email.trim())) {
       errors.email = "Please enter a valid email address";
     }
 
-    // Password validation
+    // Password validation (at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char)
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (formData.password && !passwordRegex.test(formData.password)) {
       errors.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
@@ -70,21 +75,26 @@ const Register = () => {
       errors.confirmPassword = "Passwords do not match";
     }
 
+    // Department validation
+    if (formData.department && !/^[a-zA-Z\s&',.]{2,50}$/.test(formData.department.trim())) {
+      errors.department = "Department must be 2-50 characters and contain only letters, spaces, and basic punctuation";
+    }
+
     // Role-specific validation
     if (formData.role === "supervisor") {
-      if (!formData.specialization) {
+      if (!formData.specialization?.trim()) {
         errors.specialization = "Specialization is required for supervisors";
-      } else if (!/^[a-zA-Z\s&',.]{2,50}$/.test(formData.specialization)) {
-        errors.specialization = "Specialization must be 2-50 characters and contain only letters and spaces";
+      } else if (!/^[a-zA-Z\s&',.]{2,50}$/.test(formData.specialization.trim())) {
+        errors.specialization = "Specialization must be 2-50 characters and contain only letters, spaces, and basic punctuation";
       }
     }
 
     // Optional ID validation
-    if (formData.studentId && !/^STU\d{3,6}$/.test(formData.studentId)) {
-      errors.studentId = "Student ID must start with STU followed by 3-6 digits";
+    if (formData.studentId && !/^STU\d{6}$/.test(formData.studentId)) {
+      errors.studentId = "Student ID must start with STU followed by 6 digits";
     }
-    if (formData.supervisorId && !/^SUP\d{3,6}$/.test(formData.supervisorId)) {
-      errors.supervisorId = "Supervisor ID must start with SUP followed by 3-6 digits";
+    if (formData.supervisorId && !/^SUP\d{6}$/.test(formData.supervisorId)) {
+      errors.supervisorId = "Supervisor ID must start with SUP followed by 6 digits";
     }
 
     return { isValid: Object.keys(errors).length === 0, errors };
@@ -118,17 +128,17 @@ const Register = () => {
           // Redirect will be handled by useEffect when user state updates
         }
       } else {
-        setError(result.error);
         if (result.field) {
+          setError({ [result.field]: result.error });
           toast.error(`${result.field}: ${result.error}`);
         } else {
-          toast.error(result.error);
+          toast.error(result.error || "Registration failed");
         }
       }
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage = error.message || "Registration failed";
-      setError(errorMessage);
+      setError({ form: errorMessage });
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

@@ -1,17 +1,17 @@
 import { t } from "elysia";
 import {
-    getUserProfile,
-    loginUser,
-    registerUser,
-    requestPasswordReset,
-    resetPassword,
-    updateProfile,
-    verifyEmail
+  getUserProfile,
+  loginUser,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+  updateProfile,
+  verifyEmail
 } from "../controllers/authController.js";
 import logger from "../utils/logger.js";
 
 export default function userRoutes(app) {
-  return app.group("/users", (app) => {
+  return app.group("/api/users", (app) => {
     return app
       // Login route
       .post("/login", {

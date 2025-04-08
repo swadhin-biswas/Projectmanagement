@@ -1,0 +1,287 @@
+{
+  "passed": [
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as super admin",
+      "status": 200,
+      "expected": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.868Z"
+      },
+      "success": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as admin",
+      "status": 200,
+      "expected": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.869Z"
+      },
+      "success": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as supervisor",
+      "status": 200,
+      "expected": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.869Z"
+      },
+      "success": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as student",
+      "status": 200,
+      "expected": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.870Z"
+      },
+      "success": true
+    }
+  ],
+  "failed": [
+    {
+      "method": "GET",
+      "path": "/",
+      "role": null,
+      "description": "API root health check",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/health/db",
+      "role": null,
+      "description": "Database health check",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/setup/superadmin",
+      "role": null,
+      "description": "Create super admin account",
+      "status": 500,
+      "expected": 201,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "role": "superadmin",
+      "description": "Register admin user",
+      "status": 200,
+      "expected": 201,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.869Z"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "role": "superadmin",
+      "description": "Register supervisor user",
+      "status": 200,
+      "expected": 201,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.869Z"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "role": "superadmin",
+      "description": "Register student user",
+      "status": 200,
+      "expected": 201,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-07T20:22:24.869Z"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "role": "superadmin",
+      "description": "Get all users as superadmin",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/pending-supervisors",
+      "role": "superadmin",
+      "description": "Get pending supervisors",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/admin/overview",
+      "role": "admin",
+      "description": "Get admin analytics overview",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions",
+      "role": "admin",
+      "description": "Get all sessions",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions",
+      "role": "admin",
+      "description": "Create new session",
+      "status": 500,
+      "expected": 201,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/teams",
+      "role": "admin",
+      "description": "Get all teams",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "role": "admin",
+      "description": "Get all projects",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar/events",
+      "role": "admin",
+      "description": "Get calendar events",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "role": "admin",
+      "description": "Get notifications",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/milestones",
+      "role": "admin",
+      "description": "Get all milestones",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
+        "code": "UNKNOWN"
+      },
+      "success": false
+    }
+  ],
+  "skipped": [],
+  "summary": {
+    "total": 20,
+    "passed": 4,
+    "failed": 16,
+    "skipped": 0,
+    "timestamp": "2025-04-07T20:22:24.876Z"
+  }
+}

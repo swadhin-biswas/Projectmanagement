@@ -51,6 +51,27 @@ const consoleFormat = winston.format.combine(
   })
 );
 
+// Enhanced console format for API endpoints with special highlighting
+const apiEndpointFormat = winston.format.printf(
+  ({ level, message, method, path, status, duration, error }) => {
+    let endpointInfo = `${method} ${path}`;
+    let statusInfo = status ? ` → ${status}` : "";
+    let durationInfo = duration ? ` (${duration}ms)` : "";
+    let errorInfo = error ? `\n  ERROR: ${error}` : "";
+
+    // Color coding based on status code or errors
+    if (status >= 500 || error) {
+      return `🔴 API ${endpointInfo}${statusInfo}${durationInfo}${errorInfo}`;
+    } else if (status >= 400) {
+      return `🟠 API ${endpointInfo}${statusInfo}${durationInfo}${errorInfo}`;
+    } else if (status >= 300) {
+      return `🟡 API ${endpointInfo}${statusInfo}${durationInfo}`;
+    } else {
+      return `🟢 API ${endpointInfo}${statusInfo}${durationInfo}`;
+    }
+  }
+);
+
 // Create file transports for different log levels
 const fileTransport = new winston.transports.DailyRotateFile({
   filename: path.join(logsDir, "application-%DATE%.log"),
@@ -68,6 +89,15 @@ const errorFileTransport = new winston.transports.DailyRotateFile({
   level: "error",
 });
 
+// Create a combined log for all requests
+const combinedFileTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logsDir, "combined-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  level: "info",
+});
+
 // Create console transport
 const consoleTransport = new winston.transports.Console({
   format: consoleFormat,
@@ -79,8 +109,23 @@ const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
   format: logFormat,
   defaultMeta: { service: "research-mgmt-api" },
-  transports: [consoleTransport, fileTransport, errorFileTransport],
+  transports: [
+    consoleTransport,
+    fileTransport,
+    errorFileTransport,
+    combinedFileTransport,
+  ],
   exitOnError: false,
+});
+
+// Create a specialized logger for API endpoints
+const apiLogger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
+    apiEndpointFormat
+  ),
+  transports: [new winston.transports.Console(), combinedFileTransport],
 });
 
 // Create a separate transport specifically for uncaught exceptions
@@ -141,6 +186,11 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
+// Add utility for logging API calls
+const logApiCall = (method, path, status, duration, error = null) => {
+  apiLogger.info("API Call", { method, path, status, duration, error });
+};
+
 // Export both as default and named export for compatibility
-export { logger };
+export { apiLogger, logApiCall, logger };
 export default logger;

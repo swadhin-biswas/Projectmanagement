@@ -1,6 +1,6 @@
 // database.js
 import mongoose from "mongoose";
-import logger from './logger';
+import logger from "../utils/logger.js";
 
 /**
  * Connect to MongoDB database with retry mechanism
@@ -20,7 +20,15 @@ const connectDatabase = async (retryAttempt = 0) => {
   const retryDelay = 5000; // 5 seconds
 
   try {
-    // Modern connection options without deprecated flags
+    logger.info("Attempting to connect to MongoDB...");
+
+    // Force close any existing connection first to avoid multiple connections
+    if (mongoose.connection.readyState !== 0) {
+      logger.info("Closing existing MongoDB connection before reconnecting");
+      await mongoose.connection.close();
+    }
+
+    // Strict connection options
     const connection = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
@@ -29,26 +37,50 @@ const connectDatabase = async (retryAttempt = 0) => {
       minPoolSize: 5,
       connectTimeoutMS: 30000,
       retryWrites: true,
-      readPreference: "primaryPreferred"
+      w: "majority", // Ensure write confirmation
+      readPreference: "primaryPreferred",
     });
+
+    // Clear any previous error state
+    global.dbConnectionIssue = false;
+    global.lastDbError = null;
+    global.dbRetryAttempts = 0;
 
     // Add connection event listeners for better monitoring
     mongoose.connection.on("error", (err) => {
       logger.error(`MongoDB connection error: ${err.message}`, { error: err });
+      global.dbConnectionIssue = true;
+      global.lastDbError = err;
     });
 
     mongoose.connection.on("disconnected", () => {
-      logger.warn("MongoDB disconnected, attempting to reconnect");
+      logger.warn("MongoDB disconnected");
+      global.dbConnectionIssue = true;
     });
 
     mongoose.connection.on("reconnected", () => {
       logger.info("MongoDB reconnected successfully");
+      global.dbConnectionIssue = false;
+      global.lastDbError = null;
     });
+
+    // Test the connection with a ping
+    await connection.connection.db.admin().ping();
 
     logger.info(`MongoDB Connected: ${connection.connection.host}`);
     return connection;
   } catch (error) {
-    logger.error(`Error connecting to MongoDB: ${error.message}`, { error });
+    logger.error(`Error connecting to MongoDB: ${error.message}`, {
+      error,
+      mongoUriRedacted: mongoUri.replace(
+        /mongodb(\+srv)?:\/\/[^:]+:[^@]+@/,
+        "mongodb$1://****:****@"
+      ),
+    });
+
+    global.dbConnectionIssue = true;
+    global.lastDbError = error;
+    global.dbRetryAttempts = (global.dbRetryAttempts || 0) + 1;
 
     // Implement retry logic with backoff
     if (retryAttempt < maxRetries) {
@@ -61,10 +93,7 @@ const connectDatabase = async (retryAttempt = 0) => {
       return connectDatabase(retryAttempt + 1);
     } else {
       logger.error(`Failed to connect to MongoDB after ${maxRetries} attempts`);
-      // Set global flag to indicate database issues instead of crashing
-      global.dbConnectionIssue = true;
-      // Return null instead of exiting to allow application to run with limited functionality
-      return null;
+      throw error; // Throw error instead of returning null
     }
   }
 };

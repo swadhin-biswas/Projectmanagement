@@ -41,263 +41,511 @@ const inviteResponseSchema = t.Object({
 });
 
 export default function teamRoutes(app) {
-  return app.group("/teams", (app) => {
-    return app
-      // Get all teams for current user
-      .get("/", {
-        detail: {
-          summary: "Get all teams for the current user",
-          tags: ["Teams"],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: "List of user's teams" },
-            401: { description: "Unauthorized" },
-            404: { description: "Profile not found" },
+  return app.group("/api/teams", (app) => {
+    return (
+      app
+        // Get all teams for current user
+        .get(
+          "/",
+          {
+            detail: {
+              summary: "Get all teams for the current user",
+              tags: ["Teams"],
+              security: [{ bearerAuth: [] }],
+              responses: {
+                200: { description: "List of user's teams" },
+                401: { description: "Unauthorized" },
+                404: { description: "Profile not found" },
+              },
+            },
           },
-        },
-      }, async (context) => {
-        const { user } = await authorize(["student", "supervisor"])(context);
-        return teamController.getUserTeams({ ...context, user });
-      })
+          async (context) => {
+            try {
+              const { user } = await authorize(["student", "supervisor"])(
+                context
+              );
+              return teamController.getUserTeams({ ...context, user });
+            } catch (error) {
+              logger.error("❌ Failed to get user teams:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      // Create a new team
-      .post("/", {
-        body: t.Object({
-          name: t.String({ minLength: 2, maxLength: 50 }),
-          description: t.Optional(t.String()),
-          maxMembers: t.Optional(t.Number({ minimum: 2, maximum: 6 })),
-        }),
-        response: {
-          201: t.Object({
-            success: t.Boolean(),
-            data: t.Object({
-              _id: t.String(),
-              name: t.String(),
-              members: t.Array(t.Any()),
+        // Create a new team
+        .post(
+          "/",
+          {
+            body: t.Object({
+              name: t.String({ minLength: 2, maxLength: 50 }),
+              description: t.Optional(t.String()),
+              maxMembers: t.Optional(t.Number({ minimum: 2, maximum: 6 })),
             }),
-          }),
-        },
-      }, async (context) => {
-        try {
-          logger.info("📝 Team creation requested");
-          const { user } = await authorize(["student"])(context);
-          return teamController.createTeam({ ...context, user });
-        } catch (error) {
-          logger.error("❌ Failed to create team:", error);
-          throw error;
-        }
-      })
-
-      // Team invitation endpoints
-      .post("/:teamId/invite", {
-        body: inviteSchema,
-        detail: {
-          tags: ["Teams"],
-          summary: "Invite student to team",
-          security: [{ bearerAuth: [] }],
-        },
-      }, async (context) => {
-        try {
-          logger.info("📨 Team invitation requested");
-          const { user } = await authorize(["student"])(context);
-          return teamInvitationController.sendTeamInvitation({
-            ...context,
-            user,
-          });
-        } catch (error) {
-          logger.error("❌ Failed to send team invitation:", error);
-          throw error;
-        }
-      })
-
-      .get("/invitations/pending", {
-        response: {
-          200: t.Object({
-            success: t.Boolean(),
-            data: t.Array(
-              t.Object({
-                id: t.String(),
-                team: t.Object({
-                  id: t.String(),
+            response: {
+              201: t.Object({
+                success: t.Boolean(),
+                data: t.Object({
+                  _id: t.String(),
                   name: t.String(),
-                  currentMembers: t.Number(),
-                  maxMembers: t.Number(),
+                  members: t.Array(t.Any()),
                 }),
-                invitedBy: t.Object({
-                  id: t.String(),
-                  name: t.String(),
-                }),
-                message: t.Optional(t.String()),
-                expiresAt: t.String(),
               }),
-            ),
-          }),
-        },
-      }, async (context) => {
-        const { user } = await authorize(["student"])(context);
-        return teamInvitationController.getPendingInvitations({ ...context, user });
-      })
-
-      .post("/:teamId/invitations/:inviteId/respond", {
-        body: inviteResponseSchema,
-        detail: {
-          tags: ["Teams"],
-          summary: "Respond to team invitation",
-          security: [{ bearerAuth: [] }],
-        },
-      }, async (context) => {
-        try {
-          logger.info("✉️ Processing invitation response");
-          const { user } = await authorize(["student"])(context);
-          return teamInvitationController.respondToInvitation({
-            ...context,
-            user,
-          });
-        } catch (error) {
-          logger.error("❌ Failed to process invitation response:", error);
-          throw error;
-        }
-      })
-
-      // Team member management
-      .delete("/:teamId/leave", {
-        detail: {
-          summary: "Leave a team",
-          tags: ["Teams"],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: "Left team successfully" },
-            401: { description: "Unauthorized" },
-            403: { description: "Forbidden - not a team member" },
-            404: { description: "Team not found" },
+              400: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              500: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+            },
           },
-        },
-      }, async (context) => {
-        const { user } = await authorize(["student"])(context);
-        return teamController.leaveTeam({ ...context, user });
-      })
+          async (context) => {
+            try {
+              logger.info("📝 Team creation requested");
+              const { user } = await authorize(["student"])(context);
+              const result = await teamController.createTeam({
+                ...context,
+                user,
+              });
+              context.set.status = 201; // Created
+              return result;
+            } catch (error) {
+              logger.error("❌ Failed to create team:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      // Team details
-      .get("/:teamId", {
-        response: {
-          200: t.Object({
-            success: t.Boolean(),
-            data: teamResponse,
-          }),
-        },
-      }, async (context) => {
-        const { user } = await authorize(["student", "supervisor"])(context);
-        return teamController.getTeamDetails({ ...context, user });
-      })
+        // Team invitation endpoints
+        .post(
+          "/:teamId/invite",
+          {
+            body: inviteSchema,
+            detail: {
+              tags: ["Teams"],
+              summary: "Invite student to team",
+              security: [{ bearerAuth: [] }],
+            },
+            response: {
+              201: t.Object({
+                success: t.Boolean(),
+                message: t.String(),
+              }),
+              400: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              404: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+            },
+          },
+          async (context) => {
+            try {
+              logger.info("📨 Team invitation requested");
+              const { user } = await authorize(["student"])(context);
+              const result = await teamInvitationController.sendTeamInvitation({
+                ...context,
+                user,
+              });
+              context.set.status = 201;
+              return result;
+            } catch (error) {
+              logger.error("❌ Failed to send team invitation:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      .get("/:teamId/members", {
-        response: {
-          200: t.Object({
-            success: t.Boolean(),
-            data: t.Array(t.Any()),
-          }),
-        },
-      }, async (context) => {
-        const { user } = await authorize(["student", "supervisor"])(context);
-        return teamController.getTeamMembers({ ...context, user });
-      })
-
-      // Team chat functionality
-      .group("/:teamId/chat", (app) => {
-        return app
-          .get("/", {
-            query: t.Object({
-              limit: t.Optional(t.Number()),
-              before: t.Optional(t.String()),
-            }),
+        .get(
+          "/invitations/pending",
+          {
             response: {
               200: t.Object({
                 success: t.Boolean(),
                 data: t.Array(
                   t.Object({
-                    _id: t.String(),
-                    sender: t.Object({
-                      _id: t.String(),
-                      fullName: t.String(),
+                    id: t.String(),
+                    team: t.Object({
+                      id: t.String(),
+                      name: t.String(),
+                      currentMembers: t.Number(),
+                      maxMembers: t.Number(),
                     }),
-                    content: t.String(),
-                    timestamp: t.String(),
-                    readBy: t.Array(t.String()),
-                    isAnnouncement: t.Boolean(),
+                    invitedBy: t.Object({
+                      id: t.String(),
+                      name: t.String(),
+                    }),
+                    message: t.Optional(t.String()),
+                    expiresAt: t.String(),
                   })
                 ),
               }),
-            },
-          }, async (context) => {
-            await authorize(["student", "supervisor"])(context);
-            return teamChatController.getTeamChatMessages(context);
-          })
-
-          .post("/", {
-            body: t.Object({
-              content: t.String(),
-              isAnnouncement: t.Optional(t.Boolean()),
-              attachments: t.Optional(
-                t.Array(
-                  t.Object({
-                    url: t.String(),
-                    type: t.String(),
-                  })
-                )
-              ),
-            }),
-          }, async (context) => {
-            await authorize(["student", "supervisor"])(context);
-            return teamChatController.sendTeamMessage(context);
-          })
-
-          .get("/unread", {
-            response: {
-              200: t.Object({
+              401: t.Object({
                 success: t.Boolean(),
-                data: t.Object({
-                  unreadCount: t.Number(),
-                }),
+                error: t.String(),
+              }),
+              500: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
               }),
             },
-          }, async (context) => {
-            await authorize(["student", "supervisor"])(context);
-            return teamChatController.getUnreadCount(context);
-          })
+          },
+          async (context) => {
+            try {
+              const { user } = await authorize(["student"])(context);
+              return teamInvitationController.getPendingInvitations({
+                ...context,
+                user,
+              });
+            } catch (error) {
+              logger.error("❌ Failed to get pending invitations:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-          .post("/mark-read", {
+        .post(
+          "/:teamId/invitations/:inviteId/respond",
+          {
+            body: inviteResponseSchema,
+            detail: {
+              tags: ["Teams"],
+              summary: "Respond to team invitation",
+              security: [{ bearerAuth: [] }],
+            },
             response: {
               200: t.Object({
                 success: t.Boolean(),
                 message: t.String(),
               }),
+              400: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              404: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
             },
-          }, async (context) => {
-            await authorize(["student", "supervisor"])(context);
-            return teamChatController.markMessagesAsRead(context);
-          })
+          },
+          async (context) => {
+            try {
+              logger.info("✉️ Processing invitation response");
+              const { user } = await authorize(["student"])(context);
+              return teamInvitationController.respondToInvitation({
+                ...context,
+                user,
+              });
+            } catch (error) {
+              logger.error("❌ Failed to process invitation response:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-          .get("/announcements", {
+        // Team member management
+        .delete(
+          "/:teamId/leave",
+          {
+            detail: {
+              summary: "Leave a team",
+              tags: ["Teams"],
+              security: [{ bearerAuth: [] }],
+              responses: {
+                200: { description: "Left team successfully" },
+                401: { description: "Unauthorized" },
+                403: { description: "Forbidden - not a team member" },
+                404: { description: "Team not found" },
+              },
+            },
             response: {
               200: t.Object({
                 success: t.Boolean(),
-                data: t.Array(
-                  t.Object({
-                    _id: t.String(),
-                    content: t.String(),
-                    timestamp: t.String(),
-                    sender: t.Object({
-                      _id: t.String(),
-                      fullName: t.String(),
-                    }),
-                  })
-                ),
+                message: t.String(),
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              403: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              404: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
               }),
             },
-          }, async (context) => {
-            await authorize(["student", "supervisor"])(context);
-            return teamChatController.getAnnouncements(context);
-          });
-      });
+          },
+          async (context) => {
+            try {
+              const { user } = await authorize(["student"])(context);
+              return teamController.leaveTeam({ ...context, user });
+            } catch (error) {
+              logger.error("❌ Failed to leave team:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Team details
+        .get(
+          "/:teamId",
+          {
+            response: {
+              200: t.Object({
+                success: t.Boolean(),
+                data: teamResponse,
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              404: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+            },
+          },
+          async (context) => {
+            try {
+              const { user } = await authorize(["student", "supervisor"])(
+                context
+              );
+              return teamController.getTeamDetails({ ...context, user });
+            } catch (error) {
+              logger.error("❌ Failed to get team details:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        .get(
+          "/:teamId/members",
+          {
+            response: {
+              200: t.Object({
+                success: t.Boolean(),
+                data: t.Array(t.Any()),
+              }),
+              401: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+              404: t.Object({
+                success: t.Boolean(),
+                error: t.String(),
+              }),
+            },
+          },
+          async (context) => {
+            try {
+              const { user } = await authorize(["student", "supervisor"])(
+                context
+              );
+              return teamController.getTeamMembers({ ...context, user });
+            } catch (error) {
+              logger.error("❌ Failed to get team members:", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Team chat functionality
+        .group("/:teamId/chat", (app) => {
+          return app
+            .get(
+              "/",
+              {
+                query: t.Object({
+                  limit: t.Optional(t.Number()),
+                  before: t.Optional(t.String()),
+                }),
+                response: {
+                  200: t.Object({
+                    success: t.Boolean(),
+                    data: t.Array(
+                      t.Object({
+                        _id: t.String(),
+                        sender: t.Object({
+                          _id: t.String(),
+                          fullName: t.String(),
+                        }),
+                        content: t.String(),
+                        timestamp: t.String(),
+                        readBy: t.Array(t.String()),
+                        isAnnouncement: t.Boolean(),
+                      })
+                    ),
+                  }),
+                  401: t.Object({
+                    success: t.Boolean(),
+                    error: t.String(),
+                  }),
+                  404: t.Object({
+                    success: t.Boolean(),
+                    error: t.String(),
+                  }),
+                },
+              },
+              async (context) => {
+                try {
+                  const { user } = await authorize(["student", "supervisor"])(
+                    context
+                  );
+                  return teamChatController.getTeamChatMessages({
+                    ...context,
+                    user,
+                  });
+                } catch (error) {
+                  logger.error("❌ Failed to get team chat messages:", error);
+                  context.set.status = error.status || 500;
+                  return {
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString(),
+                  };
+                }
+              }
+            )
+
+            .post(
+              "/",
+              {
+                body: t.Object({
+                  content: t.String(),
+                  isAnnouncement: t.Optional(t.Boolean()),
+                  attachments: t.Optional(
+                    t.Array(
+                      t.Object({
+                        url: t.String(),
+                        type: t.String(),
+                      })
+                    )
+                  ),
+                }),
+              },
+              async (context) => {
+                await authorize(["student", "supervisor"])(context);
+                return teamChatController.sendTeamMessage(context);
+              }
+            )
+
+            .get(
+              "/unread",
+              {
+                response: {
+                  200: t.Object({
+                    success: t.Boolean(),
+                    data: t.Object({
+                      unreadCount: t.Number(),
+                    }),
+                  }),
+                },
+              },
+              async (context) => {
+                await authorize(["student", "supervisor"])(context);
+                return teamChatController.getUnreadCount(context);
+              }
+            )
+
+            .post(
+              "/mark-read",
+              {
+                response: {
+                  200: t.Object({
+                    success: t.Boolean(),
+                    message: t.String(),
+                  }),
+                },
+              },
+              async (context) => {
+                await authorize(["student", "supervisor"])(context);
+                return teamChatController.markMessagesAsRead(context);
+              }
+            )
+
+            .get(
+              "/announcements",
+              {
+                response: {
+                  200: t.Object({
+                    success: t.Boolean(),
+                    data: t.Array(
+                      t.Object({
+                        _id: t.String(),
+                        content: t.String(),
+                        timestamp: t.String(),
+                        sender: t.Object({
+                          _id: t.String(),
+                          fullName: t.String(),
+                        }),
+                      })
+                    ),
+                  }),
+                },
+              },
+              async (context) => {
+                await authorize(["student", "supervisor"])(context);
+                return teamChatController.getAnnouncements(context);
+              }
+            );
+        })
+    );
   });
 }
