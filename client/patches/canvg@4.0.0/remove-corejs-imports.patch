@@ -1,0 +1,21 @@
+diff --git a/lib/index.es.js b/lib/index.es.js
+index XXXXXXX..YYYYYYY 100644
+--- a/lib/index.es.js
++++ b/lib/index.es.js
+@@ -1,19 +1,5 @@
+-import 'core-js/modules/es.promise.js';
+-import 'core-js/modules/es.string.match.js';
+-import 'core-js/modules/es.string.replace.js';
+-import 'core-js/modules/es.string.starts-with.js';
+-import 'core-js/modules/es.array.iterator.js';
+-import 'core-js/modules/web.dom-collections.iterator.js';
+-import 'core-js/modules/es.array.reduce.js';
+-import 'core-js/modules/es.string.ends-with.js';
+-import 'core-js/modules/es.string.split.js';
+-import 'core-js/modules/es.string.trim.js';
+-import 'core-js/modules/es.array.index-of.js';
+-import 'core-js/modules/es.string.includes.js';
+-import 'core-js/modules/es.array.reverse.js';
+-import 'core-js/modules/es.regexp.to-string.js';
+ // Rest of the file remains unchanged
++// We've removed core-js imports since they're causing issues with Bun

@@ -26,45 +26,23 @@ const RegisterForm = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    // Required field validation
     if (!formData.fullName) newErrors.fullName = "Full name is required";
-    
-    // Email validation
     if (!formData.email) {
       newErrors.email = "Email is required";
-    } else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/.test(formData.email)) {
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
       newErrors.email = "Invalid email address";
     }
-    
-    // Password validation (at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char)
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
-      newErrors.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
-    
-    // Password confirmation
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords don't match";
     }
-    
-    // Department validation
     if (!formData.department) newErrors.department = "Department is required";
-    
-    // Name validation
-    if (formData.fullName && !/^[a-zA-Z0-9\s\-\.,']{2,50}$/.test(formData.fullName.trim())) {
-      newErrors.fullName = "Name should only contain letters, numbers, spaces, and basic punctuation";
-    }
-    
-    // Student ID validation
     if (formData.studentId && !/^STU\d{6}$/.test(formData.studentId)) {
       newErrors.studentId = "Student ID must start with STU followed by 6 digits";
-    }
-    
-    // Specialization validation for supervisors
-    if (formData.role === "supervisor" && !formData.specialization?.trim()) {
-      newErrors.specialization = "Specialization is required for supervisors";
     }
 
     setErrors(newErrors);

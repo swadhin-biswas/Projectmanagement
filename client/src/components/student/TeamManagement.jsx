@@ -1,9 +1,4 @@
-import {
-  createTeam,
-  getAvailableStudents,
-  inviteToTeam,
-  leaveTeam,
-} from "@/api/teams";
+import { teamAPI } from "@/api/teams";
 import {
   faCrown,
   faEnvelope,
@@ -18,7 +13,6 @@ import { motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "../../contexts/AuthContext";
-import { api } from "../../lib/api";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
@@ -79,12 +73,19 @@ const TeamManagement = () => {
   const fetchTeamData = async () => {
     try {
       setIsLoading(true);
-      const teamResponse = await api.get("/api/student/team");
+
+      // Use the student-specific endpoint from our consolidated API
+      const teamResponse = await teamAPI.student.getCurrentTeam();
       if (teamResponse.data) {
         setTeam(teamResponse.data);
+        // Store the team ID for other operations
+        if (teamResponse.data._id) {
+          localStorage.setItem("currentTeamId", teamResponse.data._id);
+        }
       }
 
-      const invitesResponse = await api.get("/api/student/pending-invites");
+      // Get pending invites
+      const invitesResponse = await teamAPI.student.getPendingInvites();
       if (invitesResponse.data) {
         setPendingInvites(invitesResponse.data);
       }
@@ -100,8 +101,8 @@ const TeamManagement = () => {
   const fetchAvailableStudents = async () => {
     try {
       setLoadingStudents(true);
-      const response = await getAvailableStudents();
-      if (response.data.success) {
+      const response = await teamAPI.student.getAvailableStudents();
+      if (response.data?.success) {
         setAvailableStudents(response.data.data || []);
       } else {
         toast.error("Failed to fetch available students");
@@ -123,19 +124,28 @@ const TeamManagement = () => {
 
     try {
       setCreating(true);
-      const response = await createTeam(createTeamForm);
+      const response = await teamAPI.student.createTeam(createTeamForm);
 
-      if (response.data.success) {
+      if (response.success || response.data?.success) {
         toast.success("Team created successfully!");
-        setTeam(response.data.data);
+        const teamData = response.data || response.team;
+        setTeam(teamData);
+
+        // Store the new team ID
+        if (teamData._id) {
+          localStorage.setItem("currentTeamId", teamData._id);
+        }
+
         setIsCreateModalOpen(false);
         setCreateTeamForm({ name: "", description: "" });
       } else {
-        toast.error(response.data.message || "Failed to create team");
+        toast.error(
+          response.message || response.error || "Failed to create team"
+        );
       }
     } catch (error) {
       console.error("Error creating team:", error);
-      toast.error("Error creating team");
+      toast.error(error.response?.data?.message || "Error creating team");
     } finally {
       setCreating(false);
     }
@@ -147,20 +157,32 @@ const TeamManagement = () => {
       return;
     }
 
+    const teamId = team?._id || localStorage.getItem("currentTeamId");
+    if (!teamId) {
+      toast.error("No active team found");
+      return;
+    }
+
     try {
       setInviting(true);
-      const response = await inviteToTeam(selectedStudentId);
+      const response = await teamAPI.student.inviteStudent(teamId, {
+        studentId: selectedStudentId,
+        message: inviteForm.message,
+      });
 
-      if (response.data.success) {
+      if (response.success || response.data?.success) {
         toast.success("Invitation sent successfully!");
         setIsInviteModalOpen(false);
         setSelectedStudentId("");
+        setInviteForm({ studentId: "", message: "" });
       } else {
-        toast.error(response.data.message || "Failed to send invitation");
+        toast.error(
+          response.message || response.error || "Failed to send invitation"
+        );
       }
     } catch (error) {
       console.error("Error inviting student:", error);
-      toast.error("Error sending invitation");
+      toast.error(error.response?.data?.message || "Error sending invitation");
     } finally {
       setInviting(false);
     }
@@ -174,15 +196,26 @@ const TeamManagement = () => {
         return;
       }
 
-      const response = await api.post("/api/student/join-team", joinTeamForm);
+      // This is a direct team join operation - we need to check if this endpoint exists
+      // in our consolidated API, otherwise use the original implementation
+      const response = await fetch("/api/student/join-team", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(joinTeamForm),
+      });
 
-      if (response.data.success) {
+      const data = await response.json();
+
+      if (data.success) {
         fetchTeamData();
         setJoinTeamModalOpen(false);
         setJoinTeamForm({ teamId: "", inviteCode: "" });
-        toast.success(response.data.message || "Successfully joined team");
+        toast.success(data.message || "Successfully joined team");
       } else {
-        toast.error(response.data.error || "Failed to join team");
+        toast.error(data.error || "Failed to join team");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to join team");
@@ -191,25 +224,24 @@ const TeamManagement = () => {
 
   const handleRespondToInvite = async (inviteId, accept) => {
     try {
-      const response = await api.post("/api/student/respond-to-invite", {
-        teamId: inviteId, // The team ID is used as the inviteId in our UI
-        inviteId: inviteId,
-        response: accept ? "accepted" : "declined", // Server expects 'accepted' or 'declined'
-      });
+      const response = await teamAPI.student.respondToInvite(
+        inviteId,
+        accept ? "accepted" : "declined"
+      );
 
-      if (response.data.success) {
+      if (response.success || response.data?.success) {
         if (accept) {
-          toast.success(response.data.message || "Joined team successfully");
+          toast.success(response.message || "Joined team successfully");
           fetchTeamData(); // Refresh to get the updated team data
         } else {
-          toast.info(response.data.message || "Invitation declined");
+          toast.info(response.message || "Invitation declined");
           // Remove the declined invitation from the pending invites list
           setPendingInvites(
             pendingInvites.filter((invite) => invite._id !== inviteId)
           );
         }
       } else {
-        toast.error(response.data.error || "Failed to respond to invitation");
+        toast.error(response.error || "Failed to respond to invitation");
       }
     } catch (error) {
       toast.error(
@@ -229,17 +261,26 @@ const TeamManagement = () => {
 
     try {
       setLeaving(true);
-      const response = await leaveTeam();
+      const teamId = team?._id || localStorage.getItem("currentTeamId");
+      if (!teamId) {
+        toast.error("No active team found");
+        return;
+      }
 
-      if (response.data.success) {
+      const response = await teamAPI.student.leaveTeam(teamId);
+
+      if (response.success || response.data?.success) {
         toast.success("You left the team");
         setTeam(null);
+        localStorage.removeItem("currentTeamId");
       } else {
-        toast.error(response.data.message || "Failed to leave team");
+        toast.error(
+          response.message || response.error || "Failed to leave team"
+        );
       }
     } catch (error) {
       console.error("Error leaving team:", error);
-      toast.error("Error leaving team");
+      toast.error(error.response?.data?.message || "Error leaving team");
     } finally {
       setLeaving(false);
     }
@@ -453,7 +494,10 @@ const TeamManagement = () => {
                 {team.members.length < 4 && (
                   <div className="mt-4 flex justify-center">
                     <Button
-                      onClick={() => setIsInviteModalOpen(true)}
+                      onClick={() => {
+                        setIsInviteModalOpen(true);
+                        fetchAvailableStudents();
+                      }}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
                       <FontAwesomeIcon icon={faUserPlus} className="mr-2" />{" "}
@@ -559,10 +603,10 @@ const TeamManagement = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={!createTeamForm.name.trim()}
+                disabled={!createTeamForm.name.trim() || creating}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                Create Team
+                {creating ? "Creating..." : "Create Team"}
               </Button>
             </DialogFooter>
           </form>
@@ -575,7 +619,13 @@ const TeamManagement = () => {
           <DialogHeader>
             <DialogTitle>Invite Student to Team</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleInviteStudent} className="space-y-4 py-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleInviteStudent();
+            }}
+            className="space-y-4 py-4"
+          >
             <div>
               <Label htmlFor="studentId">Student ID</Label>
               <Input
@@ -610,10 +660,10 @@ const TeamManagement = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={!selectedStudentId.trim()}
+                disabled={!selectedStudentId.trim() || inviting}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                Send Invitation
+                {inviting ? "Sending..." : "Send Invitation"}
               </Button>
             </DialogFooter>
           </form>

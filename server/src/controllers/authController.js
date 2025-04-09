@@ -197,7 +197,6 @@ export const registerUser = async ({ body, set, jwt }) => {
         department: savedUser.department,
         isApproved: savedUser.isApproved,
         status: savedUser.status,
-        isEmailVerified: savedUser.isEmailVerified,
       },
       timestamp: new Date().toISOString(),
     };
@@ -279,45 +278,37 @@ export const loginUser = async ({ body, set, jwt }) => {
       setTimeout(() => reject(new Error("Database query timed out")), 5000)
     );
 
-    // Find user, include password field for comparison
     logger.info(`Login attempt for user: ${email}`);
     const userPromise = User.findOne({ email })
-      .select("+password") // Explicitly include password
+      .select("+password")
       .maxTimeMS(3000)
       .exec();
 
     const user = await Promise.race([userPromise, timeoutPromise]);
 
-    // Use UnauthorizedError for security (don't reveal if email exists)
     if (!user) {
       logger.warn(`Login failed: No user found with email ${email}`);
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    // --- DEBUG LOGGING START ---
     logger.debug("Retrieved user object during login:", {
       userId: user._id,
       email: user.email,
       role: user.role,
-      passwordHashExists: !!user.password, // Log if hash exists
-      passwordHashLength: user.password?.length, // Log hash length
+      passwordHashExists: !!user.password,
+      passwordHashLength: user.password?.length,
     });
-    // --- DEBUG LOGGING END ---
 
-    // Verify password
     logger.info(`Verifying password for user: ${email}`);
     const isMatch = await user.comparePassword(password);
 
-    // --- DEBUG LOGGING START ---
     logger.debug(`Password match result for ${email}: ${isMatch}`);
-    // --- DEBUG LOGGING END ---
 
     if (!isMatch) {
       logger.warn(`Login failed: Invalid password for user ${email}`);
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    // Check if account is approved and active
     if (!user.isApproved) {
       logger.warn(`Login failed: Account not approved for user ${email}`);
       throw new UnauthorizedError(
@@ -333,23 +324,19 @@ export const loginUser = async ({ body, set, jwt }) => {
       );
     }
 
-    // Generate token using our custom function instead of jwt.sign
     const payloadToSign = {
       userId: user._id.toString(),
       role: user.role,
       email: user.email,
     };
 
-    // Use our custom JWT generation
     const token = await generateToken(payloadToSign);
 
-    // Update last login (don't block response if this fails)
     user.lastLogin = new Date();
     user
       .save()
-      .catch((err) => logger.error("Failed to update last login", err)); // Log error but continue
+      .catch((err) => logger.error("Failed to update last login", err));
 
-    // Prepare safe user data for response
     const userResponse = {
       _id: user._id.toString(),
       fullName: user.fullName,
@@ -357,15 +344,15 @@ export const loginUser = async ({ body, set, jwt }) => {
       role: user.role,
       department: user.department,
       isApproved: user.isApproved,
-      isEmailVerified: user.isEmailVerified, // Include verification status
-      profilePicture: user.profilePicture, // Include profile picture
     };
 
     logger.info(`Login successful for user: ${email}`);
+    if (set) set.status = 200; // Ensure 200 status on success
     return {
       success: true,
       token,
       user: userResponse,
+      error: null, // Explicitly include error as null
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
@@ -405,7 +392,7 @@ export const loginUser = async ({ body, set, jwt }) => {
       };
     }
 
-    if (set) set.status = 500; // Default internal server error
+    if (set) set.status = 500;
     return {
       success: false,
       error: "Login failed due to an internal error.",

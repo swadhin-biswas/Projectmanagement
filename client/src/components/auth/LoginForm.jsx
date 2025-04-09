@@ -1,136 +1,84 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useAuth } from "../../contexts/AuthContext";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { authAPI } from "../../api";
 
 const LoginForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear errors when user starts typing
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Email validation
-    if (!formData.email?.trim()) {
-      newErrors.email = "Email is required";
-    } else {
-      const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/;
-      if (!emailRegex.test(formData.email.trim())) {
-        newErrors.email = "Please enter a valid email address";
-      }
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
     setLoading(true);
-    
+    setError(null);
+
     try {
-      const result = await login(formData);
-      if (result.success) {
-        if (onSuccess) {
-          onSuccess(result);
-        } else {
-          // Determine redirect based on user role
-          const dashboardRoutes = {
-            admin: '/admin/dashboard',
-            superadmin: '/admin/dashboard',
-            supervisor: '/supervisor/dashboard',
-            student: '/student/dashboard'
-          };
-          
-          const redirectPath = dashboardRoutes[result.user.role] || '/dashboard';
-          navigate(redirectPath);
-        }
-      } else {
-        toast.error(result.error || "Login failed. Please check your credentials.");
+      const response = await authAPI.login(formData);
+      if (response.token) {
+        onSuccess && onSuccess(response);
+        navigate("/dashboard"); // Redirect to dashboard after login
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error.message || "An unexpected error occurred during login");
+    } catch (err) {
+      setError(err.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Login</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <div className="w-full max-w-md p-8 space-y-4 bg-gray-800 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold text-center">Login</h2>
+        {error && (
+          <div className="p-2 text-sm text-red-500 bg-red-100 rounded">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
+          <div>
+            <label htmlFor="email" className="block text-sm">
+              Email
+            </label>
+            <input
               type="email"
               id="email"
               name="email"
-              placeholder="your@email.com"
               value={formData.email}
               onChange={handleChange}
-              className={errors.email ? "border-red-500" : ""}
+              required
+              className="w-full p-2 mt-1 text-black rounded bg-gray-200"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email}</p>
-            )}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
+          <div>
+            <label htmlFor="password" className="block text-sm">
+              Password
+            </label>
+            <input
               type="password"
               id="password"
               name="password"
-              placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
-              className={errors.password ? "border-red-500" : ""}
+              required
+              className="w-full p-2 mt-1 text-black rounded bg-gray-200"
             />
-            {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password}</p>
-            )}
           </div>
-          
-          <Button
+          <button
             type="submit"
             disabled={loading}
-            className="w-full"
+            className="w-full p-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-600"
           >
             {loading ? "Logging in..." : "Login"}
-          </Button>
+          </button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

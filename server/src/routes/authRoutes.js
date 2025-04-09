@@ -13,7 +13,7 @@ import { verifyToken } from "../utils/jwt.js";
 import logger from "../utils/logger.js";
 
 export default function authRoutes(app) {
-  return app.group("/api/auth", (app) => {
+  return app.group("/auth", (app) => {
     // Common schemas
     const registerSchema = t.Object({
       fullName: t.String({ minLength: 2, maxLength: 50 }),
@@ -179,12 +179,12 @@ export default function authRoutes(app) {
               success: t.Boolean(),
               token: t.Optional(t.String()),
               user: t.Optional(userProfileSchema),
-              error: t.Optional(t.String()),
+              error: t.Optional(t.Union([t.String(), t.Null()])), // Explicitly allow null
               timestamp: t.String(),
             }),
             401: t.Object({
               success: t.Boolean(),
-              error: t.String(),
+              error: t.Optional(t.String()), // Changed from t.String()
               timestamp: t.String(),
             }),
             500: t.Object({

@@ -11,12 +11,6 @@ import { elysiaCorsMiddleware } from "./middleware/cors.js";
 import staticFilesMiddleware from "./middleware/staticFiles.js";
 
 // Import routes
-import invitationRoutes from "./routes/invitationRoutes.js";
-import sessionRoutes from "./routes/sessionRoutes.js";
-import teamRoutes from "./routes/teamRoutes.js";
-// import studentTeamRoutes from "./routes/studentTeamRoutes.js";
-
-// Import additional routes
 import activityRoutes from "./routes/activityRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
@@ -25,15 +19,18 @@ import calendarRoutes from "./routes/calendarRoutes.js";
 import calendarServiceRoutes from "./routes/calendarServiceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import exportRoutes from "./routes/exportRoutes.js";
+import invitationRoutes from "./routes/invitationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import milestoneRoutes from "./routes/milestoneRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
-import projectRoutes from "./routes/projectRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
-// Import the new team routes
+// Import routes that may be exported as Elysia instances
+import { projectRoutes } from "./routes/projectRoutes.js";
 
 // Load environment variables
 config();
@@ -407,56 +404,58 @@ app.derive(async ({ jwt, cookie, set }) => {
 });
 
 // API Routes Grouping
-app.group("/api", (group) =>
-  group
-    // Mount existing routes
-    .use(authRoutes)
-    .use(adminRoutes)
-    .use(dashboardRoutes)
-    .use(sessionRoutes)
-    .use(projectRoutes)
-    .use(studentRoutes)
-    .use(supervisorRoutes)
-    .use(activityRoutes)
-    .use(analyticsRoutes)
-    .use(calendarRoutes)
-    .use(calendarServiceRoutes)
-    .use(exportRoutes)
-    .use(invitationRoutes)
-    .use(messageRoutes)
-    .use(milestoneRoutes)
-    .use(notificationRoutes)
-    .use(uploadRoutes)
-    // Mount the new team routes
-    .use(teamRoutes) // Mounts routes defined in teamRoutes under /api/teams (due to its prefix)
+app.group("/api", (api) => {
+  // Apply routes that are exported as functions
+  if (typeof authRoutes === "function") authRoutes(api);
+  if (typeof adminRoutes === "function") adminRoutes(api);
+  if (typeof dashboardRoutes === "function") dashboardRoutes(api);
+  if (typeof sessionRoutes === "function") sessionRoutes(api);
+  if (typeof studentRoutes === "function") studentRoutes(api);
+  if (typeof supervisorRoutes === "function") supervisorRoutes(api);
+  if (typeof activityRoutes === "function") activityRoutes(api);
+  if (typeof analyticsRoutes === "function") analyticsRoutes(api);
+  if (typeof calendarRoutes === "function") calendarRoutes(api);
+  if (typeof calendarServiceRoutes === "function") calendarServiceRoutes(api);
+  if (typeof exportRoutes === "function") exportRoutes(api);
+  if (typeof invitationRoutes === "function") invitationRoutes(api);
+  if (typeof messageRoutes === "function") messageRoutes(api);
+  if (typeof milestoneRoutes === "function") milestoneRoutes(api);
+  if (typeof notificationRoutes === "function") notificationRoutes(api);
+  if (typeof uploadRoutes === "function") uploadRoutes(api);
+  if (typeof teamRoutes === "function") teamRoutes(api);
 
-    // Global guard for /api routes requiring authentication (applied AFTER JWT derive)
-    .onRequest(({ user, set, request }) => {
-      // List of paths that DO NOT require authentication
-      const publicPaths = [
-        "/api/auth/login",
-        "/api/auth/register",
-        "/api/docs", // Assuming API docs route doesn't need auth
-        "/api/swagger", // Swagger UI endpoint
-        // Add any other public API endpoints here
-      ];
+  // Use routes that are exported as Elysia instances
+  if (projectRoutes instanceof Elysia) {
+    app.use(projectRoutes);
+  }
 
-      const requestPath = new URL(request.url).pathname;
+  // Global guard for /api routes requiring authentication
+  api.onRequest(({ user, set, request }) => {
+    // List of paths that DO NOT require authentication
+    const publicPaths = [
+      "/api/auth/login",
+      "/api/auth/register",
+      "/api/docs", // Assuming API docs route doesn't need auth
+      "/api/swagger", // Swagger UI endpoint
+      // Add any other public API endpoints here
+    ];
 
-      // Allow requests to public paths
-      if (publicPaths.some((path) => requestPath.startsWith(path))) {
-        return; // Do not enforce auth for public paths
-      }
+    const requestPath = new URL(request.url).pathname;
 
-      // For all other /api paths, require a valid user from JWT
-      if (!user) {
-        set.status = 401;
-        // logger.warn(`Unauthorized access attempt to ${requestPath}`); // Optional logging
-        // Return an object matching the expected error format
-        return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" };
-      }
-    })
-);
+    // Allow requests to public paths
+    if (publicPaths.some((path) => requestPath.startsWith(path))) {
+      return; // Do not enforce auth for public paths
+    }
+
+    // For all other /api paths, require a valid user from JWT
+    if (!user) {
+      set.status = 401;
+      // logger.warn(`Unauthorized access attempt to ${requestPath}`); // Optional logging
+      // Return an object matching the expected error format
+      return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" };
+    }
+  });
+});
 
 // Root/Public Routes (if any, outside /api)
 // ...

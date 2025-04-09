@@ -1,3 +1,4 @@
+import { Elysia } from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { config } from "../config/config.js";
 import { User } from "../models/User.js";
@@ -6,21 +7,18 @@ import logger from "../utils/logger.js";
 
 // Create JWT middleware for Elysia
 export const jwtAuth = () => {
-  const jwtPlugin = jwt({
-    name: "jwt",
-    secret: config.jwt.secret,
-    exp: config.jwt.expiresIn,
-  });
-
-  return async (app) => {
-    // Apply the JWT plugin
-    app.use(jwtPlugin);
-
-    // Add authentication middleware
-    app.derive(async ({ jwt, headers, set }) => {
+  return new Elysia()
+    .use(
+      jwt({
+        name: "jwt",
+        secret: config.jwt.secret,
+        exp: config.jwt.expiresIn,
+      })
+    )
+    .derive(async ({ jwt, headers, set }) => {
       try {
         // Log incoming authorization header for debugging (first 20 chars only)
-        const authHeader = headers.authorization || "";
+        const authHeader = headers.get("Authorization") || "";
         logger.debug(
           `Received Authorization header: ${authHeader.substring(0, 20)}...`
         );
@@ -82,21 +80,24 @@ export const jwtAuth = () => {
         throw new UnauthorizedError("Authentication failed");
       }
     });
-  };
 };
 
 // Generate a signed JWT token
-export const signToken = async (app, userId, email, role) => {
+export const signToken = async (userId, email, role) => {
   try {
-    const payload = {
-      userId,
-      email,
-      role,
-    };
-
+    const payload = { userId, email, role };
     logger.debug(`Signing JWT for userId: ${userId}`, payload);
 
-    // Sign the token
+    // Create a temporary Elysia instance with jwt plugin for signing
+    const app = new Elysia().use(
+      jwt({
+        name: "jwt",
+        secret: config.jwt.secret,
+        exp: config.jwt.expiresIn,
+      })
+    );
+
+    // Sign the token using the instance's jwt.sign
     const token = await app.jwt.sign(payload);
 
     return {

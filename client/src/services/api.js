@@ -123,3 +123,56 @@ export const studentService = {
     return response.data;
   },
 };
+
+// Function to get the auth token (replace with your actual token retrieval logic)
+const getAuthToken = () => {
+  // Example: Retrieve token from localStorage, context, or state management
+  return localStorage.getItem("authToken"); // Adjust as needed
+};
+
+// Add a request interceptor to include the auth token
+const apiClient = axios.create({
+  baseURL: API_URL,
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// --- Team API Functions ---
+
+/**
+ * Fetches details for a specific team by its ID.
+ * Requires JWT authentication.
+ * @param {string} teamId - The ID of the team to fetch.
+ * @returns {Promise<object>} - A promise that resolves to the team details.
+ */
+export const getTeamDetailsById = async (teamId) => {
+  if (!teamId) {
+    throw new Error("Team ID is required");
+  }
+  try {
+    const response = await apiClient.get(`/api/teams/${teamId}`);
+    // The response interceptor in api.js might already extract 'data'
+    // Adjust based on your interceptor's behavior
+    return response.data; // Assuming successful response contains team data
+  } catch (error) {
+    console.error(`Error fetching team details for ID ${teamId}:`, error);
+    // Rethrow or handle error appropriately (e.g., return null, show notification)
+    throw error;
+  }
+};
+
+// Add other team-related API functions here (createTeam, etc.)
+
+// --- Other API Functions --- (e.g., auth, projects, etc.)
+// ... existing functions ...
