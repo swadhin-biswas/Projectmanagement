@@ -7,9 +7,9 @@ import { Team } from "../models/Team.js";
 import { TeamInvitation } from "../models/TeamInvitation.js";
 import { User } from "../models/User.js";
 import {
-    ForbiddenError,
-    NotFoundError,
-    ValidationError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
 } from "../utils/errors.js";
 import logger from "../utils/logger.js";
 
@@ -105,7 +105,10 @@ const generateUniqueTeamId = async () => {
 
   while (!isUnique) {
     // Generate random alphanumeric string
-    teamId = Math.random().toString(36).substring(2, 2 + length).toUpperCase();
+    teamId = Math.random()
+      .toString(36)
+      .substring(2, 2 + length)
+      .toUpperCase();
     // Check if it exists
     const existingTeam = await Team.findOne({ teamId });
     if (!existingTeam) {
@@ -130,13 +133,15 @@ export const createTeam = async ({ body, user }) => {
     }
 
     if (body.name.length < 3 || body.name.length > 50) {
-      throw new ValidationError("Team name must be between 3 and 50 characters");
+      throw new ValidationError(
+        "Team name must be between 3 and 50 characters"
+      );
     }
 
     // Check if student is already in a team
     const existingTeam = await Team.findOne({
       "members.user": student._id,
-      "members.status": "active"
+      "members.status": "active",
     });
 
     if (existingTeam) {
@@ -161,12 +166,14 @@ export const createTeam = async ({ body, user }) => {
       session: currentSession._id,
       creator: student._id,
       maxMembers: currentSession.maxTeamSize || 4,
-      members: [{
-        user: student._id,
-        role: "leader",
-        status: "active",
-        joinedAt: new Date()
-      }]
+      members: [
+        {
+          user: student._id,
+          role: "leader",
+          status: "active",
+          joinedAt: new Date(),
+        },
+      ],
     });
 
     // Update student's team reference
@@ -177,25 +184,26 @@ export const createTeam = async ({ body, user }) => {
     // Create team chat
     await TeamChat.create({
       team: team._id,
-      messages: [{
-        type: "system",
-        content: "Team created",
-        timestamp: new Date()
-      }]
+      messages: [
+        {
+          type: "system",
+          content: "Team created",
+          timestamp: new Date(),
+        },
+      ],
     });
 
     logger.info("Team created successfully", {
       teamId: team._id,
       creator: student._id,
-      sessionId: currentSession._id
+      sessionId: currentSession._id,
     });
 
     return {
       success: true,
       message: "Team created successfully",
-      data: team
+      data: team,
     };
-
   } catch (error) {
     logger.error("Failed to create team", { error, userId: user.id });
     throw error;
@@ -213,7 +221,7 @@ export const inviteToTeam = async ({ body, user }) => {
     // Find inviter's team
     const team = await Team.findOne({
       "members.user": inviter._id,
-      "members.status": "active"
+      "members.status": "active",
     });
 
     if (!team) {
@@ -221,7 +229,10 @@ export const inviteToTeam = async ({ body, user }) => {
     }
 
     // Check if team is full
-    if (team.members.filter(m => m.status === "active").length >= team.maxMembers) {
+    if (
+      team.members.filter((m) => m.status === "active").length >=
+      team.maxMembers
+    ) {
       throw new ValidationError("Team has reached maximum member limit");
     }
 
@@ -234,7 +245,7 @@ export const inviteToTeam = async ({ body, user }) => {
     // Check if student is already in a team
     const existingTeam = await Team.findOne({
       "members.user": invitedStudent._id,
-      "members.status": "active"
+      "members.status": "active",
     });
 
     if (existingTeam) {
@@ -245,11 +256,13 @@ export const inviteToTeam = async ({ body, user }) => {
     const existingInvite = await TeamInvitation.findOne({
       team: team._id,
       invitee: invitedStudent._id,
-      status: "pending"
+      status: "pending",
     });
 
     if (existingInvite) {
-      throw new ValidationError("An invitation is already pending for this student");
+      throw new ValidationError(
+        "An invitation is already pending for this student"
+      );
     }
 
     // Create invitation
@@ -258,7 +271,7 @@ export const inviteToTeam = async ({ body, user }) => {
       inviter: inviter._id,
       invitee: invitedStudent._id,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      status: "pending"
+      status: "pending",
     });
 
     // Add notification for invited student
@@ -269,10 +282,10 @@ export const inviteToTeam = async ({ body, user }) => {
       from: inviter.user,
       relatedTo: {
         model: "Team",
-        id: team._id
+        id: team._id,
       },
       isRead: false,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     if (!invitedStudent.notifications) {
@@ -291,21 +304,21 @@ export const inviteToTeam = async ({ body, user }) => {
           studentName: invitedStudent.user.fullName,
           teamName: team.name,
           inviterName: inviter.user.fullName,
-          expiryDate: invitation.expiresAt
-        }
+          expiryDate: invitation.expiresAt,
+        },
       });
     }
 
     return {
       success: true,
       message: "Invitation sent successfully",
-      data: invitation
+      data: invitation,
     };
   } catch (error) {
     logger.error("Failed to send team invitation", {
       error,
       userId: user.id,
-      studentId: body.studentId
+      studentId: body.studentId,
     });
     throw error;
   }
@@ -1200,17 +1213,17 @@ export const markNotificationAsRead = async ({ params, user }) => {
 export const getStudentResults = async ({ user }) => {
   try {
     const student = await Student.findOne({ user: user.id })
-      .populate('team')
+      .populate("team")
       .populate({
-        path: 'marks',
+        path: "marks",
         populate: {
-          path: 'project supervisor',
-          select: 'name user',
+          path: "project supervisor",
+          select: "name user",
           populate: {
-            path: 'user',
-            select: 'fullName'
-          }
-        }
+            path: "user",
+            select: "fullName",
+          },
+        },
       });
 
     if (!student) {
@@ -1218,29 +1231,32 @@ export const getStudentResults = async ({ user }) => {
     }
 
     // Only return results that have been published
-    const publishedResults = student.marks.filter(mark => {
+    const publishedResults = student.marks.filter((mark) => {
       const project = mark.project;
       return project && project.resultsPublished;
     });
 
     return {
       success: true,
-      data: publishedResults.map(mark => ({
+      data: publishedResults.map((mark) => ({
         id: mark._id,
         category: mark.category,
         score: mark.score,
         feedback: mark.feedback,
         date: mark.date,
-        project: mark.project ? {
-          id: mark.project._id,
-          name: mark.project.name
-        } : null,
-        supervisor: mark.supervisor ? {
-          name: mark.supervisor.user.fullName
-        } : null
-      }))
+        project: mark.project
+          ? {
+              id: mark.project._id,
+              name: mark.project.name,
+            }
+          : null,
+        supervisor: mark.supervisor
+          ? {
+              name: mark.supervisor.user.fullName,
+            }
+          : null,
+      })),
     };
-
   } catch (error) {
     throw error;
   }
@@ -1274,19 +1290,22 @@ export const getResultDetail = async ({ params, user }) => {
         score: mark.score,
         feedback: mark.feedback,
         date: mark.date,
-        project: project ? {
-          id: project._id,
-          name: project.name,
-          type: project.type,
-          submissionDate: project.lastSubmittedAt
-        } : null,
-        supervisor: mark.supervisor ? {
-          name: mark.supervisor.user.fullName,
-          feedback: mark.feedback
-        } : null
-      }
+        project: project
+          ? {
+              id: project._id,
+              name: project.name,
+              type: project.type,
+              submissionDate: project.lastSubmittedAt,
+            }
+          : null,
+        supervisor: mark.supervisor
+          ? {
+              name: mark.supervisor.user.fullName,
+              feedback: mark.feedback,
+            }
+          : null,
+      },
     };
-
   } catch (error) {
     throw error;
   }

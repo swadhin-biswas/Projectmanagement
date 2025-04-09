@@ -14,183 +14,172 @@ if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
 
-// Define log format
-const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
+// Define shared timestamp format
+const timestampFormat = winston.format.timestamp({
+  format: "YYYY-MM-DD HH:mm:ss.SSS",
+});
+
+// --- File Log Format (JSON for easy parsing) ---
+const fileLogFormat = winston.format.combine(
+  timestampFormat,
   winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json(),
-  winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
-    // Format additional metadata
-    const metaStr = Object.keys(meta).length
-      ? "\n" + JSON.stringify(meta, null, 2)
-      : "";
-
-    // Include stack trace if available
-    const stackStr = stack ? `\n${stack}` : "";
-
-    return `${timestamp} [${level.toUpperCase()}]: ${message}${stackStr}${metaStr}`;
-  })
+  winston.format.splat(), // Necessary for %s, %d, %j
+  winston.format.json() // Log as JSON in files
 );
 
-// Define console format with colors for better readability
+// --- Console Log Format (Readable with Color) ---
 const consoleFormat = winston.format.combine(
-  winston.format.colorize(),
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
+  timestampFormat,
+  winston.format.colorize(), // Add colors
   winston.format.errors({ stack: true }),
-  winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
-    // Format additional metadata
-    const metaStr = Object.keys(meta).length
-      ? "\n" + JSON.stringify(meta, null, 2)
-      : "";
+  winston.format.printf(
+    ({ level, message, timestamp, stack, function: func, ...meta }) => {
+      const functionName = func ? ` [${func}]` : ""; // Show function name if provided
+      let metaString = Object.keys(meta).length ? JSON.stringify(meta) : "";
+      // Indent stack trace and metadata for readability
+      const stackString = stack
+        ? `\n  Stack: ${stack.split("\n").join("\n  ")}`
+        : "";
+      metaString = metaString ? `\n  Meta: ${metaString}` : "";
 
-    // Include stack trace if available
-    const stackStr = stack ? `\n${stack}` : "";
-
-    return `${timestamp} [${level}]: ${message}${stackStr}${metaStr}`;
-  })
-);
-
-// Enhanced console format for API endpoints with special highlighting
-const apiEndpointFormat = winston.format.printf(
-  ({ level, message, method, path, status, duration, error }) => {
-    let endpointInfo = `${method} ${path}`;
-    let statusInfo = status ? ` → ${status}` : "";
-    let durationInfo = duration ? ` (${duration}ms)` : "";
-    let errorInfo = error ? `\n  ERROR: ${error}` : "";
-
-    // Color coding based on status code or errors
-    if (status >= 500 || error) {
-      return `🔴 API ${endpointInfo}${statusInfo}${durationInfo}${errorInfo}`;
-    } else if (status >= 400) {
-      return `🟠 API ${endpointInfo}${statusInfo}${durationInfo}${errorInfo}`;
-    } else if (status >= 300) {
-      return `🟡 API ${endpointInfo}${statusInfo}${durationInfo}`;
-    } else {
-      return `🟢 API ${endpointInfo}${statusInfo}${durationInfo}`;
+      return `${timestamp} ${level}${functionName}: ${message}${metaString}${stackString}`;
     }
-  }
+  )
 );
 
-// Create file transports for different log levels
+// Determine log level for console based on NODE_ENV
+const consoleLogLevel =
+  process.env.NODE_ENV === "production" ? "info" : "debug";
+
+// Determine main log level (controls file logs primarily)
+const mainLogLevel =
+  process.env.LOG_LEVEL ||
+  (process.env.NODE_ENV === "production" ? "info" : "debug");
+
+// --- Transports ---
+
+// 1. Console Transport (Level controlled by NODE_ENV)
+const consoleTransport = new winston.transports.Console({
+  format: consoleFormat,
+  level: consoleLogLevel, // Explicitly set level for console
+  handleExceptions: true,
+  handleRejections: true,
+});
+
+// 2. Application Info File Transport
 const fileTransport = new winston.transports.DailyRotateFile({
   filename: path.join(logsDir, "application-%DATE%.log"),
   datePattern: "YYYY-MM-DD",
   maxSize: "20m",
   maxFiles: "14d",
-  level: "info",
+  level: "info", // Log info and above to this file
+  format: fileLogFormat,
 });
 
+// 3. Error File Transport
 const errorFileTransport = new winston.transports.DailyRotateFile({
   filename: path.join(logsDir, "error-%DATE%.log"),
   datePattern: "YYYY-MM-DD",
   maxSize: "20m",
   maxFiles: "14d",
-  level: "error",
+  level: "error", // Only errors to this file
+  format: fileLogFormat,
 });
 
-// Create a combined log for all requests
-const combinedFileTransport = new winston.transports.DailyRotateFile({
-  filename: path.join(logsDir, "combined-%DATE%.log"),
+// 4. Combined Info File Transport (Redundant? Maybe remove if app.log is enough)
+// const combinedFileTransport = new winston.transports.DailyRotateFile({
+//   filename: path.join(logsDir, "combined-%DATE%.log"),
+//   datePattern: "YYYY-MM-DD",
+//   maxSize: "20m",
+//   maxFiles: "14d",
+//   level: "info",
+//   format: fileLogFormat,
+// });
+
+// 5. Dedicated Debug File Transport (NEW)
+const debugFileTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logsDir, "debug-%DATE%.log"),
   datePattern: "YYYY-MM-DD",
-  maxSize: "20m",
-  maxFiles: "14d",
-  level: "info",
+  maxSize: "50m", // Allow larger size for debug logs
+  maxFiles: "7d", // Keep for shorter duration
+  level: "debug", // Log debug and above (effectively all levels if main level is debug)
+  format: fileLogFormat,
+  silent: process.env.NODE_ENV === "production", // Don't write debug logs in production
 });
 
-// Create console transport
-const consoleTransport = new winston.transports.Console({
-  format: consoleFormat,
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
-});
-
-// Create the logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
-  format: logFormat,
-  defaultMeta: { service: "research-mgmt-api" },
-  transports: [
-    consoleTransport,
-    fileTransport,
-    errorFileTransport,
-    combinedFileTransport,
-  ],
-  exitOnError: false,
-});
-
-// Create a specialized logger for API endpoints
-const apiLogger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
-    apiEndpointFormat
-  ),
-  transports: [new winston.transports.Console(), combinedFileTransport],
-});
-
-// Create a separate transport specifically for uncaught exceptions
+// 6. Exceptions File Transport
 const exceptionTransport = new winston.transports.DailyRotateFile({
   filename: path.join(logsDir, "exceptions-%DATE%.log"),
   datePattern: "YYYY-MM-DD",
   maxSize: "20m",
   maxFiles: "14d",
-  format: logFormat,
+  format: fileLogFormat, // Use file format
 });
 
-// Handle uncaught exceptions and unhandled rejections with better formatting
+// --- Create the Main Logger ---
+const logger = winston.createLogger({
+  level: mainLogLevel, // Use environment variable or default based on NODE_ENV
+  format: fileLogFormat, // Default format for files (console uses its own)
+  defaultMeta: { service: "research-mgmt-api" },
+  transports: [
+    consoleTransport,
+    fileTransport,
+    errorFileTransport,
+    debugFileTransport, // Add the new debug file transport
+    // combinedFileTransport, // Removed redundancy
+  ],
+  exitOnError: false, // Do not exit on handled exceptions
+});
+
+// Configure Exception Handling
 logger.exceptions.handle(
-  exceptionTransport,
-  new winston.transports.Console({
-    format: consoleFormat,
-  })
+  exceptionTransport, // Log exceptions to dedicated file
+  consoleTransport // Also log exceptions to console
 );
 
-// Setting up unhandled rejection logging with improved handling
+// Configure Unhandled Rejection Logging
 process.on("unhandledRejection", (reason, promise) => {
-  // Extract stack trace if available
   const stack =
     reason?.stack ||
     (reason instanceof Error ? reason.toString() : JSON.stringify(reason));
-
   logger.error("Unhandled Rejection:", {
     reason: reason instanceof Error ? reason.message : reason,
     stack: stack,
-    // Add more details that might be useful for debugging
     location: "unhandledRejection handler",
   });
 });
 
-// Add handler for uncaught exceptions to provide better context
+// Configure Uncaught Exception Logging (redundant with logger.exceptions.handle but provides fallback)
 process.on("uncaughtException", (error) => {
   logger.error("Uncaught Exception:", {
     error: error.message,
     stack: error.stack,
     location: "uncaughtException handler",
   });
-
-  // For critical exceptions, we may want to exit after logging
-  // Giving time for the log to be written
+  // Ensure process exits after logging
+  winston.on("finish", () => {
+    process.exit(1);
+  });
+  logger.end(); // Trigger finish event
   setTimeout(() => {
     process.exit(1);
-  }, 1000);
+  }, 2000); // Force exit after timeout
 });
 
-// Add handler for SIGTERM and SIGINT to gracefully log before shutdown
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM received. Shutting down gracefully");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  logger.info("SIGINT received. Shutting down gracefully");
-  process.exit(0);
-});
-
-// Add utility for logging API calls
+// --- API Call Logger (Simplified) ---
+// Use the main logger but perhaps with a specific format if needed
+// For simplicity now, we'll just use the main logger
 const logApiCall = (method, path, status, duration, error = null) => {
-  apiLogger.info("API Call", { method, path, status, duration, error });
+  const level =
+    status >= 500 || error ? "error" : status >= 400 ? "warn" : "info";
+  logger.log(
+    level,
+    `HTTP ${method} ${path} - ${status} (${duration}ms)${
+      error ? ` Error: ${error}` : ""
+    }`
+  );
 };
 
-// Export both as default and named export for compatibility
-export { apiLogger, logApiCall, logger };
+// Export logger and utility
+export { logApiCall };
 export default logger;

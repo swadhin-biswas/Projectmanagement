@@ -1,10 +1,12 @@
 // server/src/controllers/adminController.js
+import { AdminAnalytics } from "../models/AdminAnalytics.js";
 import { Notification } from "../models/Notification.js";
 import { Project } from "../models/Project.js";
 import { Session } from "../models/Session.js";
 import { Student } from "../models/Student.js";
 import { Supervisor } from "../models/Supervisor.js";
 import { Team } from "../models/Team.js";
+import { Timeline } from "../models/Timeline.js";
 import { User } from "../models/User.js";
 import { NotFoundError, ValidationError } from "../utils/errors.js";
 import logger from "../utils/logger.js";
@@ -112,16 +114,17 @@ export const approveSupervisor = async ({ params }) => {
     await User.findByIdAndUpdate(supervisor.user._id, {
       status: "active",
       isApproved: true,
-      approvedAt: new Date()
+      approvedAt: new Date(),
     });
 
     // Add notification
     const notification = new Notification({
       title: "Account Approved",
-      message: "Your supervisor account has been approved. You can now log in and start supervising teams.",
+      message:
+        "Your supervisor account has been approved. You can now log in and start supervising teams.",
       type: "account_approval",
       user: supervisor.user._id,
-      isRead: false
+      isRead: false,
     });
 
     await notification.save();
@@ -134,8 +137,8 @@ export const approveSupervisor = async ({ params }) => {
         template: "supervisorApproval",
         context: {
           name: supervisor.user.fullName,
-          loginUrl: process.env.CLIENT_URL || "http://localhost:3000"
-        }
+          loginUrl: process.env.CLIENT_URL || "http://localhost:3000",
+        },
       });
     }
 
@@ -145,7 +148,7 @@ export const approveSupervisor = async ({ params }) => {
 
     return {
       success: true,
-      message: "Supervisor account approved successfully"
+      message: "Supervisor account approved successfully",
     };
   } catch (error) {
     logger.error("Failed to approve supervisor", {
@@ -354,7 +357,125 @@ export const assignSupervisor = async ({ params, body }) => {
 };
 
 // Alias for assignSupervisor for backward compatibility
-export const assignSupervisorToTeam = assignSupervisor;
+export const assignSupervisorToTeam = async ({ params, body }) => {
+  try {
+    const { teamId } = params;
+    const { supervisorIds, sessionId } = body;
+
+    // Validate team exists
+    const team = await Team.findById(teamId).populate("session");
+    if (!team) {
+      throw new NotFoundError("Team not found");
+    }
+
+    // Check if team belongs to the session
+    if (sessionId && team.session._id.toString() !== sessionId) {
+      throw new ValidationError(
+        "Team does not belong to the specified session"
+      );
+    }
+
+    // Validate supervisors exist and are approved
+    const supervisors = await Supervisor.find({
+      _id: { $in: supervisorIds },
+      "user.isApproved": true,
+    }).populate("user");
+
+    if (supervisors.length !== supervisorIds.length) {
+      throw new ValidationError(
+        "One or more supervisors are invalid or not approved"
+      );
+    }
+
+    // Check supervisor capacity
+    for (const supervisor of supervisors) {
+      const supervisorTeams = await Team.countDocuments({
+        "supervisors.supervisor": supervisor._id,
+        session: team.session._id,
+      });
+
+      if (supervisorTeams >= team.session.supervisorCapacity) {
+        throw new ValidationError(
+          `Supervisor ${supervisor.user.fullName} has reached maximum team capacity`
+        );
+      }
+    }
+
+    // Add supervisors to team
+    const existingSupervisorIds = team.supervisors.map((s) =>
+      s.supervisor.toString()
+    );
+    const newSupervisors = supervisorIds.filter(
+      (id) => !existingSupervisorIds.includes(id)
+    );
+
+    if (newSupervisors.length === 0) {
+      return {
+        success: true,
+        message: "All specified supervisors are already assigned to this team",
+        data: team,
+      };
+    }
+
+    // Add new supervisors to team
+    for (const supervisorId of newSupervisors) {
+      team.supervisors.push({
+        supervisor: supervisorId,
+        assignedAt: new Date(),
+        status: "active",
+      });
+
+      // Add team to supervisor's teams
+      await Supervisor.findByIdAndUpdate(supervisorId, {
+        $addToSet: { teams: teamId },
+      });
+
+      // Notify team members
+      const members = team.members.map((m) => m.user);
+      await Notification.insertMany(
+        members.map((userId) => ({
+          title: "Supervisor Assigned",
+          message: `A new supervisor has been assigned to your team ${team.name}.`,
+          type: "supervisor_assignment",
+          user: userId,
+          isRead: false,
+          metadata: {
+            teamId: team._id,
+            supervisorId,
+          },
+        }))
+      );
+
+      // Notify supervisor
+      const supervisor = await Supervisor.findById(supervisorId).populate(
+        "user"
+      );
+      if (supervisor && supervisor.user) {
+        await Notification.create({
+          title: "Team Assignment",
+          message: `You have been assigned to supervise team ${team.name}.`,
+          type: "team_assignment",
+          user: supervisor.user._id,
+          isRead: false,
+          metadata: {
+            teamId: team._id,
+          },
+        });
+      }
+    }
+
+    await team.save();
+
+    return {
+      success: true,
+      message: `${newSupervisors.length} supervisor(s) assigned successfully`,
+      data: team,
+    };
+  } catch (error) {
+    logger.error("Failed to assign supervisor to team", { error });
+    throw error;
+  }
+};
 
 // Helper function to calculate session progress
 const calculateSessionProgress = (session) => {
@@ -1765,8 +1886,10 @@ export const fixSupervisorFunctionality = async ({ params, body }) => {
 // Process supervisor approval
 export const processSupervisorApproval = async ({ params, body, user }) => {
   try {
-    const supervisor = await Supervisor.findById(params.id)
-      .populate("user", "fullName email department");
+    const supervisor = await Supervisor.findById(params.id).populate(
+      "user",
+      "fullName email department"
+    );
 
     if (!supervisor) {
       throw new NotFoundError("Supervisor profile not found");
@@ -1791,8 +1914,8 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
         message: "Your supervisor account has been approved",
         details: {
           approvedBy: admin.fullName,
-          department: supervisor.user.department
-        }
+          department: supervisor.user.department,
+        },
       };
 
       if (!supervisor.notifications) {
@@ -1807,8 +1930,8 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
         template: "supervisorApproval",
         context: {
           name: supervisor.user.fullName,
-          loginUrl: `${process.env.CLIENT_URL}/login`
-        }
+          loginUrl: `${process.env.CLIENT_URL}/login`,
+        },
       });
 
       await supervisor.save();
@@ -1820,8 +1943,8 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
           supervisorId: supervisor._id,
           email: supervisor.user.email,
           approvedBy: admin.fullName,
-          approvedAt: new Date()
-        }
+          approvedAt: new Date(),
+        },
       };
     } else if (body.action === "reject") {
       // Send rejection notification
@@ -1831,8 +1954,8 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
         template: "supervisorRejection",
         context: {
           name: supervisor.user.fullName,
-          reason: body.reason || "Does not meet current requirements"
-        }
+          reason: body.reason || "Does not meet current requirements",
+        },
       });
 
       // Delete supervisor account
@@ -1845,8 +1968,8 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
         data: {
           email: supervisor.user.email,
           rejectedBy: admin.fullName,
-          rejectedAt: new Date()
-        }
+          rejectedAt: new Date(),
+        },
       };
     }
 
@@ -1854,7 +1977,7 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
   } catch (error) {
     logger.error("Failed to process supervisor approval", {
       error,
-      supervisorId: params.id
+      supervisorId: params.id,
     });
     throw error;
   }
@@ -1863,9 +1986,9 @@ export const processSupervisorApproval = async ({ params, body, user }) => {
 // Get detailed admin analytics
 export const getDetailedAnalytics = async ({ query }) => {
   try {
-    const session = query.sessionId ?
-      await Session.findById(query.sessionId) :
-      await Session.findOne({ status: "active" });
+    const session = query.sessionId
+      ? await Session.findById(query.sessionId)
+      : await Session.findOne({ status: "active" });
 
     if (!session) {
       throw new NotFoundError("No active or specified session found");
@@ -1886,18 +2009,19 @@ export const getDetailedAnalytics = async ({ query }) => {
         startDate: session.startDate,
         endDate: session.endDate,
         progress: calculateSessionProgress(session),
-        status: session.status
+        status: session.status,
       },
       teams: {
         total: teams.length,
-        withSupervisor: teams.filter(t => t.supervisors.length > 0).length,
-        withoutSupervisor: teams.filter(t => t.supervisors.length === 0).length,
+        withSupervisor: teams.filter((t) => t.supervisors.length > 0).length,
+        withoutSupervisor: teams.filter((t) => t.supervisors.length === 0)
+          .length,
         sizeDistribution: {
-          size1: teams.filter(t => t.members.length === 1).length,
-          size2: teams.filter(t => t.members.length === 2).length,
-          size3: teams.filter(t => t.members.length === 3).length,
-          size4: teams.filter(t => t.members.length === 4).length
-        }
+          size1: teams.filter((t) => t.members.length === 1).length,
+          size2: teams.filter((t) => t.members.length === 2).length,
+          size3: teams.filter((t) => t.members.length === 3).length,
+          size4: teams.filter((t) => t.members.length === 4).length,
+        },
       },
       projects: {
         total: projects.length,
@@ -1908,33 +2032,34 @@ export const getDetailedAnalytics = async ({ query }) => {
         statusDistribution: projects.reduce((acc, p) => {
           acc[p.status] = (acc[p.status] || 0) + 1;
           return acc;
-        }, {})
+        }, {}),
       },
       supervisors: {
         total: await Supervisor.countDocuments(),
         pending: await User.countDocuments({
           role: "supervisor",
-          isApproved: false
+          isApproved: false,
         }),
         active: await User.countDocuments({
           role: "supervisor",
           isApproved: true,
-          status: "active"
+          status: "active",
         }),
-        workloadDistribution: await getWorkloadDistribution()
+        workloadDistribution: await getWorkloadDistribution(),
       },
-      deadlines: session.deadlines.map(d => ({
+      deadlines: session.deadlines.map((d) => ({
         ...d.toObject(),
         isPast: new Date() > new Date(d.dueDate),
-        daysRemaining: Math.max(0,
+        daysRemaining: Math.max(
+          0,
           Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24))
-        )
-      }))
+        ),
+      })),
     };
 
     return {
       success: true,
-      data: analytics
+      data: analytics,
     };
   } catch (error) {
     logger.error("Failed to get detailed analytics", { error });
@@ -1948,19 +2073,644 @@ const getWorkloadDistribution = async () => {
     .populate("user", "fullName department")
     .populate("teams");
 
-  return supervisors.map(s => ({
+  return supervisors.map((s) => ({
     _id: s._id,
     name: s.user.fullName,
     department: s.user.department,
     teamCount: s.teams.length,
-    studentCount: s.teams.reduce((acc, t) =>
-      acc + t.members.filter(m => m.status === "active").length, 0
+    studentCount: s.teams.reduce(
+      (acc, t) => acc + t.members.filter((m) => m.status === "active").length,
+      0
     ),
     projectTypes: s.teams.reduce((acc, t) => {
       if (t.project) {
         acc[t.project.type] = (acc[t.project.type] || 0) + 1;
       }
       return acc;
-    }, {})
+    }, {}),
   }));
+};
+
+// Enhanced: Create a timeline for sessions
+export const createSessionTimeline = async ({ params, body, user }) => {
+  try {
+    const { sessionId } = params;
+    const session = await Session.findById(sessionId);
+
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    // Create timeline
+    const timeline = new Timeline({
+      session: sessionId,
+      name: body.name || `${session.name} Timeline`,
+      description: body.description || `Timeline for ${session.name}`,
+      startDate: body.startDate || session.startDate,
+      endDate: body.endDate || session.endDate,
+      createdBy: user._id,
+      scope: body.scope || "global",
+      targetDepartments: body.targetDepartments || [],
+      targetTeams: body.targetTeams || [],
+      targetUsers: body.targetUsers || [],
+    });
+
+    // Add timeline segments
+    if (body.segments && Array.isArray(body.segments)) {
+      timeline.segments = body.segments;
+    } else {
+      // Create default segments based on session
+      const sessionDuration = session.endDate - session.startDate;
+      const segmentDuration = Math.floor(sessionDuration / 3); // 3 default segments
+
+      // Setup phase
+      timeline.segments.push({
+        name: "Setup Phase",
+        description: "Initial setup and team formation",
+        startDate: new Date(session.startDate),
+        endDate: new Date(session.startDate.getTime() + segmentDuration),
+        color: "#3498db",
+        importance: 7,
+        tasks: [
+          {
+            title: "Team Formation",
+            description: "Form teams for the session",
+            startDate: new Date(session.startDate),
+            dueDate: new Date(
+              session.startDate.getTime() + segmentDuration / 3
+            ),
+            assignedTo: "students",
+            priority: "high",
+            createdBy: user._id,
+          },
+          {
+            title: "Supervisor Assignment",
+            description: "Assign supervisors to teams",
+            startDate: new Date(
+              session.startDate.getTime() + segmentDuration / 3
+            ),
+            dueDate: new Date(
+              session.startDate.getTime() + segmentDuration / 2
+            ),
+            assignedTo: "admins",
+            priority: "high",
+            createdBy: user._id,
+          },
+        ],
+      });
+
+      // Development phase
+      timeline.segments.push({
+        name: "Development Phase",
+        description: "Main project development period",
+        startDate: new Date(session.startDate.getTime() + segmentDuration),
+        endDate: new Date(session.startDate.getTime() + segmentDuration * 2),
+        color: "#2ecc71",
+        importance: 10,
+        tasks: [
+          {
+            title: "Progress Report",
+            description: "Submit progress report",
+            startDate: new Date(session.startDate.getTime() + segmentDuration),
+            dueDate: new Date(
+              session.startDate.getTime() +
+                segmentDuration +
+                segmentDuration / 2
+            ),
+            assignedTo: "students",
+            priority: "medium",
+            createdBy: user._id,
+          },
+        ],
+      });
+
+      // Final phase
+      timeline.segments.push({
+        name: "Final Phase",
+        description: "Project completion and evaluation",
+        startDate: new Date(session.startDate.getTime() + segmentDuration * 2),
+        endDate: new Date(session.endDate),
+        color: "#e74c3c",
+        importance: 9,
+        tasks: [
+          {
+            title: "Final Submission",
+            description: "Submit final project",
+            startDate: new Date(
+              session.startDate.getTime() + segmentDuration * 2
+            ),
+            dueDate: new Date(session.endDate.getTime() - segmentDuration / 4),
+            assignedTo: "students",
+            priority: "critical",
+            createdBy: user._id,
+          },
+          {
+            title: "Evaluation",
+            description: "Evaluate submitted projects",
+            startDate: new Date(
+              session.endDate.getTime() - segmentDuration / 4
+            ),
+            dueDate: new Date(session.endDate),
+            assignedTo: "supervisors",
+            priority: "high",
+            createdBy: user._id,
+          },
+        ],
+      });
+    }
+
+    await timeline.save();
+
+    return {
+      success: true,
+      message: "Timeline created successfully",
+      data: timeline,
+    };
+  } catch (error) {
+    logger.error("Failed to create session timeline", { error });
+    throw error;
+  }
+};
+
+// Enhanced: Get session timeline
+export const getSessionTimeline = async ({ params, query }) => {
+  try {
+    const { sessionId } = params;
+
+    const timeline = await Timeline.findOne({
+      session: sessionId,
+      scope: query.scope || "global",
+    })
+      .populate("createdBy", "fullName email")
+      .lean();
+
+    if (!timeline) {
+      return {
+        success: false,
+        message: "No timeline found for this session",
+      };
+    }
+
+    // Calculate the progress for the timeline on-the-fly
+    let totalProgress = 0;
+    let weightSum = 0;
+
+    for (const segment of timeline.segments) {
+      let segmentProgress = 0;
+
+      if (segment.tasks && segment.tasks.length > 0) {
+        let taskProgressSum = 0;
+        segment.tasks.forEach((task) => {
+          taskProgressSum += task.progress;
+        });
+        segmentProgress = Math.round(taskProgressSum / segment.tasks.length);
+      }
+
+      segment.progress = segmentProgress;
+      totalProgress += segmentProgress * segment.importance;
+      weightSum += segment.importance;
+    }
+
+    const overallProgress =
+      weightSum > 0 ? Math.round(totalProgress / weightSum) : 0;
+
+    return {
+      success: true,
+      data: {
+        ...timeline,
+        overallProgress,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get session timeline", { error });
+    throw error;
+  }
+};
+
+// Enhanced: Update timeline task
+export const updateTimelineTask = async ({ params, body }) => {
+  try {
+    const { timelineId, segmentId, taskId } = params;
+
+    const timeline = await Timeline.findById(timelineId);
+    if (!timeline) {
+      throw new NotFoundError("Timeline not found");
+    }
+
+    const segment = timeline.segments.id(segmentId);
+    if (!segment) {
+      throw new NotFoundError("Timeline segment not found");
+    }
+
+    const task = segment.tasks.id(taskId);
+    if (!task) {
+      throw new NotFoundError("Task not found");
+    }
+
+    // Update task fields
+    Object.keys(body).forEach((key) => {
+      if (key !== "_id" && key !== "createdAt" && key !== "updatedAt") {
+        task[key] = body[key];
+      }
+    });
+
+    task.lastUpdated = new Date();
+
+    // Recalculate progress after update
+    if (body.status === "completed") {
+      task.progress = 100;
+    }
+
+    await timeline.save();
+
+    // If task is updated, check if notifications need to be sent
+    if (
+      task.status === "delayed" ||
+      (body.priority === "critical" && task.status !== "completed")
+    ) {
+      // Create notifications for relevant users
+      const session = await Session.findById(timeline.session);
+
+      // Determine notification recipients based on assignedTo
+      let userIds = [];
+
+      if (task.targetUsers && task.targetUsers.length > 0) {
+        userIds = task.targetUsers;
+      } else if (task.targetTeams && task.targetTeams.length > 0) {
+        // Get all members from targeted teams
+        const teams = await Team.find({
+          _id: { $in: task.targetTeams },
+          session: timeline.session,
+        });
+
+        teams.forEach((team) => {
+          team.members.forEach((member) => {
+            userIds.push(member.user);
+          });
+        });
+      } else {
+        // Based on general assignedTo
+        const roleMap = {
+          students: "student",
+          supervisors: "supervisor",
+          admins: "admin",
+        };
+
+        if (task.assignedTo !== "all") {
+          const role = roleMap[task.assignedTo];
+          const users = await User.find({
+            role,
+            status: "active",
+          });
+          userIds = users.map((u) => u._id);
+        }
+      }
+
+      // Create notifications
+      const notifications = userIds.map((userId) => ({
+        title:
+          task.status === "delayed" ? "Task Delayed" : "Critical Task Update",
+        message: `Task "${task.title}" in ${segment.name} has been updated. Status: ${task.status}, Priority: ${task.priority}`,
+        type: "task_update",
+        user: userId,
+        isRead: false,
+        metadata: {
+          timelineId: timeline._id,
+          segmentId: segment._id,
+          taskId: task._id,
+          sessionId: timeline.session,
+        },
+      }));
+
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
+    }
+
+    return {
+      success: true,
+      message: "Task updated successfully",
+      data: task,
+    };
+  } catch (error) {
+    logger.error("Failed to update timeline task", { error });
+    throw error;
+  }
+};
+
+// Enhanced: Get session analytics
+export const getSessionAnalytics = async ({ params, query }) => {
+  try {
+    const { sessionId } = params;
+    const timeRange = query.timeRange || "month"; // week, month, semester
+    const groupBy = query.groupBy || "day"; // day, week, month
+
+    // Validate session exists
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    // Get the most recent analytics data
+    const latestAnalytics = await AdminAnalytics.findOne({
+      session: sessionId,
+    }).sort({ date: -1 });
+
+    // Get aggregated metrics for trends
+    const startDate = new Date();
+    let endDate = new Date();
+
+    switch (timeRange) {
+      case "week":
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case "month":
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+      case "semester":
+        startDate.setTime(session.startDate.getTime());
+        break;
+      default:
+        startDate.setMonth(startDate.getMonth() - 1);
+    }
+
+    const analyticsData = await AdminAnalytics.getAggregatedMetrics(
+      sessionId,
+      startDate,
+      endDate,
+      groupBy
+    );
+
+    // Get performance metrics
+    const performanceMetrics = await AdminAnalytics.getPerformanceMetrics(
+      sessionId,
+      timeRange
+    );
+
+    // Get detailed data about supervision
+    const supervisorData = await Supervisor.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "_id",
+          foreignField: "supervisors.supervisor",
+          as: "supervisedTeams",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: "$userDetails.fullName",
+          email: "$userDetails.email",
+          department: "$userDetails.department",
+          teamsCount: { $size: "$supervisedTeams" },
+          studentsCount: { $size: "$students" },
+          responseRate: { $ifNull: ["$metrics.responseRate", 0] },
+          avgResponseTime: { $ifNull: ["$metrics.avgResponseTime", 0] },
+        },
+      },
+      { $sort: { teamsCount: -1 } },
+    ]);
+
+    // Get student progress statistics
+    const studentProgress = await Team.aggregate([
+      { $match: { session: mongoose.Types.ObjectId(sessionId) } },
+      {
+        $lookup: {
+          from: "projects",
+          localField: "project",
+          foreignField: "_id",
+          as: "projectDetails",
+        },
+      },
+      {
+        $unwind: { path: "$projectDetails", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          avgProgress: { $avg: { $ifNull: ["$projectDetails.progress", 0] } },
+        },
+      },
+    ]);
+
+    // Get teams without supervisors
+    const teamsWithoutSupervisor = await Team.countDocuments({
+      session: sessionId,
+      "supervisors.0": { $exists: false },
+    });
+
+    return {
+      success: true,
+      data: {
+        overview: latestAnalytics
+          ? {
+              students: latestAnalytics.studentMetrics.totalRegistered,
+              supervisors: latestAnalytics.supervisorMetrics.totalActive,
+              teams: latestAnalytics.teamMetrics.totalActive,
+              averageProgress: latestAnalytics.studentMetrics.averageProgress,
+              atRiskTeams: latestAnalytics.teamMetrics.atRiskPercentage,
+            }
+          : null,
+        trends: analyticsData,
+        performance: performanceMetrics,
+        supervision: {
+          supervisors: supervisorData,
+          teamsWithoutSupervisor,
+          pendingSupervisors: await User.countDocuments({
+            role: "supervisor",
+            isApproved: false,
+          }),
+        },
+        teamProgress: studentProgress,
+        timeline: {
+          deadlines: await Timeline.findOne({ session: sessionId }).then(
+            (timeline) => (timeline ? timeline.getUpcomingTasks(30) : [])
+          ),
+        },
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get session analytics", { error });
+    throw error;
+  }
+};
+
+// Enhanced: Create administrative task
+export const createAdminTask = async ({ body, user }) => {
+  try {
+    const {
+      sessionId,
+      title,
+      description,
+      startDate,
+      dueDate,
+      assignedTo,
+      targetUsers,
+      targetTeams,
+      priority,
+    } = body;
+
+    // Validate session exists
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    // Find or create timeline
+    let timeline = await Timeline.findOne({ session: sessionId });
+    if (!timeline) {
+      // Create a new timeline
+      timeline = new Timeline({
+        session: sessionId,
+        name: `${session.name} Timeline`,
+        description: `Administrative timeline for ${session.name}`,
+        startDate: session.startDate,
+        endDate: session.endDate,
+        createdBy: user._id,
+        segments: [
+          {
+            name: "Administrative Tasks",
+            description: "Tasks created by administrators",
+            startDate: session.startDate,
+            endDate: session.endDate,
+            color: "#3498db",
+          },
+        ],
+      });
+    }
+
+    // Find the appropriate segment or use the first one
+    let segment;
+    const now = new Date();
+
+    for (const seg of timeline.segments) {
+      if (now >= seg.startDate && now <= seg.endDate) {
+        segment = seg;
+        break;
+      }
+    }
+
+    // If no suitable segment found, use the first one
+    if (!segment && timeline.segments.length > 0) {
+      segment = timeline.segments[0];
+    }
+
+    // If still no segment, create one
+    if (!segment) {
+      segment = {
+        name: "Administrative Tasks",
+        description: "Tasks created by administrators",
+        startDate: session.startDate,
+        endDate: session.endDate,
+        color: "#3498db",
+        tasks: [],
+      };
+      timeline.segments.push(segment);
+    }
+
+    // Create new task
+    const newTask = {
+      title,
+      description,
+      startDate: new Date(startDate),
+      dueDate: new Date(dueDate),
+      assignedTo,
+      targetUsers: targetUsers || [],
+      targetTeams: targetTeams || [],
+      priority: priority || "medium",
+      status: "pending",
+      createdBy: user._id,
+    };
+
+    segment.tasks.push(newTask);
+    await timeline.save();
+
+    // Create notifications for task assignees
+    await createTaskNotifications(newTask, timeline, segment);
+
+    return {
+      success: true,
+      message: "Task created successfully",
+      data: newTask,
+    };
+  } catch (error) {
+    logger.error("Failed to create admin task", { error });
+    throw error;
+  }
+};
+
+// Helper function for task notifications
+const createTaskNotifications = async (task, timeline, segment) => {
+  // Determine notification recipients
+  let userIds = [];
+
+  if (task.targetUsers && task.targetUsers.length > 0) {
+    userIds = task.targetUsers;
+  } else if (task.targetTeams && task.targetTeams.length > 0) {
+    // Get all members from targeted teams
+    const teams = await Team.find({
+      _id: { $in: task.targetTeams },
+      session: timeline.session,
+    });
+
+    teams.forEach((team) => {
+      team.members.forEach((member) => {
+        userIds.push(member.user);
+      });
+    });
+  } else {
+    // Based on general assignedTo
+    const roleMap = {
+      students: "student",
+      supervisors: "supervisor",
+      admins: "admin",
+    };
+
+    if (task.assignedTo !== "all") {
+      const role = roleMap[task.assignedTo];
+      const users = await User.find({
+        role,
+        status: "active",
+      });
+      userIds = users.map((u) => u._id);
+    } else {
+      // If 'all', get active users
+      const users = await User.find({ status: "active" });
+      userIds = users.map((u) => u._id);
+    }
+  }
+
+  // Create notifications
+  const notifications = userIds.map((userId) => ({
+    title: "New Task Assigned",
+    message: `New task "${
+      task.title
+    }" has been assigned to you. Due: ${new Date(
+      task.dueDate
+    ).toLocaleDateString()}`,
+    type: "task_assignment",
+    user: userId,
+    isRead: false,
+    metadata: {
+      timelineId: timeline._id,
+      segmentId: segment._id,
+      taskId: task._id,
+      sessionId: timeline.session,
+    },
+  }));
+
+  if (notifications.length > 0) {
+    await Notification.insertMany(notifications);
+  }
 };

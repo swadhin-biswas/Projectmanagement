@@ -6,14 +6,9 @@
     "auditLog": "/home/swadhin/r/server/logs/.f30a75755e7a2b67047c2093c196438936b2c11a-audit.json",
     "files": [
         {
-            "date": 1744047936738,
-            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-07.log",
-            "hash": "4d07b50d7a1096a361d30094791d047c17352074db42a75bb6c9ad73b8287b09"
-        },
-        {
-            "date": 1744048899737,
-            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-08.log",
-            "hash": "9339351d2754bbc23d606482ac30d5d42df26ebb579955a16983a12be1c9109e"
+            "date": 1744192986575,
+            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-09.log",
+            "hash": "8695b2004cef54810857c795445a42c693d7e9724d30525dc0fb61093111323f"
         }
     ],
     "hashType": "sha256"

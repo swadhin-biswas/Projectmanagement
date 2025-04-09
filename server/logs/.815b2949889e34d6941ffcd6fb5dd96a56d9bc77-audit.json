@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/swadhin/r/server/logs/.815b2949889e34d6941ffcd6fb5dd96a56d9bc77-audit.json",
+    "files": [
+        {
+            "date": 1744192986574,
+            "name": "/home/swadhin/r/server/logs/application-2025-04-09.log",
+            "hash": "10a0c2f808c5e0eeaf55de50d771c0d88194d26c5265b9ccbd16f58cae33f696"
+        }
+    ],
+    "hashType": "sha256"
+}

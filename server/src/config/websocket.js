@@ -1,5 +1,6 @@
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 import { Server } from "socket.io";
+import { TextEncoder } from "util"; // For encoding the secret
 import { reminderService } from "../services/ReminderService.js";
 import logger from "../utils/logger.js";
 
@@ -14,14 +15,29 @@ export const initWebSocket = (httpServer) => {
   // Authentication middleware
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth.token?.replace("Bearer ", "");
+      const token = socket.handshake.auth.token;
 
       if (!token) {
         return next(new Error("Authentication token missing"));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.id;
+      // Remove "Bearer " prefix if present
+      const actualToken = token.startsWith("Bearer ") ? token.slice(7) : token;
+
+      // Verify token using jose
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || "fallback-secret"
+      );
+      const { payload } = await jwtVerify(actualToken, secret);
+
+      if (!payload || !payload.userId) {
+        return next(new Error("Invalid token payload"));
+      }
+
+      // Attach user ID (or full payload if needed) to the socket
+      socket.userId = payload.userId;
+      socket.userPayload = payload; // Optionally store the full payload
+
       next();
     } catch (error) {
       logger.error("WebSocket authentication failed:", error);

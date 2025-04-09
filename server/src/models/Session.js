@@ -250,13 +250,119 @@ const sessionSchema = new mongoose.Schema(
     projectsPerStudent: {
       type: Number,
       min: 1,
-      max: 3,
       default: 1,
     },
-    teamsPerSupervisor: {
-      type: Number,
-      min: 1,
-      default: 5,
+    // New fields for enhanced admin functionality
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    timelineDefinitions: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        description: String,
+        startDate: {
+          type: Date,
+          required: true,
+        },
+        endDate: {
+          type: Date,
+          required: true,
+        },
+        color: {
+          type: String,
+          default: "#3498db",
+        },
+        tasks: [
+          {
+            title: {
+              type: String,
+              required: true,
+            },
+            description: String,
+            dueDate: {
+              type: Date,
+              required: true,
+            },
+            assignedTo: {
+              type: String,
+              enum: ["students", "supervisors", "admins", "all"],
+              default: "all",
+            },
+            priority: {
+              type: String,
+              enum: ["low", "medium", "high", "critical"],
+              default: "medium",
+            },
+            status: {
+              type: String,
+              enum: ["pending", "in_progress", "completed", "delayed"],
+              default: "pending",
+            },
+          },
+        ],
+        // Track overall progress
+        progress: {
+          type: Number,
+          min: 0,
+          max: 100,
+          default: 0,
+        },
+      },
+    ],
+    // Analytics configurations
+    analyticsSettings: {
+      enableRealTimeTracking: {
+        type: Boolean,
+        default: true,
+      },
+      trackingMetrics: {
+        studentProgress: {
+          type: Boolean,
+          default: true,
+        },
+        supervisorPerformance: {
+          type: Boolean,
+          default: true,
+        },
+        teamCollaboration: {
+          type: Boolean,
+          default: true,
+        },
+        projectQuality: {
+          type: Boolean,
+          default: true,
+        },
+      },
+      reportingFrequency: {
+        type: String,
+        enum: ["daily", "weekly", "biweekly", "monthly"],
+        default: "weekly",
+      },
+    },
+    // Admin configurable thresholds
+    performanceThresholds: {
+      studentActivityMinimum: {
+        type: Number,
+        default: 3, // activities per week
+      },
+      supervisorResponseTime: {
+        type: Number,
+        default: 48, // hours
+      },
+      criticalDeadlineWarningDays: {
+        type: Number,
+        default: 7, // days before deadline
+      },
     },
     notificationSettings: {
       sendDeadlineReminders: {
@@ -486,8 +592,8 @@ sessionSchema.virtual("teamFormationStatus").get(function () {
   }
 });
 
-// Virtual for active status
-sessionSchema.virtual("isActive").get(function () {
+// Virtual for active status - Renamed to avoid conflict
+sessionSchema.virtual("isCurrentlyActive").get(function () {
   const now = new Date();
   return now >= this.startDate && now <= this.endDate;
 });
@@ -804,7 +910,7 @@ sessionSchema.methods.generateAllDeadlines = function () {
   const minDuration = 120; // 4 months
   const maxDuration = 150; // 5 months
   if (totalDuration < minDuration || totalDuration > maxDuration) {
-    throw new Error('Session duration must be between 4 and 5 months');
+    throw new Error("Session duration must be between 4 and 5 months");
   }
 
   // Registration period (2 weeks before session starts)
@@ -820,8 +926,8 @@ sessionSchema.methods.generateAllDeadlines = function () {
     status: "upcoming",
     reminderDays: 7,
     submissionOptions: {
-      allowLateSubmission: false
-    }
+      allowLateSubmission: false,
+    },
   });
 
   // Team formation period (first 2 weeks)
@@ -837,8 +943,8 @@ sessionSchema.methods.generateAllDeadlines = function () {
     status: "upcoming",
     reminderDays: 3,
     submissionOptions: {
-      allowLateSubmission: false
-    }
+      allowLateSubmission: false,
+    },
   });
 
   // Project proposal (3 weeks after start)
@@ -856,15 +962,15 @@ sessionSchema.methods.generateAllDeadlines = function () {
     submissionOptions: {
       allowLateSubmission: true,
       latePenaltyPercentage: 10,
-      maxLateDays: 3
-    }
+      maxLateDays: 3,
+    },
   });
 
   // Progress reports (monthly)
   const monthlyReportCount = Math.floor(totalDuration / 30);
   for (let i = 1; i <= monthlyReportCount - 1; i++) {
     const reportDate = new Date(this.startDate);
-    reportDate.setDate(reportDate.getDate() + (i * 30));
+    reportDate.setDate(reportDate.getDate() + i * 30);
 
     this.deadlines.push({
       title: `Monthly Progress Report ${i}`,
@@ -877,14 +983,16 @@ sessionSchema.methods.generateAllDeadlines = function () {
       submissionOptions: {
         allowLateSubmission: true,
         latePenaltyPercentage: 5,
-        maxLateDays: 2
-      }
+        maxLateDays: 2,
+      },
     });
   }
 
   // Final submission (90% into session)
   const finalSubmissionDate = new Date(this.startDate);
-  finalSubmissionDate.setDate(finalSubmissionDate.getDate() + Math.floor(totalDuration * 0.9));
+  finalSubmissionDate.setDate(
+    finalSubmissionDate.getDate() + Math.floor(totalDuration * 0.9)
+  );
 
   this.deadlines.push({
     title: "Final Project Submission",
@@ -896,13 +1004,15 @@ sessionSchema.methods.generateAllDeadlines = function () {
     reminderDays: 7,
     submissionOptions: {
       allowLateSubmission: false,
-      maxSubmissionAttempts: 1
-    }
+      maxSubmissionAttempts: 1,
+    },
   });
 
   // Presentation schedule (last week)
   const presentationDate = new Date(this.startDate);
-  presentationDate.setDate(presentationDate.getDate() + Math.floor(totalDuration * 0.95));
+  presentationDate.setDate(
+    presentationDate.getDate() + Math.floor(totalDuration * 0.95)
+  );
 
   this.deadlines.push({
     title: "Project Presentation",
@@ -913,8 +1023,8 @@ sessionSchema.methods.generateAllDeadlines = function () {
     status: "upcoming",
     reminderDays: 5,
     submissionOptions: {
-      allowLateSubmission: false
-    }
+      allowLateSubmission: false,
+    },
   });
 
   return this;

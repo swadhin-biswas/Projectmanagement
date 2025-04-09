@@ -35,10 +35,22 @@ const errorHandler = (err, req, res, next) => {
   } else if (err.name === "MongoServerError" && err.code === 11000) {
     safeError.status = 400;
     safeError.message = "Duplicate key error - record already exists";
-  } else if (err.name === "TokenExpiredError") {
+  } else if (
+    err.name === "JWTExpired" || // Common jose error name
+    err.code === "ERR_JWT_EXPIRED" || // Common jose error code
+    err.message?.includes("expire") || // General check
+    err.message?.includes("expired")
+  ) {
     safeError.status = 401;
     safeError.message = "Your session has expired. Please log in again.";
-  } else if (err.name === "JsonWebTokenError") {
+  } else if (
+    err.name === "JWTInvalid" || // Common jose error name
+    err.code === "ERR_JWT_INVALID" || // Common jose error code
+    err.message?.includes("invalid token") ||
+    err.message?.includes("Invalid token") ||
+    err.message?.includes("Authentication required") || // From @elysiajs/jwt perhaps
+    err.message?.includes("Authentication failed") // From @elysiajs/jwt perhaps
+  ) {
     safeError.status = 401;
     safeError.message = "Invalid token. Please log in again.";
   }

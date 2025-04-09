@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Management System</title>
+    <!-- Auth Persistence Script -->
+    <script>
+      (function () {
+        // Check if auth data exists on page load
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+        const authData = localStorage.getItem("auth_data");
+
+        // If we have auth data but somehow the token is missing, restore it
+        if (authData && !token) {
+          try {
+            const parsedAuthData = JSON.parse(authData);
+            if (parsedAuthData && parsedAuthData.token) {
+              localStorage.setItem("token", parsedAuthData.token);
+              console.log("Auth token restored from auth_data");
+            }
+          } catch (e) {
+            console.error("Failed to parse auth data:", e);
+          }
+        }
+
+        // If we have a token but somehow user data is missing, restore it
+        if (token && !user && authData) {
+          try {
+            const parsedAuthData = JSON.parse(authData);
+            if (parsedAuthData && parsedAuthData.user) {
+              localStorage.setItem("user", JSON.stringify(parsedAuthData.user));
+              console.log("User data restored from auth_data");
+            }
+          } catch (e) {
+            console.error("Failed to parse auth data:", e);
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

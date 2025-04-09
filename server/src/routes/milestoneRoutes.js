@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { authorize } from "../middleware/auth.js";
+
 import { Project } from "../models/Project.js";
 import { Student } from "../models/Student.js";
 import { ForbiddenError, NotFoundError } from "../utils/errors.js";

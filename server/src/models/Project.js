@@ -532,30 +532,35 @@ const projectSchema = new mongoose.Schema(
 );
 
 // Pre-save middleware to validate project data
-projectSchema.pre('validate', async function(next) {
+projectSchema.pre("validate", async function (next) {
   // Validate dates
   if (this.startDate && this.endDate && this.startDate >= this.endDate) {
-    throw new Error('End date must be after start date');
+    throw new Error("End date must be after start date");
   }
 
   // Validate progress
   if (this.progress < 0 || this.progress > 100) {
-    throw new Error('Progress must be between 0 and 100');
+    throw new Error("Progress must be between 0 and 100");
   }
 
   // Validate milestones
   if (this.milestones && this.milestones.length > 0) {
-    this.milestones.forEach(milestone => {
-      if (milestone.dueDate && (milestone.dueDate < this.startDate || milestone.dueDate > this.endDate)) {
-        throw new Error('Milestone dates must be within project duration');
+    this.milestones.forEach((milestone) => {
+      if (
+        milestone.dueDate &&
+        (milestone.dueDate < this.startDate || milestone.dueDate > this.endDate)
+      ) {
+        throw new Error("Milestone dates must be within project duration");
       }
     });
   }
 
   // Ensure at least one active supervisor
-  const activeSupervisors = this.supervisors.filter(s => s.status === "accepted");
+  const activeSupervisors = this.supervisors.filter(
+    (s) => s.status === "accepted"
+  );
   if (!activeSupervisors.length) {
-    throw new Error('Project must have at least one accepted supervisor');
+    throw new Error("Project must have at least one accepted supervisor");
   }
 
   next();

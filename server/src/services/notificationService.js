@@ -1,8 +1,9 @@
-import jwt from 'jsonwebtoken';
-import { Student } from '../models/Student.js';
-import { Team } from '../models/Team.js';
-import { Notification, User } from '../models/User.js';
-import logger from '../utils/logger.js';
+import { jwtVerify } from "jose";
+import { TextEncoder } from "util";
+import { Student } from "../models/Student.js";
+import { Team } from "../models/Team.js";
+import { Notification, User } from "../models/User.js";
+import logger from "../utils/logger.js";
 
 class NotificationService {
   constructor() {
@@ -34,12 +35,17 @@ class NotificationService {
   }
 
   // Verify JWT token and extract user ID
-  verifyToken(token) {
+  async verifyToken(token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      return decoded.id;
+      // Remove "Bearer " prefix if present
+      const actualToken = token.startsWith("Bearer ") ? token.slice(7) : token;
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || "fallback-secret"
+      );
+      const { payload } = await jwtVerify(actualToken, secret);
+      return payload.userId; // Return userId from the payload
     } catch (error) {
-      logger.error('Token verification failed:', error);
+      logger.error("Token verification failed:", error);
       return null;
     }
   }
@@ -52,19 +58,20 @@ class NotificationService {
         user: userId,
         title,
         message,
-        type
+        type,
       });
 
       // Send to all connected WebSocket clients for this user
       const connections = this.connections.get(userId);
       if (connections) {
         const payload = JSON.stringify({
-          type: 'notification',
-          data: notification
+          type: "notification",
+          data: notification,
         });
 
-        connections.forEach(ws => {
-          if (ws.readyState === 1) { // If connection is open
+        connections.forEach((ws) => {
+          if (ws.readyState === 1) {
+            // If connection is open
             ws.send(payload);
           }
         });
@@ -72,7 +79,7 @@ class NotificationService {
 
       return notification;
     } catch (error) {
-      logger.error('Failed to send notification:', error);
+      logger.error("Failed to send notification:", error);
       throw error;
     }
   }
@@ -82,12 +89,12 @@ class NotificationService {
     try {
       // Create notifications for all users
       const notifications = await Promise.all(
-        userIds.map(userId =>
+        userIds.map((userId) =>
           Notification.create({
             user: userId,
             title,
             message,
-            type
+            type,
           })
         )
       );
@@ -97,11 +104,11 @@ class NotificationService {
         const connections = this.connections.get(userId);
         if (connections) {
           const payload = JSON.stringify({
-            type: 'notification',
-            data: notifications[index]
+            type: "notification",
+            data: notifications[index],
           });
 
-          connections.forEach(ws => {
+          connections.forEach((ws) => {
             if (ws.readyState === 1) {
               ws.send(payload);
             }
@@ -111,7 +118,7 @@ class NotificationService {
 
       return notifications;
     } catch (error) {
-      logger.error('Failed to broadcast notification:', error);
+      logger.error("Failed to broadcast notification:", error);
       throw error;
     }
   }
@@ -120,39 +127,43 @@ class NotificationService {
   async notifyRole(role, title, message, type) {
     try {
       const users = await User.find({ role });
-      const userIds = users.map(user => user._id);
+      const userIds = users.map((user) => user._id);
       return await this.broadcastNotification(userIds, title, message, type);
     } catch (error) {
-      logger.error('Failed to notify role:', error);
+      logger.error("Failed to notify role:", error);
       throw error;
     }
   }
 
   // Handle incoming WebSocket messages
-  handleMessage(ws, message) {
+  async handleMessage(ws, message) {
     try {
       const data = JSON.parse(message);
 
-      if (data.type === 'subscribe' && data.token) {
-        const userId = this.verifyToken(data.token);
+      if (data.type === "subscribe" && data.token) {
+        const userId = await this.verifyToken(data.token);
         if (userId) {
           this.addConnection(userId, ws);
           ws.userId = userId; // Store userId for cleanup
-          ws.send(JSON.stringify({ type: 'subscribed', success: true }));
+          ws.send(JSON.stringify({ type: "subscribed", success: true }));
         } else {
-          ws.send(JSON.stringify({
-            type: 'error',
-            message: 'Invalid token'
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Invalid token",
+            })
+          );
           ws.close();
         }
       }
     } catch (error) {
-      logger.error('WebSocket message handling error:', error);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format'
-      }));
+      logger.error("WebSocket message handling error:", error);
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Invalid message format",
+        })
+      );
     }
   }
 
@@ -179,7 +190,7 @@ export const createTeamNotification = async (options) => {
       teamId,
       projectId,
       recipientIds,
-      link
+      link,
     } = options;
 
     // Get team members if recipientIds not provided
@@ -187,17 +198,17 @@ export const createTeamNotification = async (options) => {
     if (!recipients && teamId) {
       const team = await Team.findById(teamId);
       if (team) {
-        recipients = team.members.map(m => m.user.toString());
+        recipients = team.members.map((m) => m.user.toString());
       }
     }
 
     if (!recipients || recipients.length === 0) {
-      logger.warn('No recipients found for notification', { options });
+      logger.warn("No recipients found for notification", { options });
       return;
     }
 
     // Create notification for each recipient
-    const notifications = recipients.map(userId => ({
+    const notifications = recipients.map((userId) => ({
       type,
       title,
       message,
@@ -206,7 +217,7 @@ export const createTeamNotification = async (options) => {
       project: projectId,
       link,
       isRead: false,
-      createdAt: new Date()
+      createdAt: new Date(),
     }));
 
     // Update each student's notifications
@@ -214,7 +225,9 @@ export const createTeamNotification = async (options) => {
       recipients.map(async (userId) => {
         const student = await Student.findOne({ user: userId });
         if (student) {
-          student.notifications.push(notifications.find(n => n.from?.toString() !== userId));
+          student.notifications.push(
+            notifications.find((n) => n.from?.toString() !== userId)
+          );
           await student.save();
         }
       })
@@ -222,19 +235,19 @@ export const createTeamNotification = async (options) => {
 
     // If connected to WebSocket, emit real-time notification
     if (global.io) {
-      recipients.forEach(userId => {
-        global.io.to(`user:${userId}`).emit('notification', {
+      recipients.forEach((userId) => {
+        global.io.to(`user:${userId}`).emit("notification", {
           type,
           title,
           message,
-          link
+          link,
         });
       });
     }
 
     return notifications;
   } catch (error) {
-    logger.error('Failed to create team notification', { error, options });
+    logger.error("Failed to create team notification", { error, options });
     throw error;
   }
 };
@@ -244,11 +257,11 @@ export const markNotificationsAsRead = async (userId, notificationIds) => {
   try {
     const student = await Student.findOne({ user: userId });
     if (!student) {
-      throw new Error('Student not found');
+      throw new Error("Student not found");
     }
 
     // Update notification status
-    student.notifications = student.notifications.map(notification => {
+    student.notifications = student.notifications.map((notification) => {
       if (notificationIds.includes(notification._id.toString())) {
         notification.isRead = true;
       }
@@ -258,7 +271,11 @@ export const markNotificationsAsRead = async (userId, notificationIds) => {
     await student.save();
     return student.notifications;
   } catch (error) {
-    logger.error('Failed to mark notifications as read', { error, userId, notificationIds });
+    logger.error("Failed to mark notifications as read", {
+      error,
+      userId,
+      notificationIds,
+    });
     throw error;
   }
 };
@@ -271,9 +288,9 @@ export const getUnreadNotificationsCount = async (userId) => {
       return 0;
     }
 
-    return student.notifications.filter(n => !n.isRead).length;
+    return student.notifications.filter((n) => !n.isRead).length;
   } catch (error) {
-    logger.error('Failed to get unread notifications count', { error, userId });
+    logger.error("Failed to get unread notifications count", { error, userId });
     return 0;
   }
 };
@@ -282,16 +299,16 @@ export const getUnreadNotificationsCount = async (userId) => {
 export const checkSupervisorPerformance = async () => {
   try {
     const supervisors = await Supervisor.find()
-      .populate('user', 'fullName email department')
+      .populate("user", "fullName email department")
       .populate({
-        path: 'teams',
+        path: "teams",
         populate: {
-          path: 'members.user',
-          select: 'fullName'
-        }
+          path: "members.user",
+          select: "fullName",
+        },
       });
 
-    const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
+    const admins = await User.find({ role: { $in: ["admin", "superadmin"] } });
     const notifications = [];
 
     for (const supervisor of supervisors) {
@@ -306,71 +323,72 @@ export const checkSupervisorPerformance = async () => {
       const twoWeeksAgo = new Date(now - 14 * 24 * 60 * 60 * 1000);
 
       // Check student tracking
-      const outdatedStudentTracking = trackedStudents.filter(ts =>
-        !ts.lastUpdated || new Date(ts.lastUpdated) < twoWeeksAgo
+      const outdatedStudentTracking = trackedStudents.filter(
+        (ts) => !ts.lastUpdated || new Date(ts.lastUpdated) < twoWeeksAgo
       );
 
       if (outdatedStudentTracking.length > 0) {
         issues.push({
-          type: 'student_tracking',
+          type: "student_tracking",
           count: outdatedStudentTracking.length,
-          message: `${outdatedStudentTracking.length} students not tracked in over 2 weeks`
+          message: `${outdatedStudentTracking.length} students not tracked in over 2 weeks`,
         });
       }
 
       // Check team tracking
-      const outdatedTeamTracking = trackedTeams.filter(tt =>
-        !tt.lastUpdated || new Date(tt.lastUpdated) < twoWeeksAgo
+      const outdatedTeamTracking = trackedTeams.filter(
+        (tt) => !tt.lastUpdated || new Date(tt.lastUpdated) < twoWeeksAgo
       );
 
       if (outdatedTeamTracking.length > 0) {
         issues.push({
-          type: 'team_tracking',
+          type: "team_tracking",
           count: outdatedTeamTracking.length,
-          message: `${outdatedTeamTracking.length} teams not tracked in over 2 weeks`
+          message: `${outdatedTeamTracking.length} teams not tracked in over 2 weeks`,
         });
       }
 
       // Check marking activity
       const marksGiven = supervisor.marksGiven || [];
-      const teamsWithoutMarks = supervisor.teams.filter(team =>
-        !marksGiven.some(m =>
-          team.members.some(member =>
-            member.user._id.toString() === m.student.toString()
+      const teamsWithoutMarks = supervisor.teams.filter(
+        (team) =>
+          !marksGiven.some((m) =>
+            team.members.some(
+              (member) => member.user._id.toString() === m.student.toString()
+            )
           )
-        )
       );
 
       if (teamsWithoutMarks.length > 0) {
         issues.push({
-          type: 'marking',
+          type: "marking",
           count: teamsWithoutMarks.length,
-          message: `${teamsWithoutMarks.length} teams have no marks recorded`
+          message: `${teamsWithoutMarks.length} teams have no marks recorded`,
         });
       }
 
       // If there are issues, create notifications for admins
       if (issues.length > 0) {
         const notification = {
-          title: 'Supervisor Performance Alert',
+          title: "Supervisor Performance Alert",
           message: `Performance issues detected for supervisor ${supervisor.user.fullName}`,
-          type: 'supervisor_alert',
+          type: "supervisor_alert",
           details: {
             supervisorId: supervisor._id,
             supervisorName: supervisor.user.fullName,
             department: supervisor.user.department,
-            issues
+            issues,
           },
-          priority: issues.length > 2 ? 'high' : 'medium',
-          createdAt: new Date()
+          priority: issues.length > 2 ? "high" : "medium",
+          createdAt: new Date(),
         };
 
         // Add notification for each admin
-        admins.forEach(admin => {
+        admins.forEach((admin) => {
           notifications.push({
             ...notification,
             user: admin._id,
-            isRead: false
+            isRead: false,
           });
         });
       }
@@ -383,10 +401,10 @@ export const checkSupervisorPerformance = async () => {
 
     return {
       success: true,
-      notificationsCreated: notifications.length
+      notificationsCreated: notifications.length,
     };
   } catch (error) {
-    logger.error('Failed to check supervisor performance', { error });
+    logger.error("Failed to check supervisor performance", { error });
     throw error;
   }
 };
@@ -394,12 +412,14 @@ export const checkSupervisorPerformance = async () => {
 // Schedule regular performance checks
 export const schedulePerformanceChecks = () => {
   // Run checks every day at midnight
-  schedule.scheduleJob('0 0 * * *', async () => {
+  schedule.scheduleJob("0 0 * * *", async () => {
     try {
       await checkSupervisorPerformance();
-      logger.info('Completed daily supervisor performance check');
+      logger.info("Completed daily supervisor performance check");
     } catch (error) {
-      logger.error('Failed to run scheduled supervisor performance check', { error });
+      logger.error("Failed to run scheduled supervisor performance check", {
+        error,
+      });
     }
   });
 };

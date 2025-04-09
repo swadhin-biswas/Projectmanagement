@@ -5,7 +5,7 @@ import {
     getCurrentSession,
     updateSession,
 } from "../controllers/sessionController.js";
-import { authorize } from "../middleware/auth.js";
+
 import logger from "../utils/logger.js";
 
 export default function sessionRoutes(app) {

@@ -1,5 +1,5 @@
 import { t } from "elysia";
-import { authorize } from "../middleware/auth.js";
+
 import { Activity } from "../models/Activity.js";
 import { Project } from "../models/Project.js";
 import { NotFoundError } from "../utils/errors.js";
@@ -34,7 +34,6 @@ export default function activityRoutes(app) {
         .get(
           "/",
           {
-            beforeHandle: [authorize(["student", "supervisor"])],
             query: t.Object({
               page: t.Optional(t.Number({ default: 1 })),
               limit: t.Optional(t.Number({ default: 20 })),
@@ -104,7 +103,6 @@ export default function activityRoutes(app) {
         .post(
           "/",
           {
-            beforeHandle: [authorize(["student", "supervisor"])],
             body: t.Object({
               type: t.String(),
               description: t.String(),
@@ -152,7 +150,6 @@ export default function activityRoutes(app) {
         .get(
           "/stats",
           {
-            beforeHandle: [authorize(["student", "supervisor"])],
             query: t.Object({
               startDate: t.Optional(t.String({ format: "date-time" })),
               endDate: t.Optional(t.String({ format: "date-time" })),

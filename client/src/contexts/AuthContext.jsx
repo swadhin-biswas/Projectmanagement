@@ -1,6 +1,4 @@
-// AuthContext.jsx
-import { loginUser, registerUser } from "@/api/auth";
-import { api, invalidateCache } from "@/lib/api";
+import { authAPI } from "@/api/auth"; // Import authAPI
 import React, {
   createContext,
   useCallback,
@@ -14,6 +12,7 @@ import { toast } from "sonner";
 const CACHE_KEYS = {
   TOKEN: "token",
   USER: "user",
+  AUTH_DATA: "auth_data",
   THEME: "theme",
   PREFERENCES: "preferences",
 };
@@ -30,238 +29,152 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [authData, setAuthData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastTokenCheck, setLastTokenCheck] = useState(0);
   const navigate = useNavigate();
 
   const clearAuth = useCallback(() => {
     localStorage.removeItem(CACHE_KEYS.TOKEN);
     localStorage.removeItem(CACHE_KEYS.USER);
+    localStorage.removeItem(CACHE_KEYS.AUTH_DATA);
     setUser(null);
+    setAuthData(null);
     setError(null);
-    delete api.defaults.headers.common["Authorization"];
+    setLoading(false);
   }, []);
 
-  // Initialize auth state
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
-      const token = localStorage.getItem(CACHE_KEYS.TOKEN);
-      const cachedUser = localStorage.getItem(CACHE_KEYS.USER);
+      if (!isMounted) return;
+      setLoading(true);
 
-      if (token && cachedUser) {
-        try {
-          // Use cached user data initially
-          setUser(JSON.parse(cachedUser));
-          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      try {
+        const token = localStorage.getItem(CACHE_KEYS.TOKEN);
+        const storedUser = localStorage.getItem(CACHE_KEYS.USER);
 
-          // Check token validity if it hasn't been checked recently (5 minutes)
-          const now = Date.now();
-          if (now - lastTokenCheck > 5 * 60 * 1000) {
-            const response = await api.get("/api/auth/profile", {
-              noCache: true,
-            });
-            if (response.data?.success) {
-              setUser(response.data.user);
-              localStorage.setItem(
-                CACHE_KEYS.USER,
-                JSON.stringify(response.data.user)
-              );
-              setLastTokenCheck(now);
-            }
-          }
-        } catch (error) {
-          // Only clear auth if it's an auth-related error
-          if (error.response?.status === 401) {
-            clearAuth();
-          }
+        if (!token) {
+          if (isMounted) clearAuth();
+          return;
         }
+
+        // If we have a token and stored user data, use it immediately
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            if (isMounted) {
+              setUser(parsedUser);
+              setAuthData({ token, user: parsedUser });
+              setError(null);
+              setLoading(false);
+            }
+          } catch (e) {
+            console.error("Failed to parse stored user data:", e);
+            if (isMounted) clearAuth();
+          }
+          return; // Skip server verification to avoid 401 issues
+        }
+
+        // Only verify with server if we don't have user data
+        const response = await authAPI.getUserProfile();
+
+        if (!isMounted) return;
+
+        if (response?.success) {
+          const freshUser = response.data;
+          if (isMounted) {
+            setUser(freshUser);
+            setAuthData({ token, user: freshUser });
+            setError(null);
+          }
+        } else {
+          clearAuth();
+        }
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+        if (isMounted) clearAuth();
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
     };
 
     initializeAuth();
-  }, [clearAuth, lastTokenCheck]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [clearAuth]);
 
   const login = async (credentials) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const result = await loginUser(credentials);
-
+      const result = await authAPI.loginUser(credentials);
       if (result.success) {
-        // Set auth token
-        api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
-        localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
-        localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(result.user));
         setUser(result.user);
-        setLastTokenCheck(Date.now());
-
+        setAuthData(result);
+        setError(null);
         toast.success("Welcome back!", {
           description: `Logged in as ${result.user.fullName}`,
         });
-
         return { success: true, user: result.user };
       } else {
-        setError(result.error);
-        toast.error("Login failed", {
-          description: result.error,
-        });
-        return { success: false, error: result.error };
+        setError(result.error || "Login failed");
+        return { success: false, error: result.error || "Login failed" };
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.message;
-      setError(errorMessage);
-      toast.error("Login failed", {
-        description: errorMessage,
-      });
-      return { success: false, error: errorMessage };
+      setError(error.message || "An unexpected error occurred during login.");
+      return { success: false, error: error.message || "Login failed" };
     } finally {
       setLoading(false);
     }
   };
 
   const register = async (userData) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const result = await registerUser(userData);
-
+      const result = await authAPI.registerUser(userData);
       if (result.success) {
-        // Set auth token
-        api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
-        localStorage.setItem(CACHE_KEYS.TOKEN, result.token);
-        localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(result.user));
         setUser(result.user);
-        setLastTokenCheck(Date.now());
-
+        setAuthData(result);
+        setError(null);
+        toast.success("Registration successful!", {
+          description: result.message || "Your account has been created.",
+        });
         return { success: true, user: result.user };
+      } else {
+        setError(result.error || "Registration failed");
+        return { success: false, error: result.error || "Registration failed" };
       }
-
-      // Handle registration failure
-      const errorMessage = result.error || "Registration failed";
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
     } catch (error) {
-      let errorMessage = "Registration failed";
-      let field = null;
-
-      if (error.response?.data) {
-        errorMessage = error.response.data.error || errorMessage;
-        field = error.response.data.field;
-      }
-
-      setError(errorMessage);
-      return { success: false, error: errorMessage, field };
+      setError(
+        error.message || "An unexpected error occurred during registration."
+      );
+      return { success: false, error: error.message || "Registration failed" };
     } finally {
       setLoading(false);
     }
   };
 
   const logout = useCallback(() => {
-    // Invalidate all cached API responses
-    invalidateCache(".*");
     clearAuth();
+    authAPI.logoutUser();
     navigate("/login");
     toast.success("Logged out successfully");
   }, [clearAuth, navigate]);
 
-  const refreshUserData = useCallback(async () => {
-    try {
-      const response = await api.get("/auth/profile", { noCache: true });
-      const responseData = response.data;
-
-      // Handle different response structures
-      let userData;
-
-      if (responseData.success === true && responseData.user) {
-        userData = responseData.user;
-      } else if (
-        responseData.success === true &&
-        responseData.data &&
-        responseData.data.user
-      ) {
-        userData = responseData.data.user;
-      } else {
-        return {
-          success: false,
-          error: responseData.error || "Failed to refresh user data",
-        };
-      }
-
-      setUser(userData);
-      localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(userData));
-      setLastTokenCheck(Date.now());
-      return { success: true, user: userData };
-    } catch (error) {
-      console.error("Refresh user data error:", error);
-      // Only clear auth if it's an auth-related error
-      if (error.response?.status === 401) {
-        clearAuth();
-      }
-      return { success: false, error: error.message };
-    }
-  }, [clearAuth]);
-
-  const updateProfile = async (profileData) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await api.put("/auth/profile", profileData);
-      const responseData = response.data;
-
-      // Handle both response formats
-      if (responseData.success === false) {
-        throw new Error(responseData.error || "Failed to update profile");
-      }
-
-      // Extract user data, handling different response structures
-      let updatedUser;
-
-      if (responseData.user) {
-        // Direct structure: { user }
-        updatedUser = responseData.user;
-      } else if (responseData.data && responseData.data.user) {
-        // Nested structure: { data: { user } }
-        updatedUser = responseData.data.user;
-      } else {
-        throw new Error("Invalid response structure from server");
-      }
-
-      setUser(updatedUser);
-      localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(updatedUser));
-
-      toast.success("Profile updated successfully");
-      return { success: true, user: updatedUser };
-    } catch (error) {
-      console.error("Profile update error:", error);
-      const errorMessage = error.response?.data?.error || error.message;
-      setError(errorMessage);
-      toast.error("Failed to update profile", {
-        description: errorMessage,
-      });
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const value = {
     user,
+    authData,
     loading,
     error,
     login,
     register,
     logout,
-    updateProfile,
-    refreshUserData,
     isAuthenticated: !!user,
-    isAdmin: user?.role === "admin" || user?.role === "super_admin",
-    isSupervisor: user?.role === "supervisor",
-    isStudent: user?.role === "student",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

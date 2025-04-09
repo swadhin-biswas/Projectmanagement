@@ -2,8 +2,12 @@ import { t } from "elysia";
 import {
   approveSupervisor,
   assignSupervisorToTeam,
+  createAdminTask,
+  createSessionTimeline,
   fixSupervisorFunctionality,
   getProjects,
+  getSessionAnalytics,
+  getSessionTimeline,
   getStudents,
   getSupervisorActivity,
   getSupervisorPerformance,
@@ -12,10 +16,9 @@ import {
   getTeams,
   reviewSupervisorMarkingActivity,
   updateSupervisorConfiguration,
+  updateTimelineTask,
   verifySupervisorProgressTracking,
 } from "../controllers/adminController.js";
-import { authorize } from "../middleware/auth.js";
-import { ValidationError } from "../utils/errors.js";
 
 const userSchema = t.Object({
   _id: t.String(),
@@ -42,17 +45,30 @@ const errorResponse = t.Object({
 export default function adminRoutes(app) {
   return app.group("/api/admin", (app) => {
     // Admin-only middleware
-    app.derive(({ user, set }) => {
-      if (!user) {
+    app.derive(({ jwt, set }) => {
+      if (!jwt?.payload) {
         set.status = 401;
-        throw new Error("Authentication required");
+        return {
+          success: false,
+          error: "Authentication required",
+          code: "UNAUTHORIZED",
+          timestamp: new Date().toISOString(),
+        };
       }
 
-      if (user.role !== "admin" && user.role !== "super_admin") {
+      const userRole = jwt.payload.role;
+
+      if (userRole !== "admin" && userRole !== "superadmin") {
         set.status = 403;
-        throw new ValidationError("Only administrators can access this resource");
+        return {
+          success: false,
+          error: "Forbidden: Administrator access required",
+          code: "FORBIDDEN",
+          timestamp: new Date().toISOString(),
+        };
       }
-      return { user };
+
+      return {};
     });
 
     app.get(
@@ -94,7 +110,8 @@ export default function adminRoutes(app) {
         },
       },
       async () => {
-        const pendingSupervisors = await adminController.getPendingSupervisors();
+        const pendingSupervisors =
+          await adminController.getPendingSupervisors();
         return pendingSupervisors;
       }
     );
@@ -169,6 +186,245 @@ export default function adminRoutes(app) {
         async (context) => {
           await authorize(["admin", "super_admin"])(context);
           return getSystemAnalytics(context);
+        }
+      )
+      .get(
+        "/sessions/:sessionId/analytics",
+        {
+          query: {
+            type: "object",
+            properties: {
+              timeRange: {
+                type: "string",
+                enum: ["week", "month", "semester"],
+              },
+              groupBy: { type: "string", enum: ["day", "week", "month"] },
+            },
+          },
+          detail: {
+            summary: "Get detailed analytics for a specific session",
+            tags: ["Admin", "Analytics"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session analytics" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return getSessionAnalytics(context);
+        }
+      )
+      .post(
+        "/sessions/:sessionId/timeline",
+        {
+          body: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              startDate: { type: "string", format: "date-time" },
+              endDate: { type: "string", format: "date-time" },
+              scope: {
+                type: "string",
+                enum: ["global", "department", "team", "user"],
+              },
+              targetDepartments: { type: "array", items: { type: "string" } },
+              targetTeams: { type: "array", items: { type: "string" } },
+              targetUsers: { type: "array", items: { type: "string" } },
+              segments: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    startDate: { type: "string", format: "date-time" },
+                    endDate: { type: "string", format: "date-time" },
+                    color: { type: "string" },
+                    importance: { type: "number" },
+                    tasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          description: { type: "string" },
+                          startDate: { type: "string", format: "date-time" },
+                          dueDate: { type: "string", format: "date-time" },
+                          assignedTo: { type: "string" },
+                          priority: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          detail: {
+            summary: "Create timeline for a session",
+            tags: ["Admin", "Timeline"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Timeline created successfully" },
+              400: { description: "Validation error" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return createSessionTimeline(context);
+        }
+      )
+      .get(
+        "/sessions/:sessionId/timeline",
+        {
+          query: {
+            type: "object",
+            properties: {
+              scope: {
+                type: "string",
+                enum: ["global", "department", "team", "user"],
+              },
+            },
+          },
+          detail: {
+            summary: "Get timeline for a session",
+            tags: ["Admin", "Timeline"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session timeline" },
+              401: { description: "Unauthorized" },
+              404: { description: "Timeline not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return getSessionTimeline(context);
+        }
+      )
+      .put(
+        "/timelines/:timelineId/segments/:segmentId/tasks/:taskId",
+        {
+          body: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              dueDate: { type: "string", format: "date-time" },
+              status: {
+                type: "string",
+                enum: [
+                  "pending",
+                  "in_progress",
+                  "completed",
+                  "delayed",
+                  "canceled",
+                ],
+              },
+              priority: {
+                type: "string",
+                enum: ["low", "medium", "high", "critical"],
+              },
+              progress: { type: "number", minimum: 0, maximum: 100 },
+            },
+          },
+          detail: {
+            summary: "Update a task in a timeline",
+            tags: ["Admin", "Timeline"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Task updated successfully" },
+              400: { description: "Validation error" },
+              401: { description: "Unauthorized" },
+              404: { description: "Timeline, segment or task not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return updateTimelineTask(context);
+        }
+      )
+      .post(
+        "/tasks",
+        {
+          body: {
+            type: "object",
+            required: [
+              "sessionId",
+              "title",
+              "startDate",
+              "dueDate",
+              "assignedTo",
+            ],
+            properties: {
+              sessionId: { type: "string" },
+              title: { type: "string" },
+              description: { type: "string" },
+              startDate: { type: "string", format: "date-time" },
+              dueDate: { type: "string", format: "date-time" },
+              assignedTo: {
+                type: "string",
+                enum: ["students", "supervisors", "admins", "all"],
+              },
+              targetUsers: { type: "array", items: { type: "string" } },
+              targetTeams: { type: "array", items: { type: "string" } },
+              priority: {
+                type: "string",
+                enum: ["low", "medium", "high", "critical"],
+              },
+            },
+          },
+          detail: {
+            summary: "Create an administrative task",
+            tags: ["Admin", "Tasks"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Task created successfully" },
+              400: { description: "Validation error" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return createAdminTask(context);
+        }
+      )
+      .post(
+        "/teams/:teamId/supervisors",
+        {
+          body: {
+            type: "object",
+            required: ["supervisorIds"],
+            properties: {
+              supervisorIds: { type: "array", items: { type: "string" } },
+              sessionId: { type: "string" },
+            },
+          },
+          detail: {
+            summary: "Assign supervisor(s) to a team",
+            tags: ["Admin", "Teams", "Supervisors"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Supervisor(s) assigned successfully" },
+              400: { description: "Validation error" },
+              401: { description: "Unauthorized" },
+              404: { description: "Team or supervisor not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return assignSupervisorToTeam(context);
         }
       )
       .get(
@@ -368,33 +624,6 @@ export default function adminRoutes(app) {
         async (context) => {
           await authorize(["admin", "super_admin"])(context);
           return updateSupervisorConfiguration(context);
-        }
-      )
-      .post(
-        "/teams/:teamId/assign-supervisor",
-        {
-          body: {
-            type: "object",
-            properties: {
-              supervisorId: { type: "string" },
-            },
-            required: ["supervisorId"],
-          },
-          detail: {
-            summary: "Assign supervisor to team",
-            tags: ["Admin", "Teams", "Supervisors"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Supervisor assigned successfully" },
-              400: { description: "Validation error" },
-              401: { description: "Unauthorized" },
-              404: { description: "Team or supervisor not found" },
-            },
-          },
-        },
-        async (context) => {
-          await authorize(["admin", "super_admin"])(context);
-          return assignSupervisorToTeam(context);
         }
       )
       .get(

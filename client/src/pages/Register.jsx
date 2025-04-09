@@ -50,12 +50,18 @@ const Register = () => {
     if (!formData.fullName?.trim()) errors.fullName = "Full name is required";
     if (!formData.email?.trim()) errors.email = "Email is required";
     if (!formData.password) errors.password = "Password is required";
-    if (!formData.confirmPassword) errors.confirmPassword = "Please confirm your password";
-    if (!formData.department?.trim()) errors.department = "Department is required";
+    if (!formData.confirmPassword)
+      errors.confirmPassword = "Please confirm your password";
+    if (!formData.department?.trim())
+      errors.department = "Department is required";
 
     // Name validation
-    if (formData.fullName && !/^[a-zA-Z0-9\s\-\.,']{2,50}$/.test(formData.fullName.trim())) {
-      errors.fullName = "Name should be 2-50 characters and contain only letters, numbers, spaces, and basic punctuation";
+    if (
+      formData.fullName &&
+      !/^[a-zA-Z0-9\s\-\.,']{2,50}$/.test(formData.fullName.trim())
+    ) {
+      errors.fullName =
+        "Name should be 2-50 characters and contain only letters, numbers, spaces, and basic punctuation";
     }
 
     // Email validation
@@ -65,9 +71,11 @@ const Register = () => {
     }
 
     // Password validation (at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (formData.password && !passwordRegex.test(formData.password)) {
-      errors.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
+      errors.password =
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
     }
 
     // Password confirmation
@@ -76,16 +84,23 @@ const Register = () => {
     }
 
     // Department validation
-    if (formData.department && !/^[a-zA-Z\s&',.]{2,50}$/.test(formData.department.trim())) {
-      errors.department = "Department must be 2-50 characters and contain only letters, spaces, and basic punctuation";
+    if (
+      formData.department &&
+      !/^[a-zA-Z\s&',.]{2,50}$/.test(formData.department.trim())
+    ) {
+      errors.department =
+        "Department must be 2-50 characters and contain only letters, spaces, and basic punctuation";
     }
 
     // Role-specific validation
     if (formData.role === "supervisor") {
       if (!formData.specialization?.trim()) {
         errors.specialization = "Specialization is required for supervisors";
-      } else if (!/^[a-zA-Z\s&',.]{2,50}$/.test(formData.specialization.trim())) {
-        errors.specialization = "Specialization must be 2-50 characters and contain only letters, spaces, and basic punctuation";
+      } else if (
+        !/^[a-zA-Z\s&',.]{2,50}$/.test(formData.specialization.trim())
+      ) {
+        errors.specialization =
+          "Specialization must be 2-50 characters and contain only letters, spaces, and basic punctuation";
       }
     }
 
@@ -94,7 +109,8 @@ const Register = () => {
       errors.studentId = "Student ID must start with STU followed by 6 digits";
     }
     if (formData.supervisorId && !/^SUP\d{6}$/.test(formData.supervisorId)) {
-      errors.supervisorId = "Supervisor ID must start with SUP followed by 6 digits";
+      errors.supervisorId =
+        "Supervisor ID must start with SUP followed by 6 digits";
     }
 
     return { isValid: Object.keys(errors).length === 0, errors };
@@ -121,7 +137,9 @@ const Register = () => {
 
       if (result.success) {
         if (formData.role === "supervisor") {
-          toast.success("Registration successful! Your account will be reviewed by an admin.");
+          toast.success(
+            "Registration successful! Your account will be reviewed by an admin."
+          );
           navigate("/login");
         } else {
           toast.success("Registration successful!");
@@ -165,7 +183,10 @@ const Register = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-blue-800 dark:text-white">
+              <Label
+                htmlFor="fullName"
+                className="text-blue-800 dark:text-white"
+              >
                 Full Name
               </Label>
               <Input
@@ -201,7 +222,10 @@ const Register = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-blue-800 dark:text-white">
+                <Label
+                  htmlFor="password"
+                  className="text-blue-800 dark:text-white"
+                >
                   Password
                 </Label>
                 <Input
@@ -219,7 +243,10 @@ const Register = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-blue-800 dark:text-white">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-blue-800 dark:text-white"
+                >
                   Confirm Password
                 </Label>
                 <Input
@@ -232,7 +259,9 @@ const Register = () => {
                   className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
                 />
                 {error?.confirmPassword && (
-                  <p className="text-red-500 text-sm">{error.confirmPassword}</p>
+                  <p className="text-red-500 text-sm">
+                    {error.confirmPassword}
+                  </p>
                 )}
               </div>
             </div>
@@ -254,7 +283,10 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="department" className="text-blue-800 dark:text-white">
+              <Label
+                htmlFor="department"
+                className="text-blue-800 dark:text-white"
+              >
                 Department
               </Label>
               <Input
@@ -272,7 +304,10 @@ const Register = () => {
 
             {formData.role === "student" && (
               <div className="space-y-2">
-                <Label htmlFor="studentId" className="text-blue-800 dark:text-white">
+                <Label
+                  htmlFor="studentId"
+                  className="text-blue-800 dark:text-white"
+                >
                   Student ID (Optional)
                 </Label>
                 <Input
@@ -292,7 +327,10 @@ const Register = () => {
             {formData.role === "supervisor" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="supervisorId" className="text-blue-800 dark:text-white">
+                  <Label
+                    htmlFor="supervisorId"
+                    className="text-blue-800 dark:text-white"
+                  >
                     Supervisor ID (Optional)
                   </Label>
                   <Input
@@ -309,7 +347,10 @@ const Register = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="specialization" className="text-blue-800 dark:text-white">
+                  <Label
+                    htmlFor="specialization"
+                    className="text-blue-800 dark:text-white"
+                  >
                     Specialization
                   </Label>
                   <Input
@@ -321,7 +362,9 @@ const Register = () => {
                     className="border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
                   />
                   {error?.specialization && (
-                    <p className="text-red-500 text-sm">{error.specialization}</p>
+                    <p className="text-red-500 text-sm">
+                      {error.specialization}
+                    </p>
                   )}
                 </div>
               </>

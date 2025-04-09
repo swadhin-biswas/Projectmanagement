@@ -1,294 +1,446 @@
 // server/src/models/Supervisor.js
 import mongoose from "mongoose";
 
+// Feedback schema for student assessments
+const feedbackSchema = new mongoose.Schema({
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+  },
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
+  },
+  milestone: {
+    type: String,
+    required: true,
+  },
+  marks: {
+    type: Number,
+    min: 0,
+    max: 100,
+  },
+  comments: String,
+  submittedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  status: {
+    type: String,
+    enum: ["draft", "submitted", "revised"],
+    default: "draft",
+  },
+  attachments: [
+    {
+      filename: String,
+      path: String,
+      uploadedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+  categories: [
+    {
+      name: String,
+      score: Number,
+      maxScore: Number,
+      comments: String,
+    },
+  ],
+});
+
+// Meeting tracking schema
+const meetingSchema = new mongoose.Schema({
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: Date,
+    required: true,
+  },
+  duration: Number, // in minutes
+  attendees: [
+    {
+      student: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      attended: {
+        type: Boolean,
+        default: false,
+      },
+    },
+  ],
+  notes: String,
+  agenda: [String],
+  outcomes: [String],
+  nextSteps: [String],
+  meetingType: {
+    type: String,
+    enum: ["regular", "emergency", "review", "other"],
+    default: "regular",
+  },
+  status: {
+    type: String,
+    enum: ["scheduled", "completed", "cancelled", "rescheduled"],
+    default: "scheduled",
+  },
+  notificationSent: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// Progress tracking
+const progressTrackingSchema = new mongoose.Schema({
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+    required: true,
+  },
+  session: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Session",
+  },
+  lastChecked: {
+    type: Date,
+    default: Date.now,
+  },
+  overallProgress: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0,
+  },
+  milestones: [
+    {
+      name: String,
+      dueDate: Date,
+      status: {
+        type: String,
+        enum: [
+          "pending",
+          "in_progress",
+          "completed",
+          "delayed",
+          "not_submitted",
+        ],
+        default: "pending",
+      },
+      feedback: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Feedback",
+      },
+      progress: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0,
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now,
+      },
+      comments: String,
+    },
+  ],
+  riskAssessment: {
+    level: {
+      type: String,
+      enum: ["low", "medium", "high", "critical"],
+      default: "low",
+    },
+    reasons: [String],
+    mitigationPlan: String,
+    lastAssessed: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  supervisorNotes: [
+    {
+      note: String,
+      date: {
+        type: Date,
+        default: Date.now,
+      },
+      visibility: {
+        type: String,
+        enum: ["private", "team", "admin"],
+        default: "private",
+      },
+    },
+  ],
+});
+
+// Communication record
+const communicationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["email", "notification", "meeting", "feedback", "other"],
+    required: true,
+  },
+  recipients: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+  },
+  subject: String,
+  content: String,
+  sentAt: {
+    type: Date,
+    default: Date.now,
+  },
+  status: {
+    type: String,
+    enum: ["sent", "delivered", "read", "failed"],
+    default: "sent",
+  },
+  attachments: [
+    {
+      filename: String,
+      path: String,
+    },
+  ],
+  metadata: {
+    category: String,
+    priority: {
+      type: String,
+      enum: ["low", "normal", "high", "urgent"],
+      default: "normal",
+    },
+    responseRequired: {
+      type: Boolean,
+      default: false,
+    },
+    responseDeadline: Date,
+  },
+});
+
+// Analytics metrics
+const analyticsSchema = new mongoose.Schema({
+  session: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Session",
+  },
+  lastUpdated: {
+    type: Date,
+    default: Date.now,
+  },
+  teamMetrics: {
+    totalTeams: {
+      type: Number,
+      default: 0,
+    },
+    teamsByProgress: {
+      onTrack: {
+        type: Number,
+        default: 0,
+      },
+      atRisk: {
+        type: Number,
+        default: 0,
+      },
+      delayed: {
+        type: Number,
+        default: 0,
+      },
+    },
+    averageProgress: {
+      type: Number,
+      default: 0,
+    },
+  },
+  studentMetrics: {
+    totalStudents: {
+      type: Number,
+      default: 0,
+    },
+    activeStudents: {
+      type: Number,
+      default: 0,
+    },
+    submittedReports: {
+      type: Number,
+      default: 0,
+    },
+    averagePerformance: {
+      type: Number,
+      default: 0,
+    },
+  },
+  projectMetrics: {
+    totalProjects: {
+      type: Number,
+      default: 0,
+    },
+    projectsByType: mongoose.Schema.Types.Mixed, // { "research": 5, "development": 3 }
+    projectsByStatus: mongoose.Schema.Types.Mixed, // { "onTrack": 6, "delayed": 2 }
+  },
+  activityMetrics: {
+    meetingsHeld: {
+      type: Number,
+      default: 0,
+    },
+    feedbacksProvided: {
+      type: Number,
+      default: 0,
+    },
+    communicationsSent: {
+      type: Number,
+      default: 0,
+    },
+    averageResponseTime: {
+      type: Number,
+      default: 0, // hours
+    },
+  },
+});
+
+// Main Supervisor schema
 const supervisorSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
     supervisorId: {
       type: String,
-      required: [true, "Supervisor ID is required"],
+      required: true,
       unique: true,
-      trim: true,
-      validate: {
-        validator: function (v) {
-          return /^SUP\d{3,6}$/.test(v);
-        },
-        message: "Supervisor ID must start with SUP followed by 3-6 digits",
-      },
     },
     specialization: {
       type: String,
-      required: [true, "Specialization is required"],
       trim: true,
     },
-    bio: {
+    designation: {
+      type: String,
+      trim: true,
+    },
+    department: {
       type: String,
       trim: true,
     },
     researchInterests: [String],
-    officeHours: String,
-    contactInformation: {
-      officeLocation: String,
-      phoneNumber: String,
-      alternateEmail: String,
+    availability: {
+      maxTeams: {
+        type: Number,
+        default: 5,
+      },
+      preferredProjectTypes: [String],
+      restrictedTimes: [
+        {
+          day: String,
+          startTime: String,
+          endTime: String,
+          reason: String,
+        },
+      ],
     },
-    assignedTeams: [
+    teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
       },
     ],
-    assignedProjects: [
+    students: [
       {
-        project: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Project",
-        },
-        role: {
-          type: String,
-          enum: ["primary", "secondary"],
-          default: "primary",
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
     ],
-    marksGiven: [
+    projects: [
       {
-        student: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Student",
-        },
-        project: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Project",
-        },
-        marks: [
-          {
-            type: {
-              type: String,
-              enum: [
-                "proposal",
-                "progress",
-                "final",
-                "presentation",
-                "overall",
-              ],
-              required: true,
-            },
-            score: {
-              type: Number,
-              required: true,
-              min: 0,
-              max: 100,
-            },
-            feedback: String,
-            breakdown: {
-              methodology: Number,
-              implementation: Number,
-              documentation: Number,
-              presentation: Number,
-              innovation: Number,
-            },
-            strengths: [String],
-            improvements: [String],
-            date: {
-              type: Date,
-              default: Date.now,
-            },
-          },
-        ],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project",
       },
     ],
-    notifications: [
-      {
-        title: String,
-        message: String,
-        type: {
+    feedbacks: [feedbackSchema],
+    meetings: [meetingSchema],
+    communications: [communicationSchema],
+    progressTracking: [progressTrackingSchema],
+    analytics: analyticsSchema,
+    preferences: {
+      notificationSettings: {
+        emailNotifications: {
+          type: Boolean,
+          default: true,
+        },
+        submissionAlerts: {
+          type: Boolean,
+          default: true,
+        },
+        meetingReminders: {
+          type: Boolean,
+          default: true,
+        },
+        urgentAlerts: {
+          type: Boolean,
+          default: true,
+        },
+      },
+      displayPreferences: {
+        defaultView: {
           type: String,
-          enum: ["submission", "invitation", "deadline", "system"],
-          required: true,
+          enum: ["teams", "students", "projects", "calendar"],
+          default: "teams",
         },
-        relatedTo: {
-          model: {
-            type: String,
-            enum: ["Project", "Team", "Student", "Session"],
-          },
-          id: mongoose.Schema.Types.ObjectId,
+        teamsPerPage: {
+          type: Number,
+          default: 10,
         },
-        isRead: {
+        showCompletedProjects: {
           type: Boolean,
           default: false,
         },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
       },
-    ],
-    evaluations: [
-      {
-        team: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Team",
-        },
-        type: {
-          type: String,
-          enum: ["proposal", "progress", "final"],
-        },
-        submittedAt: Date,
-        status: {
-          type: String,
-          enum: ["pending", "completed"],
-          default: "pending",
-        },
-      },
-    ],
-    recentActivity: [
-      {
-        type: {
-          type: String,
-          enum: [
-            "mark_added",
-            "feedback_given",
-            "notification_sent",
-            "progress_update",
-            "meeting_scheduled",
-          ],
-        },
-        relatedTo: {
-          type: mongoose.Schema.Types.ObjectId,
-          refPath: "recentActivity.relatedModel",
-        },
-        relatedModel: {
-          type: String,
-          enum: ["Student", "Team", "Project"],
-        },
-        description: String,
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-    progressTracking: {
-      trackedStudents: [
-        {
-          student: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Student",
-          },
-          progressNotes: [
-            {
-              note: String,
-              date: {
-                type: Date,
-                default: Date.now,
-              },
-              progressPercentage: {
-                type: Number,
-                min: 0,
-                max: 100,
-              },
-              status: {
-                type: String,
-                enum: ["on_track", "at_risk", "behind", "ahead"],
-                default: "on_track",
-              },
-              milestones: [
-                {
-                  title: String,
-                  completed: Boolean,
-                  dueDate: Date,
-                },
-              ],
-            },
-          ],
-          lastUpdated: Date,
-        },
-      ],
-      trackedTeams: [
-        {
-          team: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Team",
-          },
-          progressNotes: [
-            {
-              note: String,
-              date: {
-                type: Date,
-                default: Date.now,
-              },
-              overallProgress: {
-                type: Number,
-                min: 0,
-                max: 100,
-              },
-              teamDynamics: {
-                type: String,
-                enum: [
-                  "excellent",
-                  "good",
-                  "satisfactory",
-                  "needs_improvement",
-                  "poor",
-                ],
-              },
-              concerns: [String],
-              achievements: [String],
-            },
-          ],
-          lastUpdated: Date,
-        },
-      ],
     },
-    scheduledMeetings: [
+    expertise: [
       {
-        title: String,
-        description: String,
-        withEntity: {
+        area: String,
+        level: {
           type: String,
-          enum: ["team", "student", "admin"],
-          required: true,
-        },
-        entityId: {
-          type: mongoose.Schema.Types.ObjectId,
-          refPath: "scheduledMeetings.entityType",
-        },
-        entityType: {
-          type: String,
-          enum: ["Team", "Student", "User"],
-          required: true,
-        },
-        date: {
-          type: Date,
-          required: true,
-        },
-        duration: Number, // in minutes
-        location: String,
-        meetingLink: String,
-        agenda: [String],
-        isRecurring: {
-          type: Boolean,
-          default: false,
-        },
-        recurringPattern: {
-          frequency: {
-            type: String,
-            enum: ["daily", "weekly", "biweekly", "monthly"],
-          },
-          endDate: Date,
-        },
-        reminderSent: {
-          type: Boolean,
-          default: false,
+          enum: ["beginner", "intermediate", "advanced", "expert"],
+          default: "intermediate",
         },
       },
     ],
+    biography: {
+      type: String,
+      trim: true,
+    },
+    contactDetails: {
+      officeLocation: String,
+      officeHours: String,
+      alternateEmail: String,
+      phone: String,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationDate: Date,
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
@@ -297,215 +449,307 @@ const supervisorSchema = new mongoose.Schema(
   }
 );
 
-// Add indexes for better query performance
-supervisorSchema.index({ "assignedTeams": 1 });
-supervisorSchema.index({ "marksGiven.student": 1 });
-supervisorSchema.index({ "scheduledMeetings.date": 1 });
-supervisorSchema.index({ "progressTracking.trackedStudents.student": 1 });
-supervisorSchema.index({ "progressTracking.trackedTeams.team": 1 });
-
-// Virtual for full profile
-supervisorSchema.virtual("fullProfile", {
-  ref: "User",
-  localField: "user",
-  foreignField: "_id",
-  justOne: true,
+// Virtual for total number of teams
+supervisorSchema.virtual("teamsCount").get(function () {
+  return this.teams ? this.teams.length : 0;
 });
 
-// Add virtual for current workload
-supervisorSchema.virtual('currentWorkload').get(function() {
-  return {
-    teams: this.assignedTeams?.length || 0,
-    students: this.marksGiven?.length || 0,
-    pendingMeetings: this.scheduledMeetings?.filter(m =>
-      new Date(m.date) > new Date()
-    ).length || 0
-  };
+// Virtual for total number of students
+supervisorSchema.virtual("studentsCount").get(function () {
+  return this.students ? this.students.length : 0;
 });
 
-// Pre-find middleware to populate user data
-supervisorSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: "user",
-    select: "fullName email department",
-  });
-  next();
-});
-
-// Method to assign marks
-supervisorSchema.methods.assignMarks = async function (
-  studentId,
-  projectId,
-  markData
-) {
-  const markEntry = this.marksGiven.find(
-    (m) =>
-      m.student.toString() === studentId.toString() &&
-      m.project.toString() === projectId.toString()
-  );
-
-  if (markEntry) {
-    markEntry.marks.push(markData);
-  } else {
-    this.marksGiven.push({
-      student: studentId,
-      project: projectId,
-      marks: [markData],
-    });
+// Method to add a student to supervisor
+supervisorSchema.methods.addStudent = function (studentId) {
+  if (!this.students.includes(studentId)) {
+    this.students.push(studentId);
   }
+  return this.save();
+};
+
+// Method to add a team to supervisor
+supervisorSchema.methods.addTeam = function (teamId) {
+  if (!this.teams.includes(teamId)) {
+    this.teams.push(teamId);
+  }
+  return this.save();
+};
+
+// Method to record feedback
+supervisorSchema.methods.recordFeedback = async function (feedbackData) {
+  this.feedbacks.push(feedbackData);
+
+  // Update analytics
+  if (!this.analytics) {
+    this.analytics = {};
+  }
+  if (!this.analytics.activityMetrics) {
+    this.analytics.activityMetrics = { feedbacksProvided: 0 };
+  }
+  this.analytics.activityMetrics.feedbacksProvided =
+    (this.analytics.activityMetrics.feedbacksProvided || 0) + 1;
+  this.analytics.lastUpdated = new Date();
 
   await this.save();
-  return this.marksGiven;
+  return this.feedbacks[this.feedbacks.length - 1];
 };
 
-// Method to get all students under supervision
-supervisorSchema.methods.getAllStudents = async function () {
-  const Team = mongoose.models.Team || mongoose.model("Team");
-  const teams = await Team.find({ _id: { $in: this.assignedTeams } }).populate(
-    "members.user"
-  );
-
-  const students = new Set();
-  teams.forEach((team) => {
-    team.members.forEach((member) => {
-      students.add(member.user);
-    });
-  });
-
-  return Array.from(students);
+// Method to record meeting
+supervisorSchema.methods.scheduleMeeting = async function (meetingData) {
+  this.meetings.push(meetingData);
+  await this.save();
+  return this.meetings[this.meetings.length - 1];
 };
 
-// Add a new method to track student progress
-supervisorSchema.methods.updateStudentProgress = async function (
-  studentId,
-  progressData
+// Method to record communication
+supervisorSchema.methods.recordCommunication = async function (
+  communicationData
 ) {
-  const trackedStudentIndex = this.progressTracking.trackedStudents.findIndex(
-    (ts) => ts.student.toString() === studentId.toString()
-  );
+  this.communications.push(communicationData);
 
-  if (trackedStudentIndex >= 0) {
-    // Update existing tracked student
-    this.progressTracking.trackedStudents[
-      trackedStudentIndex
-    ].progressNotes.push(progressData);
-    this.progressTracking.trackedStudents[trackedStudentIndex].lastUpdated =
-      new Date();
-  } else {
-    // Add new tracked student
-    if (!this.progressTracking.trackedStudents) {
-      this.progressTracking.trackedStudents = [];
-    }
-    this.progressTracking.trackedStudents.push({
-      student: studentId,
-      progressNotes: [progressData],
-      lastUpdated: new Date(),
-    });
+  // Update analytics
+  if (!this.analytics) {
+    this.analytics = {};
   }
-
-  // Add to recent activity
-  this.recentActivity.push({
-    type: "progress_update",
-    relatedTo: studentId,
-    relatedModel: "Student",
-    description: `Updated progress for student: ${progressData.note.substring(
-      0,
-      30
-    )}...`,
-    timestamp: new Date(),
-  });
+  if (!this.analytics.activityMetrics) {
+    this.analytics.activityMetrics = { communicationsSent: 0 };
+  }
+  this.analytics.activityMetrics.communicationsSent =
+    (this.analytics.activityMetrics.communicationsSent || 0) + 1;
+  this.analytics.lastUpdated = new Date();
 
   await this.save();
-  return this.progressTracking.trackedStudents.find(
-    (ts) => ts.student.toString() === studentId.toString()
-  );
+  return this.communications[this.communications.length - 1];
 };
 
-// Add a new method to track team progress
+// Method to update team progress
 supervisorSchema.methods.updateTeamProgress = async function (
   teamId,
   progressData
 ) {
-  const trackedTeamIndex = this.progressTracking.trackedTeams.findIndex(
-    (tt) => tt.team.toString() === teamId.toString()
+  const existingTracking = this.progressTracking.find(
+    (tracking) => tracking.team.toString() === teamId.toString()
   );
 
-  if (trackedTeamIndex >= 0) {
-    // Update existing tracked team
-    this.progressTracking.trackedTeams[trackedTeamIndex].progressNotes.push(
-      progressData
-    );
-    this.progressTracking.trackedTeams[trackedTeamIndex].lastUpdated =
-      new Date();
+  if (existingTracking) {
+    // Update existing progress tracking
+    Object.assign(existingTracking, progressData);
+    existingTracking.lastChecked = new Date();
   } else {
-    // Add new tracked team
-    if (!this.progressTracking.trackedTeams) {
-      this.progressTracking.trackedTeams = [];
-    }
-    this.progressTracking.trackedTeams.push({
+    // Create new progress tracking
+    this.progressTracking.push({
       team: teamId,
-      progressNotes: [progressData],
-      lastUpdated: new Date(),
+      ...progressData,
+      lastChecked: new Date(),
     });
   }
 
-  // Add to recent activity
-  this.recentActivity.push({
-    type: "progress_update",
-    relatedTo: teamId,
-    relatedModel: "Team",
-    description: `Updated progress for team: ${progressData.note.substring(
-      0,
-      30
-    )}...`,
-    timestamp: new Date(),
-  });
-
   await this.save();
-  return this.progressTracking.trackedTeams.find(
-    (tt) => tt.team.toString() === teamId.toString()
+  return this.progressTracking.find(
+    (tracking) => tracking.team.toString() === teamId.toString()
   );
 };
 
-// Method to schedule a meeting
-supervisorSchema.methods.scheduleMeeting = async function (meetingData) {
-  if (!this.scheduledMeetings) {
-    this.scheduledMeetings = [];
+// Method to calculate analytics
+supervisorSchema.methods.calculateAnalytics = async function (sessionId) {
+  if (!this.analytics) {
+    this.analytics = {};
   }
 
-  this.scheduledMeetings.push(meetingData);
+  const session =
+    sessionId || (this.progressTracking[0] && this.progressTracking[0].session);
+  if (!session) return null;
 
-  // Add to recent activity
-  this.recentActivity.push({
-    type: "meeting_scheduled",
-    relatedTo: meetingData.entityId,
-    relatedModel: meetingData.entityType,
-    description: `Scheduled meeting: ${meetingData.title}`,
-    timestamp: new Date(),
-  });
+  // Calculate team metrics
+  const teams = await mongoose.model("Team").find({ _id: { $in: this.teams } });
+  const totalTeams = teams.length;
+
+  let teamsByProgress = { onTrack: 0, atRisk: 0, delayed: 0 };
+  let totalProgress = 0;
+
+  for (const tracking of this.progressTracking) {
+    totalProgress += tracking.overallProgress || 0;
+
+    if (tracking.riskAssessment) {
+      if (tracking.riskAssessment.level === "low") {
+        teamsByProgress.onTrack++;
+      } else if (["medium", "high"].includes(tracking.riskAssessment.level)) {
+        teamsByProgress.atRisk++;
+      } else if (tracking.riskAssessment.level === "critical") {
+        teamsByProgress.delayed++;
+      }
+    }
+  }
+
+  // Calculate student metrics
+  const totalStudents = this.students.length;
+  // Count unique students in feedback
+  const studentsWithFeedback = new Set(
+    this.feedbacks.map((f) => f.student.toString())
+  );
+  const submittedReports = this.feedbacks.length;
+
+  // Calculate project metrics
+  const projects = await mongoose
+    .model("Project")
+    .find({ _id: { $in: this.projects } });
+  const totalProjects = projects.length;
+
+  // Project by type distribution
+  const projectsByType = projects.reduce((acc, project) => {
+    acc[project.type] = (acc[project.type] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Project by status distribution
+  const projectsByStatus = projects.reduce((acc, project) => {
+    acc[project.status] = (acc[project.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Activity metrics
+  const meetingsHeld = this.meetings.filter(
+    (m) => m.status === "completed"
+  ).length;
+  const feedbacksProvided = this.feedbacks.length;
+  const communicationsSent = this.communications.length;
+
+  // Update analytics object
+  this.analytics = {
+    session,
+    lastUpdated: new Date(),
+    teamMetrics: {
+      totalTeams,
+      teamsByProgress,
+      averageProgress: totalTeams > 0 ? totalProgress / totalTeams : 0,
+    },
+    studentMetrics: {
+      totalStudents,
+      activeStudents: studentsWithFeedback.size,
+      submittedReports,
+      averagePerformance: 0, // Requires additional calculation
+    },
+    projectMetrics: {
+      totalProjects,
+      projectsByType,
+      projectsByStatus,
+    },
+    activityMetrics: {
+      meetingsHeld,
+      feedbacksProvided,
+      communicationsSent,
+      averageResponseTime: 0, // Requires additional data
+    },
+  };
 
   await this.save();
-  return this.scheduledMeetings[this.scheduledMeetings.length - 1];
+  return this.analytics;
 };
 
-// Method to check if supervisor can take more teams
-supervisorSchema.methods.canTakeMoreTeams = function(sessionTeamsLimit) {
-  const currentTeams = this.assignedTeams?.length || 0;
-  return currentTeams < (sessionTeamsLimit || this.maxTeams);
+// Method to send email
+supervisorSchema.methods.sendEmail = async function (emailData) {
+  const communication = {
+    type: "email",
+    recipients: emailData.recipients,
+    team: emailData.team,
+    subject: emailData.subject,
+    content: emailData.content,
+    sentAt: new Date(),
+    status: "sent",
+    attachments: emailData.attachments || [],
+    metadata: emailData.metadata || {},
+  };
+
+  return this.recordCommunication(communication);
 };
 
-// Method to check workload status
-supervisorSchema.methods.getWorkloadStatus = function() {
-  const currentTeams = this.assignedTeams?.length || 0;
-  const maxTeams = this.maxTeams;
+// Method to send notification
+supervisorSchema.methods.sendNotification = async function (notificationData) {
+  const communication = {
+    type: "notification",
+    recipients: notificationData.recipients,
+    team: notificationData.team,
+    subject: notificationData.subject,
+    content: notificationData.content,
+    sentAt: new Date(),
+    status: "sent",
+    metadata: notificationData.metadata || {},
+  };
 
-  if (currentTeams >= maxTeams) return 'full';
-  if (currentTeams >= maxTeams * 0.8) return 'high';
-  if (currentTeams >= maxTeams * 0.5) return 'moderate';
-  return 'low';
+  // Create notifications in the Notification collection
+  const Notification = mongoose.model("Notification");
+  const notifications = notificationData.recipients.map((userId) => ({
+    user: userId,
+    title: notificationData.subject,
+    message: notificationData.content,
+    type: notificationData.metadata?.category || "supervisor_notification",
+    metadata: {
+      supervisorId: this._id,
+      teamId: notificationData.team,
+    },
+  }));
+
+  if (notifications.length > 0) {
+    await Notification.insertMany(notifications);
+  }
+
+  return this.recordCommunication(communication);
 };
 
-// Prevent model recompilation
+// Method to add expertise
+supervisorSchema.methods.addExpertise = function (expertise) {
+  if (!this.expertise) {
+    this.expertise = [];
+  }
+
+  // Check if expertise already exists
+  const existingIndex = this.expertise.findIndex(
+    (e) => e.area === expertise.area
+  );
+  if (existingIndex !== -1) {
+    this.expertise[existingIndex] = expertise;
+  } else {
+    this.expertise.push(expertise);
+  }
+
+  return this.save();
+};
+
+// Method to get team details
+supervisorSchema.methods.getTeamDetails = async function (teamId) {
+  if (!teamId) {
+    return this.populate("teams");
+  }
+
+  if (!this.teams.some((t) => t.toString() === teamId.toString())) {
+    throw new Error("Team not supervised by this supervisor");
+  }
+
+  return mongoose
+    .model("Team")
+    .findById(teamId)
+    .populate({
+      path: "members.user",
+      select: "fullName email profilePicture",
+    })
+    .populate("project")
+    .populate("session");
+};
+
+// Method to get student details
+supervisorSchema.methods.getStudentDetails = async function (studentId) {
+  if (!studentId) {
+    return this.populate("students");
+  }
+
+  if (!this.students.some((s) => s.toString() === studentId.toString())) {
+    throw new Error("Student not supervised by this supervisor");
+  }
+
+  return mongoose.model("User").findById(studentId).select("-password");
+};
+
+// Create and export the model
 const Supervisor =
   mongoose.models.Supervisor || mongoose.model("Supervisor", supervisorSchema);
 

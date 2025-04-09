@@ -2,8 +2,7 @@ import { t } from "elysia";
 import * as teamChatController from "../controllers/teamChatController.js";
 import * as teamController from "../controllers/teamController.js";
 import * as teamInvitationController from "../controllers/teamInvitationController.js";
-import { authorize } from "../middleware/auth.js";
-import { logger } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 
 // Response schemas
 const teamResponse = t.Object({
@@ -61,12 +60,10 @@ export default function teamRoutes(app) {
           },
           async (context) => {
             try {
-              const { user } = await authorize(["student", "supervisor"])(
-                context
-              );
-              return teamController.getUserTeams({ ...context, user });
+              logger.info("👥 Getting user teams");
+              return await teamController.getUserTeams(context);
             } catch (error) {
-              logger.error("❌ Failed to get user teams:", error);
+              logger.error("❌ Error fetching user teams:", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -112,13 +109,7 @@ export default function teamRoutes(app) {
           async (context) => {
             try {
               logger.info("📝 Team creation requested");
-              const { user } = await authorize(["student"])(context);
-              const result = await teamController.createTeam({
-                ...context,
-                user,
-              });
-              context.set.status = 201; // Created
-              return result;
+              return await teamController.createTeam(context);
             } catch (error) {
               logger.error("❌ Failed to create team:", error);
               context.set.status = error.status || 500;
@@ -163,13 +154,7 @@ export default function teamRoutes(app) {
           async (context) => {
             try {
               logger.info("📨 Team invitation requested");
-              const { user } = await authorize(["student"])(context);
-              const result = await teamInvitationController.sendTeamInvitation({
-                ...context,
-                user,
-              });
-              context.set.status = 201;
-              return result;
+              return await teamInvitationController.sendTeamInvitation(context);
             } catch (error) {
               logger.error("❌ Failed to send team invitation:", error);
               context.set.status = error.status || 500;
@@ -218,11 +203,7 @@ export default function teamRoutes(app) {
           },
           async (context) => {
             try {
-              const { user } = await authorize(["student"])(context);
-              return teamInvitationController.getPendingInvitations({
-                ...context,
-                user,
-              });
+              return teamInvitationController.getPendingInvitations(context);
             } catch (error) {
               logger.error("❌ Failed to get pending invitations:", error);
               context.set.status = error.status || 500;
@@ -266,11 +247,7 @@ export default function teamRoutes(app) {
           async (context) => {
             try {
               logger.info("✉️ Processing invitation response");
-              const { user } = await authorize(["student"])(context);
-              return teamInvitationController.respondToInvitation({
-                ...context,
-                user,
-              });
+              return teamInvitationController.respondToInvitation(context);
             } catch (error) {
               logger.error("❌ Failed to process invitation response:", error);
               context.set.status = error.status || 500;
@@ -319,8 +296,7 @@ export default function teamRoutes(app) {
           },
           async (context) => {
             try {
-              const { user } = await authorize(["student"])(context);
-              return teamController.leaveTeam({ ...context, user });
+              return teamController.leaveTeam(context);
             } catch (error) {
               logger.error("❌ Failed to leave team:", error);
               context.set.status = error.status || 500;
@@ -354,10 +330,7 @@ export default function teamRoutes(app) {
           },
           async (context) => {
             try {
-              const { user } = await authorize(["student", "supervisor"])(
-                context
-              );
-              return teamController.getTeamDetails({ ...context, user });
+              return teamController.getTeamDetails(context);
             } catch (error) {
               logger.error("❌ Failed to get team details:", error);
               context.set.status = error.status || 500;
@@ -390,10 +363,7 @@ export default function teamRoutes(app) {
           },
           async (context) => {
             try {
-              const { user } = await authorize(["student", "supervisor"])(
-                context
-              );
-              return teamController.getTeamMembers({ ...context, user });
+              return teamController.getTeamMembers(context);
             } catch (error) {
               logger.error("❌ Failed to get team members:", error);
               context.set.status = error.status || 500;
@@ -445,13 +415,7 @@ export default function teamRoutes(app) {
               },
               async (context) => {
                 try {
-                  const { user } = await authorize(["student", "supervisor"])(
-                    context
-                  );
-                  return teamChatController.getTeamChatMessages({
-                    ...context,
-                    user,
-                  });
+                  return teamChatController.getTeamChatMessages(context);
                 } catch (error) {
                   logger.error("❌ Failed to get team chat messages:", error);
                   context.set.status = error.status || 500;
@@ -481,7 +445,6 @@ export default function teamRoutes(app) {
                 }),
               },
               async (context) => {
-                await authorize(["student", "supervisor"])(context);
                 return teamChatController.sendTeamMessage(context);
               }
             )
@@ -499,7 +462,6 @@ export default function teamRoutes(app) {
                 },
               },
               async (context) => {
-                await authorize(["student", "supervisor"])(context);
                 return teamChatController.getUnreadCount(context);
               }
             )
@@ -515,7 +477,6 @@ export default function teamRoutes(app) {
                 },
               },
               async (context) => {
-                await authorize(["student", "supervisor"])(context);
                 return teamChatController.markMessagesAsRead(context);
               }
             )
@@ -541,7 +502,6 @@ export default function teamRoutes(app) {
                 },
               },
               async (context) => {
-                await authorize(["student", "supervisor"])(context);
                 return teamChatController.getAnnouncements(context);
               }
             );

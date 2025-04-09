@@ -8,7 +8,7 @@ import {
   getTeamAnalytics,
   getTeamStatistics,
 } from "../controllers/analyticsController.js";
-import { authorize } from "../middleware/auth.js";
+
 import logger from "../utils/logger.js";
 
 export default function analyticsRoutes(app) {

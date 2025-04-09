@@ -1,7 +1,7 @@
+import { jwt } from "@elysiajs/jwt";
 import { swagger } from "@elysiajs/swagger";
 import { config } from "dotenv";
 import { Elysia } from "elysia";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "./config/database.js";
 import { DatabaseError, ValidationError } from "./utils/errors.js";
 import logger, { logApiCall } from "./utils/logger.js";
@@ -28,14 +28,18 @@ import messageRoutes from "./routes/messageRoutes.js";
 import milestoneRoutes from "./routes/milestoneRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
-import setupRoutes from "./routes/setupRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
 
 // Load environment variables
 config();
+
+// Check for JWT secret
+if (!process.env.JWT_SECRET) {
+  logger.error("FATAL ERROR: JWT_SECRET is not defined in .env");
+  process.exit(1);
+}
 
 // Initialize express app with error handling
 const app = new Elysia().use(swagger()).onError(({ error, set }) => {
@@ -324,42 +328,50 @@ app.onError(({ code, error, set }) => {
   };
 });
 
-// JWT authentication setup with error handling
-app.derive(async ({ request }) => {
-  try {
-    const path = new URL(request.url).pathname;
+// JWT configuration - THIS is the instance we keep and modify
+const publicPaths = [
+  "/",
+  "/health",
+  "/health/db",
+  "/api/auth/register",
+  "/api/auth/login",
+  "/api/auth/reset-password",
+  "/api/auth/verify-email",
+  "/api/auth/test-login", // Added test login
+  "/swagger", // Keep swagger public
+  /\/swagger\/.*/, // Keep swagger UI public
+  "/api-docs",
+  "/api/health",
+];
 
-    // Skip auth for public routes
-    const publicPaths = [
-      "/",
-      "/health",
-      "/health/db",
-      "/api/auth/register",
-      "/api/auth/login",
-      "/api/auth/reset-password",
-      "/api/auth/verify-email",
-      "/api-docs",
-      "/swagger",
-      "/api/health",
-    ];
-
-    if (publicPaths.some((p) => path.startsWith(p) || path === p)) {
-      return {};
-    }
-
-    const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new Error("Authentication required");
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    return { user: decoded };
-  } catch (error) {
-    throw new Error("Authentication failed: " + error.message);
-  }
-});
+app.use(
+  jwt({
+    name: "jwt",
+    secret: process.env.JWT_SECRET || "fallback-secret",
+    exp: "7d",
+    exclude: publicPaths,
+    // --- Logging Hooks ---
+    async verify(context) {
+      // Log when verification is attempted
+      logger.debug("JWT verify hook triggered (exclude instance)", {
+        hasAuthHeader: !!context.request.headers.get("authorization"),
+        tokenSnippet: context.request.headers
+          .get("authorization")
+          ?.substring(7, 20), // First few chars after Bearer
+      });
+    },
+    error(context, error) {
+      logger.error("JWT Error hook triggered (exclude instance)", {
+        errorName: error?.name,
+        errorMessage: error?.message,
+        tokenSnippet: context.request.headers
+          .get("authorization")
+          ?.substring(7, 20),
+      });
+    },
+    // --- End Logging Hooks ---
+  })
+);
 
 // Define API routes
 app
@@ -371,7 +383,7 @@ app
     return dbHealth;
   })
   .use(authRoutes)
-  .use(userRoutes)
+  // .use(userRoutes)
   .use(sessionRoutes)
   .use(teamRoutes)
   .use(adminRoutes)
@@ -389,8 +401,7 @@ app
   .use(supervisorRoutes)
   .use(apiDocsRoutes)
   .use(projectRoutes)
-  .use(milestoneRoutes)
-  .use(setupRoutes);
+  .use(milestoneRoutes);
 
 // Handle 404 for undefined routes
 app.all("*", ({ set }) => {
