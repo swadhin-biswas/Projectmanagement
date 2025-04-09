@@ -1,4 +1,4 @@
-import { PageTransition } from "@/components/PageTransition";
+import PageTransition from "@/components/PageTransition";
 import StudentProfile from "@/components/student/StudentProfile";
 import React from "react";
 import { Helmet } from "react-helmet-async";

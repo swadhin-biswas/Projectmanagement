@@ -8,32 +8,40 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Show loading spinner ONLY while the AuthContext is verifying
   if (loading) {
-    console.log("ProtectedRoute: Auth context is loading...");
-    return <LoadingSpinner />; // Or a more sophisticated loading UI
+    return <LoadingSpinner />;
   }
 
   // After loading, check if authenticated
   if (!isAuthenticated) {
-    console.log("ProtectedRoute: Not authenticated, redirecting to login.");
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience
-    // than dropping them off on the home page.
+    // Redirect to login page, saving the current location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check roles if applicable (user should be guaranteed to exist if isAuthenticated is true)
-  if (allowedRoles.length > 0 && (!user || !allowedRoles.includes(user.role))) {
-    console.log(
-      `ProtectedRoute: Unauthorized access attempt. User role: ${
-        user?.role
-      }, Allowed roles: ${allowedRoles.join(", ")}`
-    );
+  // If we need to check roles but user is null, try to get it from localStorage
+  if (allowedRoles.length > 0 && !user) {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        // Check if stored user has allowed role
+        if (parsedUser && allowedRoles.includes(parsedUser.role)) {
+          return children;
+        }
+      }
+      // If we couldn't get a valid user with an allowed role, redirect to unauthorized
+      return <Navigate to="/unauthorized" replace />;
+    } catch (e) {
+      console.error("Failed to parse stored user in ProtectedRoute:", e);
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+
+  // Check roles if applicable (using the user from context)
+  if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
     // User is authenticated but doesn't have the required role
     return <Navigate to="/unauthorized" replace />;
   }
 
-  console.log("ProtectedRoute: Access granted.");
   // If authenticated and has the right role (or no specific role required), render the children
   return children;
 };

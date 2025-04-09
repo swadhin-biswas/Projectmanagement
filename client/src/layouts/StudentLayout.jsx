@@ -1,36 +1,42 @@
 import {
-    FileText,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    MessageSquare,
-    Moon,
-    Settings,
-    Star,
-    Sun,
-    User,
-    Users,
-    X,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Moon,
+  Settings,
+  Star,
+  Sun,
+  User,
+  Users,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    Link,
-    NavLink,
-    Outlet,
-    useLocation,
-    useNavigate,
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+
+const CACHE_KEYS = {
+  TOKEN: "token",
+  USER: "user",
+  AUTH_DATA: "auth_data",
+};
 
 const StudentLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -38,6 +44,30 @@ const StudentLayout = () => {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+
+  // Fallback to localStorage if user is null
+  useEffect(() => {
+    if (user) {
+      setUserData(user);
+    } else {
+      try {
+        const storedUser = localStorage.getItem(CACHE_KEYS.USER);
+        if (storedUser) {
+          setUserData(JSON.parse(storedUser));
+        }
+      } catch (e) {
+        console.error("Failed to parse stored user data:", e);
+      }
+    }
+  }, [user]);
+
+  // Redirect if still no user data
+  useEffect(() => {
+    if (!user && !userData) {
+      navigate("/login");
+    }
+  }, [userData, user, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -86,6 +116,15 @@ const StudentLayout = () => {
       icon: <User className="w-4 h-4" />,
     },
   ];
+
+  // If we don't have user data yet, show a loading state
+  if (!user && !userData) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
@@ -138,23 +177,23 @@ const StudentLayout = () => {
             <Avatar className="h-9 w-9 mr-3 ring-2 ring-white/10 dark:ring-gray-800/60">
               <AvatarImage
                 src={
-                  user?.profilePicture ||
+                  userData?.profilePicture ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user?.fullName
+                    userData?.fullName || "User"
                   )}&background=6366F1&color=fff`
                 }
-                alt={user?.fullName}
+                alt={userData?.fullName || "User"}
               />
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white">
-                {getInitials(user?.fullName)}
+                {getInitials(userData?.fullName)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                {user?.fullName}
+                {userData?.fullName || "User"}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {user?.email}
+                {userData?.email || "user@example.com"}
               </p>
             </div>
           </div>
@@ -228,38 +267,39 @@ const StudentLayout = () => {
               : ""}
           </div>
 
-          <div className="flex items-center space-x-3">
-            <button
+          <div className="flex items-center space-x-1.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-8 w-8"
               onClick={toggleTheme}
-              className="p-1.5 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700/50"
-              title={isDark ? "Light mode" : "Dark mode"}
             >
               {isDark ? (
                 <Sun className="h-4 w-4" />
               ) : (
                 <Moon className="h-4 w-4" />
               )}
-            </button>
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full"
+                  className="rounded-full h-8 w-8 p-0 ml-1.5"
                 >
-                  <Avatar className="h-8 w-8 ring-2 ring-white/10 dark:ring-gray-800/60">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage
                       src={
-                        user?.profilePicture ||
+                        userData?.profilePicture ||
                         `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          user?.fullName
+                          userData?.fullName || "User"
                         )}&background=6366F1&color=fff`
                       }
-                      alt={user?.fullName}
+                      alt={userData?.fullName || "User"}
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white text-xs">
-                      {getInitials(user?.fullName)}
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white">
+                      {getInitials(userData?.fullName)}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -267,10 +307,10 @@ const StudentLayout = () => {
               <DropdownMenuContent align="end" className="w-52">
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                    {user?.fullName}
+                    {userData?.fullName || "User"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user?.email}
+                    {userData?.email || "user@example.com"}
                   </p>
                 </div>
                 <DropdownMenuSeparator />

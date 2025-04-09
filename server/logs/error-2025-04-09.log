@@ -45,3 +45,87 @@
 {"level":"error","message":"HTTP POST /api/auth/login - 401 (69ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 16:54:03.141"}
 {"level":"error","message":"Login error: Invalid email or password","name":"UnauthorizedError","service":"research-mgmt-api","stack":"UnauthorizedError: Invalid email or password\n    at new UnauthorizedError (/home/swadhin/r/server/src/utils/errors.js:22:5)\n    at <anonymous> (/home/swadhin/r/server/src/controllers/authController.js:317:17)\n    at processTicksAndRejections (native:7:39)","status":401,"timestamp":"2025-04-09 16:56:22.677"}
 {"level":"error","message":"HTTP POST /api/auth/login - 401 (71ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 16:56:22.677"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.881"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.882"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:02.897"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:02.908"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:04.901"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:04.912"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.881"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.882"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:15.899"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:15.909"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:17.904"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:17.915"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:38.185"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:38.187"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:39.203"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:39.222"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:41.208"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:41.227"}
+{"level":"error","message":"HTTP POST /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:47.343"}
+{"level":"error","message":"HTTP GET /student/team-chat - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:12.242"}
+{"level":"error","message":"HTTP GET /student/team-chat - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:13.248"}
+{"level":"error","message":"HTTP GET /api/students/results - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:14.770"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:00.552"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:00.554"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:01.566"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:01.567"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:03.571"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:03.581"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.991"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.992"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:30.008"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:30.008"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:32.013"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:32.022"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.913"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.913"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.344"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.345"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:37.357"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:37.383"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:39.362"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:39.401"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.823"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.824"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:58.836"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:58.846"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:00.841"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:00.857"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.734"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.736"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:03.259"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:03.260"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:04.281"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:04.282"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:06.287"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:06.288"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.304"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.305"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:01.338"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:01.348"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:03.064"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:03.065"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:04.082"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:04.083"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:06.088"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:06.088"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.687"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.688"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:13.705"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:13.705"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:15.710"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:15.721"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.709"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.710"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:19.733"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:19.733"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:21.737"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:21.753"}
+{"error":"undefined is not an object (evaluating 'sandbox.event')","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: undefined is not an object (evaluating 'sandbox.event')\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2923:7)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)\n    at /home/swadhin/r/server/src/index.js:400:4\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 17:29:18.927"}
+{"error":"undefined is not an object (evaluating 'sandbox.event')","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: undefined is not an object (evaluating 'sandbox.event')\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2923:7)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)\n    at /home/swadhin/r/server/src/index.js:400:4\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 17:30:43.137"}
+{"level":"error","message":"Login error: Invalid email or password","name":"UnauthorizedError","service":"research-mgmt-api","stack":"UnauthorizedError: Invalid email or password\n    at <anonymous> (/home/swadhin/r/server/src/controllers/authController.js:317:17)\n    at processTicksAndRejections (native:7:39)","status":401,"timestamp":"2025-04-09 18:28:29.068"}
+{"level":"error","message":"HTTP POST /api/auth/login - 401 (76ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:29.069"}
+{"level":"error","message":"Login error: Invalid email or password","name":"UnauthorizedError","service":"research-mgmt-api","stack":"UnauthorizedError: Invalid email or password\n    at <anonymous> (/home/swadhin/r/server/src/controllers/authController.js:317:17)\n    at processTicksAndRejections (native:7:39)","status":401,"timestamp":"2025-04-09 18:28:37.625"}
+{"level":"error","message":"HTTP POST /api/auth/login - 401 (66ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.625"}

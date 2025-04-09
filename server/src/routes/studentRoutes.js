@@ -1,6 +1,15 @@
 import { t } from "elysia";
 import * as studentController from "../controllers/studentController.js";
+import * as teamController from "../controllers/teamController.js";
+import { jwtAuth } from "../middleware/auth.js";
+import {
+  createTeamSchema,
+  inviteToTeamSchema,
+  removeMemberSchema,
+  respondToInvitationSchema,
+} from "../schemas/teamSchemas.js";
 import { ValidationError } from "../utils/errors.js";
+import logger from "../utils/logger.js";
 
 // Common response schemas
 const successResponse = t.Object({
@@ -10,12 +19,16 @@ const successResponse = t.Object({
 });
 
 const errorResponse = t.Object({
-  error: t.Boolean(),
-  message: t.String(),
+  success: t.Boolean(),
+  error: t.String(),
+  timestamp: t.Optional(t.String()),
 });
 
 export default function studentRoutes(app) {
-  return app.group("/students", (app) => {
+  return app.group("/api/students", (app) => {
+    // Apply JWT authentication to all routes in this group
+    app.use(jwtAuth());
+
     // Common authorization middleware for student-only routes
     app.derive(({ user, set }) => {
       if (!user || user.role !== "student") {
@@ -25,6 +38,174 @@ export default function studentRoutes(app) {
       return { user };
     });
 
+    // Team management routes section
+    app.group("/team", (app) => {
+      return app
+        .get("/", async (context) => {
+          try {
+            const result = await teamController.getUserTeam(context);
+            return {
+              ...result,
+              timestamp: new Date().toISOString(),
+            };
+          } catch (error) {
+            logger.error("Failed to get user team", error);
+            context.set.status = error.status || 500;
+            return {
+              success: false,
+              error: error.message,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        })
+        .post(
+          "/create",
+          {
+            body: createTeamSchema.body,
+          },
+          async (context) => {
+            try {
+              const result = await teamController.createTeam(context);
+              context.set.status = 201;
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to create team", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+        .post(
+          "/invite",
+          {
+            body: inviteToTeamSchema.body,
+          },
+          async (context) => {
+            try {
+              const result = await teamController.inviteUser(context);
+              context.set.status = 201;
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to send invitation", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+        .get("/invitations", async (context) => {
+          try {
+            const result = await teamController.getPendingInvitations(context);
+            return {
+              ...result,
+              timestamp: new Date().toISOString(),
+            };
+          } catch (error) {
+            logger.error("Failed to get invitations", error);
+            context.set.status = error.status || 500;
+            return {
+              success: false,
+              error: error.message,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        })
+        .post(
+          "/respond-to-invitation",
+          {
+            body: respondToInvitationSchema.body,
+          },
+          async (context) => {
+            try {
+              const result = await teamController.respondToInvitation(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to respond to invitation", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+        .post(
+          "/remove-member",
+          {
+            body: removeMemberSchema.body,
+          },
+          async (context) => {
+            try {
+              const result = await teamController.removeMember(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to remove team member", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+        .post("/leave-team", async (context) => {
+          try {
+            const result = await teamController.leaveTeam(context);
+            return {
+              ...result,
+              timestamp: new Date().toISOString(),
+            };
+          } catch (error) {
+            logger.error("Failed to leave team", error);
+            context.set.status = error.status || 500;
+            return {
+              success: false,
+              error: error.message,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        })
+        .get("/available-students", async (context) => {
+          try {
+            const result = await teamController.getAvailableStudents(context);
+            return {
+              ...result,
+              timestamp: new Date().toISOString(),
+            };
+          } catch (error) {
+            logger.error("Failed to get available students", error);
+            context.set.status = error.status || 500;
+            return {
+              success: false,
+              error: error.message,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        });
+    });
+
+    // Continue with the rest of the student routes
     return (
       app
         // Profile and session management

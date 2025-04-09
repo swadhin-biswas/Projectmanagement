@@ -527,3 +527,315 @@
 {"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 16:57:18.633"}
 {"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 16:57:18.634"}
 {"level":"info","message":"HTTP GET /api/dashboard/student - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 16:57:18.929"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 16:58:24.178"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 16:58:24.179"}
+{"external":"23 MB","heapTotal":"27 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"229 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:00:30.889"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:01:15.539"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:01:15.542"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:02:22.061"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:02:22.062"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.589"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.590"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.881"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:01.882"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:02.897"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:02.908"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:04.901"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:04.912"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.588"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.589"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.881"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:14.882"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:15.899"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:15.909"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:17.904"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:03:17.914"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:37.953"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:37.954"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:38.185"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:38.187"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:39.202"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:39.222"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:41.208"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:41.226"}
+{"level":"error","message":"HTTP POST /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:04:47.343"}
+{"level":"error","message":"HTTP GET /student/team-chat - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:12.242"}
+{"level":"error","message":"HTTP GET /student/team-chat - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:13.248"}
+{"level":"error","message":"HTTP GET /api/students/results - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:14.770"}
+{"level":"info","message":"HTTP GET /api/dashboard/student - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:16.496"}
+{"external":"24 MB","heapTotal":"27 MB","heapUsed":"43 MB","level":"info","message":"Memory usage stats:","rss":"231 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:05:30.890"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:00.552"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:00.554"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:01.566"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:01.567"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:03.571"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:03.581"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:09.864"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:09.865"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:10.668"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:10.669"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:10.673"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:39.482"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:39.483"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:40.090"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:40.090"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:40.095"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:40.621"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:40.622"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:41.237"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:41.237"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:08:41.241"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:27.973"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:27.975"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.702"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.703"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.991"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:28.992"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:30.007"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:30.008"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:32.012"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:09:32.022"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.700"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.700"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.912"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:34.913"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.053"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.054"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.344"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:36.345"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:37.357"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:37.383"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:39.362"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:39.401"}
+{"external":"29 MB","heapTotal":"28 MB","heapUsed":"51 MB","level":"info","message":"Memory usage stats:","rss":"207 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:40.629"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.529"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.530"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.823"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:57.824"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:58.836"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:13:58.846"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:00.841"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:00.857"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.447"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.448"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.734"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:01.736"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:02.971"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:02.972"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:03.259"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:03.260"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:04.281"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:04.282"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:06.287"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:14:06.288"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.008"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.010"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.303"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:00.305"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:01.338"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:01.348"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:02.775"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:02.775"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:03.064"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:03.065"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:04.082"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:04.083"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:06.088"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:06.088"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.399"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.400"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.687"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:12.688"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:13.705"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:13.705"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:15.709"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:15.721"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:17.788"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:17.788"}
+{"level":"info","message":"HTTP GET /notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.417"}
+{"level":"info","message":"HTTP GET /notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.418"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.709"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:18.710"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:19.733"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:19.733"}
+{"level":"error","message":"HTTP GET /api/student/teams - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:21.737"}
+{"level":"error","message":"HTTP GET /api/student/invitations - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-09 17:15:21.753"}
+{"error":"undefined is not an object (evaluating 'sandbox.event')","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: undefined is not an object (evaluating 'sandbox.event')\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2923:7)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)\n    at /home/swadhin/r/server/src/index.js:400:4\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 17:29:18.927"}
+{"error":"undefined is not an object (evaluating 'sandbox.event')","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: undefined is not an object (evaluating 'sandbox.event')\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2923:7)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at _use (/home/swadhin/r/server/node_modules/elysia/src/index.ts:3748:21)\n    at /home/swadhin/r/server/src/index.js:400:4\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 17:30:43.137"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:32:55.836"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:32:55.837"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:32:56.550"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:32:56.551"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:32:56.555"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:34:02.431"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:34:02.432"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:34:03.088"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:34:03.088"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:34:03.092"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:15.148"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:15.149"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:15.800"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:15.800"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:15.804"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:22.857"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:22.857"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:23.463"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:23.464"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:23.471"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:30.360"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:30.361"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:30.961"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:30.961"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:30.967"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:42.304"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:42.304"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:42.918"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:42.918"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:35:42.923"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:40.318"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:40.319"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:40.984"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:40.984"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:40.988"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:43.450"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:43.451"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:43.910"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:43.911"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:44.796"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:44.797"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:36:44.801"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:11.215"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:11.215"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:11.918"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:11.918"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:11.923"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:14.904"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:14.905"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:15.513"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:15.513"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:15.517"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:28.637"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:28.638"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:29.239"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:29.239"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:29.244"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:29.813"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:29.814"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:30.422"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:30.422"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:40:30.426"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:50.302"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:50.302"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:50.958"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:50.958"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:50.963"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:53.845"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:53.845"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:54.345"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:54.346"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:54.980"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:54.980"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 17:42:54.984"}
+{"external":"28 MB","heapTotal":"27 MB","heapUsed":"50 MB","level":"info","message":"Memory usage stats:","rss":"207 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:47:54.353"}
+{"external":"22 MB","heapTotal":"26 MB","heapUsed":"39 MB","level":"info","message":"Memory usage stats:","rss":"201 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:52:54.354"}
+{"external":"22 MB","heapTotal":"26 MB","heapUsed":"39 MB","level":"info","message":"Memory usage stats:","rss":"201 MB","service":"research-mgmt-api","timestamp":"2025-04-09 17:57:54.353"}
+{"external":"22 MB","heapTotal":"26 MB","heapUsed":"40 MB","level":"info","message":"Memory usage stats:","rss":"203 MB","service":"research-mgmt-api","timestamp":"2025-04-09 18:02:54.353"}
+{"external":"22 MB","heapTotal":"26 MB","heapUsed":"40 MB","level":"info","message":"Memory usage stats:","rss":"203 MB","service":"research-mgmt-api","timestamp":"2025-04-09 18:07:54.354"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:07:54.375"}
+{"level":"warn","message":"MongoDB disconnected","service":"research-mgmt-api","timestamp":"2025-04-09 18:12:44.862"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:12:44.898"}
+{"external":"23 MB","heapTotal":"26 MB","heapUsed":"40 MB","level":"info","message":"Memory usage stats:","rss":"205 MB","service":"research-mgmt-api","timestamp":"2025-04-09 18:12:54.354"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:13:54.374"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:13:54.375"}
+{"external":"23 MB","heapTotal":"26 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"205 MB","service":"research-mgmt-api","timestamp":"2025-04-09 18:17:54.354"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:42.375"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:42.376"}
+{"level":"warn","message":"MongoDB disconnected","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:52.690"}
+{"level":"info","message":"MongoDB reconnected successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:52.752"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:59.149"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:59.150"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:59.881"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:59.882"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:19:59.887"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:03.305"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:03.305"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:03.974"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:03.974"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:03.978"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:20.370"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:20.371"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:21.033"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:21.033"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:21.038"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:22.818"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:22.819"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:23.479"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:23.479"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:23.484"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:40.068"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:40.069"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:40.712"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:40.712"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:20:40.717"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:21:45.219"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:21:45.220"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:21:45.985"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:21:45.985"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:21:45.990"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:24:52.021"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:24:52.022"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:24:52.775"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:24:52.776"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:24:52.781"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:05.986"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:05.987"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:06.760"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:06.760"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:06.765"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:28.994"}
+{"level":"info","message":"Login attempt for user: teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:28.994"}
+{"level":"info","message":"Verifying password for user: teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:29.050"}
+{"level":"warn","message":"Login failed: Invalid password for user teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:29.068"}
+{"level":"error","message":"Login error: Invalid email or password","name":"UnauthorizedError","service":"research-mgmt-api","stack":"UnauthorizedError: Invalid email or password\n    at <anonymous> (/home/swadhin/r/server/src/controllers/authController.js:317:17)\n    at processTicksAndRejections (native:7:39)","status":401,"timestamp":"2025-04-09 18:28:29.068"}
+{"level":"error","message":"HTTP POST /api/auth/login - 401 (76ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:29.068"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.560"}
+{"level":"info","message":"Login attempt for user: teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.560"}
+{"level":"info","message":"Verifying password for user: teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.610"}
+{"level":"warn","message":"Login failed: Invalid password for user teststudent@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.625"}
+{"level":"error","message":"Login error: Invalid email or password","name":"UnauthorizedError","service":"research-mgmt-api","stack":"UnauthorizedError: Invalid email or password\n    at <anonymous> (/home/swadhin/r/server/src/controllers/authController.js:317:17)\n    at processTicksAndRejections (native:7:39)","status":401,"timestamp":"2025-04-09 18:28:37.625"}
+{"level":"error","message":"HTTP POST /api/auth/login - 401 (66ms) Error: Invalid email or password","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:37.625"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.032"}
+{"function":"registerUser","level":"info","message":"MongoDB connection verified","service":"research-mgmt-api","state":1,"timestamp":"2025-04-09 18:28:51.032"}
+{"function":"registerUser","level":"info","message":"Argon2 hashing verified","service":"research-mgmt-api","success":true,"timestamp":"2025-04-09 18:28:51.051"}
+{"level":"info","message":"Checking for existing user with email: testuser@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.051"}
+{"level":"info","message":"No existing user found with email: testuser@example.com. Proceeding with registration.","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.101"}
+{"level":"info","message":"Creating new user object for: testuser@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.101"}
+{"level":"info","message":"Saving user to database: testuser@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.103"}
+{"level":"info","message":"User successfully saved. ID: 67f668031c2d338f08bd980a, Email: testuser@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.177"}
+{"level":"info","message":"Creating student profile with ID: STU000007","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.228"}
+{"level":"info","message":"Student profile created successfully: STU000007","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.281"}
+{"email":"testuser@example.com","function":"registerUser","level":"info","message":"New user registered successfully","role":"student","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.283","userId":"67f668031c2d338f08bd980a"}
+{"level":"info","message":"HTTP POST /api/auth/register - 201 (252ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:28:51.283"}
+{"level":"info","message":"HTTP POST /api/teams/create - 200 (52ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:13.106"}
+{"level":"info","message":"HTTP GET /api/teams/my-teams - 200 (51ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:23.068"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.800"}
+{"function":"registerUser","level":"info","message":"MongoDB connection verified","service":"research-mgmt-api","state":1,"timestamp":"2025-04-09 18:29:39.800"}
+{"function":"registerUser","level":"info","message":"Argon2 hashing verified","service":"research-mgmt-api","success":true,"timestamp":"2025-04-09 18:29:39.818"}
+{"level":"info","message":"Checking for existing user with email: testuser2@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.818"}
+{"level":"info","message":"No existing user found with email: testuser2@example.com. Proceeding with registration.","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.867"}
+{"level":"info","message":"Creating new user object for: testuser2@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.867"}
+{"level":"info","message":"Saving user to database: testuser2@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.868"}
+{"level":"info","message":"User successfully saved. ID: 67f668331c2d338f08bd9812, Email: testuser2@example.com","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.938"}
+{"level":"info","message":"Creating student profile with ID: STU000008","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:39.988"}
+{"level":"info","message":"Student profile created successfully: STU000008","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:40.041"}
+{"email":"testuser2@example.com","function":"registerUser","level":"info","message":"New user registered successfully","role":"student","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:40.042","userId":"67f668331c2d338f08bd9812"}
+{"level":"info","message":"HTTP POST /api/auth/register - 201 (242ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:40.042"}
+{"level":"info","message":"HTTP GET /api/teams/my-teams - 200 (51ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:29:49.667"}
+{"level":"info","message":"HTTP GET /api/students/profile - 200 (50ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:30:02.310"}
+{"level":"info","message":"HTTP GET /api/teams/my-teams - 200 (50ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:30:12.061"}
+{"level":"info","message":"HTTP POST /api/teams/create - 200 (50ms)","service":"research-mgmt-api","timestamp":"2025-04-09 18:30:26.373"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 18:31:09.623"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 18:31:09.624"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 18:31:10.322"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 18:31:10.322"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 18:31:10.326"}

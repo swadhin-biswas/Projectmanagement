@@ -11,8 +11,10 @@ import { elysiaCorsMiddleware } from "./middleware/cors.js";
 import staticFilesMiddleware from "./middleware/staticFiles.js";
 
 // Import routes
+import invitationRoutes from "./routes/invitationRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
+// import studentTeamRoutes from "./routes/studentTeamRoutes.js";
 
 // Import additional routes
 import activityRoutes from "./routes/activityRoutes.js";
@@ -386,6 +388,8 @@ app
   // .use(userRoutes)
   .use(sessionRoutes)
   .use(teamRoutes)
+  .use(invitationRoutes)
+  // .use(studentTeamRoutes)
   .use(adminRoutes)
   .use(dashboardRoutes)
   .use(analyticsRoutes)

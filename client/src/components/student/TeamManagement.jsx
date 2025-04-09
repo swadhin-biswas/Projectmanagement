@@ -1,4 +1,10 @@
 import {
+  createTeam,
+  getAvailableStudents,
+  inviteToTeam,
+  leaveTeam,
+} from "@/api/teams";
+import {
   faCrown,
   faEnvelope,
   faUserCheck,
@@ -52,6 +58,13 @@ const TeamManagement = () => {
     inviteCode: "",
   });
   const [activeTab, setActiveTab] = useState("team");
+  const [creating, setCreating] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [removing, setRemoving] = useState(null);
+  const [leaving, setLeaving] = useState(false);
+  const [availableStudents, setAvailableStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -84,60 +97,72 @@ const TeamManagement = () => {
     }
   };
 
-  const handleCreateTeam = async (e) => {
-    e.preventDefault();
+  const fetchAvailableStudents = async () => {
     try {
-      if (!createTeamForm.name.trim()) {
-        toast.error("Team name is required");
-        return;
-      }
-
-      const response = await api.post(
-        "/api/student/create-team",
-        createTeamForm
-      );
-
-      // The response structure is { success, data, message }
+      setLoadingStudents(true);
+      const response = await getAvailableStudents();
       if (response.data.success) {
-        // If data.team exists use it, otherwise use data directly
-        const teamData = response.data.data.team || response.data.data;
-        setTeam(teamData);
-        setIsCreateModalOpen(false);
-        setCreateTeamForm({ name: "" });
-        toast.success(response.data.message || "Team created successfully");
-
-        // Refresh team data to ensure we have the latest
-        fetchTeamData();
+        setAvailableStudents(response.data.data || []);
       } else {
-        toast.error(response.data.error || "Failed to create team");
+        toast.error("Failed to fetch available students");
       }
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to create team");
+      console.error("Error fetching available students:", error);
+      toast.error("Error loading available students");
+    } finally {
+      setLoadingStudents(false);
     }
   };
 
-  const handleInviteStudent = async (e) => {
+  const handleCreateTeam = async (e) => {
     e.preventDefault();
-    try {
-      if (!inviteForm.studentId.trim()) {
-        toast.error("Student ID is required");
-        return;
-      }
+    if (!createTeamForm.name.trim()) {
+      toast.error("Team name is required");
+      return;
+    }
 
-      const response = await api.post(
-        "/api/student/invite-to-team",
-        inviteForm
-      );
+    try {
+      setCreating(true);
+      const response = await createTeam(createTeamForm);
 
       if (response.data.success) {
-        setIsInviteModalOpen(false);
-        setInviteForm({ studentId: "", message: "" });
-        toast.success(response.data.message || "Invitation sent successfully");
+        toast.success("Team created successfully!");
+        setTeam(response.data.data);
+        setIsCreateModalOpen(false);
+        setCreateTeamForm({ name: "", description: "" });
       } else {
-        toast.error(response.data.error || "Failed to send invitation");
+        toast.error(response.data.message || "Failed to create team");
       }
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to send invitation");
+      console.error("Error creating team:", error);
+      toast.error("Error creating team");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleInviteStudent = async () => {
+    if (!selectedStudentId) {
+      toast.error("Please select a student to invite");
+      return;
+    }
+
+    try {
+      setInviting(true);
+      const response = await inviteToTeam(selectedStudentId);
+
+      if (response.data.success) {
+        toast.success("Invitation sent successfully!");
+        setIsInviteModalOpen(false);
+        setSelectedStudentId("");
+      } else {
+        toast.error(response.data.message || "Failed to send invitation");
+      }
+    } catch (error) {
+      console.error("Error inviting student:", error);
+      toast.error("Error sending invitation");
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -203,11 +228,20 @@ const TeamManagement = () => {
     }
 
     try {
-      await api.post("/api/student/leave-team");
-      setTeam(null);
-      toast.success("Left team successfully");
+      setLeaving(true);
+      const response = await leaveTeam();
+
+      if (response.data.success) {
+        toast.success("You left the team");
+        setTeam(null);
+      } else {
+        toast.error(response.data.message || "Failed to leave team");
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to leave team");
+      console.error("Error leaving team:", error);
+      toast.error("Error leaving team");
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -546,10 +580,8 @@ const TeamManagement = () => {
               <Label htmlFor="studentId">Student ID</Label>
               <Input
                 id="studentId"
-                value={inviteForm.studentId}
-                onChange={(e) =>
-                  setInviteForm({ ...inviteForm, studentId: e.target.value })
-                }
+                value={selectedStudentId}
+                onChange={(e) => setSelectedStudentId(e.target.value)}
                 placeholder="Enter student ID (e.g., STU123456)"
                 required
               />
@@ -578,7 +610,7 @@ const TeamManagement = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={!inviteForm.studentId.trim()}
+                disabled={!selectedStudentId.trim()}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 Send Invitation

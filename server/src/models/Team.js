@@ -62,34 +62,46 @@ const teamSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Team name is required"],
+      required: true,
       trim: true,
+      minlength: 3,
+      maxlength: 50,
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 500,
     },
     teamId: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true, // Allows null values without duplicate key errors
+    },
+    leader: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     members: [
       {
         user: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Student",
+          ref: "User",
           required: true,
         },
         role: {
           type: String,
           enum: ["leader", "member"],
-          required: true,
+          default: "member",
+        },
+        status: {
+          type: String,
+          enum: ["active", "inactive", "pending", "removed"],
+          default: "active",
         },
         joinedAt: {
           type: Date,
           default: Date.now,
-        },
-        status: {
-          type: String,
-          enum: ["active", "inactive", "left"],
-          default: "active",
         },
       },
     ],
@@ -123,13 +135,6 @@ const teamSchema = new mongoose.Schema(
     maxMembers: {
       type: Number,
       default: 4,
-      max: 4,
-      validate: {
-        validator: function (val) {
-          return val <= 4;
-        },
-        message: "Team cannot have more than 4 members",
-      },
     },
     minMembers: {
       type: Number,
@@ -145,10 +150,16 @@ const teamSchema = new mongoose.Schema(
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
+      sparse: true,
     },
     invites: [
       {
         student: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Student",
+          required: true,
+        },
+        invitedBy: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Student",
           required: true,
@@ -158,44 +169,32 @@ const teamSchema = new mongoose.Schema(
           enum: ["pending", "accepted", "declined", "expired"],
           default: "pending",
         },
-        expiresAt: {
-          type: Date,
-          default: () => new Date(+new Date() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-        },
-        invitedBy: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Student",
-          required: true,
-        },
         inviteMessage: {
           type: String,
-          trim: true,
+          maxlength: 200,
         },
-        responseMessage: {
-          type: String,
-          trim: true,
+        expiresAt: {
+          type: Date,
+          required: true,
         },
-        respondedAt: Date,
+        respondedAt: {
+          type: Date,
+        },
       },
     ],
     session: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Session",
-      required: true,
     },
     status: {
       type: String,
-      enum: ["forming", "active", "inactive", "completed", "dissolved"],
+      enum: ["forming", "active", "completed", "archived"],
       default: "forming",
     },
     formationStrategy: {
       type: String,
       enum: ["self_formed", "admin_assigned", "algorithm_matched", "mixed"],
       default: "self_formed",
-    },
-    description: {
-      type: String,
-      trim: true,
     },
     meetingSchedule: {
       frequency: {
@@ -334,6 +333,17 @@ const teamSchema = new mongoose.Schema(
         },
       },
     ],
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    completedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -370,7 +380,7 @@ teamSchema.methods.canAcceptMembers = function () {
   return (
     this.members.length < this.maxMembers &&
     this.isOpenToNewMembers &&
-    this.status !== "dissolved" &&
+    this.status !== "archived" &&
     this.status !== "completed"
   );
 };
@@ -596,7 +606,7 @@ teamSchema.methods.canInvite = function (userId) {
     !this.isFull() &&
     !this.isMember(userId) &&
     this.isOpenToNewMembers &&
-    this.status !== "dissolved" &&
+    this.status !== "archived" &&
     this.status !== "completed" &&
     !this.invites.some(
       (invite) =>
@@ -607,7 +617,7 @@ teamSchema.methods.canInvite = function (userId) {
 };
 
 // Virtual for active members count
-teamSchema.virtual("memberCount").get(function () {
+teamSchema.virtual("activeMembersCount").get(function () {
   return this.members.filter((m) => m.status === "active").length;
 });
 
@@ -852,7 +862,7 @@ teamSchema.statics.processExpiredInvites = async function () {
 // Method to generate team statistics
 teamSchema.methods.getStatistics = function () {
   return {
-    memberCount: this.memberCount,
+    memberCount: this.activeMembersCount,
     totalMembers: this.totalMemberCount,
     fullnessPercentage: this.fullnessPercentage,
     formationProgress: this.formationProgress,
@@ -947,6 +957,15 @@ teamSchema.methods.getPeerReviewSummary = function (studentId) {
   };
 };
 
-const Team = mongoose.models.Team || mongoose.model("Team", teamSchema);
+// Create index for faster lookups
+teamSchema.index({ leader: 1 });
+teamSchema.index({ "members.user": 1 });
+teamSchema.index({ status: 1 });
+teamSchema.index({ session: 1 });
 
+// Team Model
+const Team = mongoose.model("Team", teamSchema);
+
+// Export as both default and named export
+export default Team;
 export { Team };

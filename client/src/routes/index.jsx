@@ -52,10 +52,36 @@ const StudentLayout = lazy(() => import("../layouts/StudentLayout"));
 const RoleBasedRedirect = () => {
   const { user } = useAuth();
 
+  // If user is null, try to get from localStorage
   if (!user) {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.role) {
+          // Redirect based on role from localStorage
+          switch (parsedUser.role) {
+            case "admin":
+            case "superadmin":
+              return <Navigate to="/admin/dashboard" replace />;
+            case "supervisor":
+              return <Navigate to="/supervisor/dashboard" replace />;
+            case "student":
+              return <Navigate to="/student/dashboard" replace />;
+            default:
+              break;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse stored user in RoleBasedRedirect:", e);
+    }
+
+    // If we can't get a valid user role, go to login
     return <Navigate to="/login" replace />;
   }
 
+  // If we have user from context, use it for redirection
   switch (user.role) {
     case "admin":
     case "superadmin":

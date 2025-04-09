@@ -8,6 +8,7 @@ import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import Routes from "@/routes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter } from "react-router-dom";
 
@@ -43,25 +44,27 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <BrowserRouter>
-          <NextThemesProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem={true}
-            storageKey="project-management-theme"
-          >
-            <ThemeProvider>
-              <ToastProvider />
-              <QueryProvider>
-                <AuthProvider>
-                  <WebSocketProvider>
-                    <NotificationProvider>
-                      <Routes />
-                    </NotificationProvider>
-                  </WebSocketProvider>
-                </AuthProvider>
-              </QueryProvider>
-            </ThemeProvider>
-          </NextThemesProvider>
+          <HelmetProvider>
+            <NextThemesProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem={true}
+              storageKey="project-management-theme"
+            >
+              <ThemeProvider>
+                <ToastProvider />
+                <QueryProvider>
+                  <AuthProvider>
+                    <WebSocketProvider>
+                      <NotificationProvider>
+                        <Routes />
+                      </NotificationProvider>
+                    </WebSocketProvider>
+                  </AuthProvider>
+                </QueryProvider>
+              </ThemeProvider>
+            </NextThemesProvider>
+          </HelmetProvider>
         </BrowserRouter>
       </ErrorBoundary>
       <Toaster position="top-right" />

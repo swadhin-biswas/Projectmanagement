@@ -1,13 +1,13 @@
 import { t } from "elysia";
-import * as teamChatController from "../controllers/teamChatController.js";
 import * as teamController from "../controllers/teamController.js";
-import * as teamInvitationController from "../controllers/teamInvitationController.js";
+import { jwtAuth } from "../middleware/auth.js";
 import logger from "../utils/logger.js";
 
-// Response schemas
+// Team schemas
 const teamResponse = t.Object({
   _id: t.String(),
   name: t.String(),
+  teamId: t.String(),
   members: t.Array(
     t.Object({
       user: t.Object({
@@ -18,52 +18,79 @@ const teamResponse = t.Object({
       }),
       role: t.String(),
       joinedAt: t.String(),
+      status: t.String(),
     })
   ),
   maxMembers: t.Number(),
-  invites: t.Array(
-    t.Object({
-      student: t.String(),
-      status: t.String(),
-      expiresAt: t.String(),
-    })
-  ),
+  description: t.Optional(t.String()),
+  status: t.String(),
 });
 
+// Team creation schema
+const createTeamSchema = t.Object({
+  name: t.String(),
+  description: t.Optional(t.String()),
+});
+
+// Team invitation schema
 const inviteSchema = t.Object({
+  teamId: t.String(),
   studentId: t.String(),
   message: t.Optional(t.String()),
 });
 
+// Invitation response schema
 const inviteResponseSchema = t.Object({
   response: t.Union([t.Literal("accept"), t.Literal("decline")]),
 });
 
+// Success response schema
+const successResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  data: t.Optional(t.Any()),
+  timestamp: t.Optional(t.String()),
+});
+
+// Error response schema
+const errorResponse = t.Object({
+  success: t.Boolean(),
+  error: t.String(),
+  timestamp: t.Optional(t.String()),
+});
+
+// Export as a function that takes app as parameter
 export default function teamRoutes(app) {
   return app.group("/api/teams", (app) => {
+    // Apply JWT authentication to all routes in this group
+    app.use(jwtAuth());
+
     return (
       app
-        // Get all teams for current user
+        // Get user's teams
         .get(
-          "/",
+          "/my-teams",
           {
             detail: {
-              summary: "Get all teams for the current user",
               tags: ["Teams"],
+              summary: "Get teams the user is a member of",
               security: [{ bearerAuth: [] }],
-              responses: {
-                200: { description: "List of user's teams" },
-                401: { description: "Unauthorized" },
-                404: { description: "Profile not found" },
-              },
+            },
+            response: {
+              200: successResponse,
+              401: errorResponse,
+              500: errorResponse,
             },
           },
           async (context) => {
             try {
-              logger.info("👥 Getting user teams");
-              return await teamController.getUserTeams(context);
+              const result = await teamController.getMyTeams(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Error fetching user teams:", error);
+              logger.error("Failed to get user teams", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -74,44 +101,102 @@ export default function teamRoutes(app) {
           }
         )
 
-        // Create a new team
+        // Create team
         .post(
-          "/",
+          "/create",
+          {
+            body: createTeamSchema,
+            detail: {
+              tags: ["Teams"],
+              summary: "Create a new team",
+              security: [{ bearerAuth: [] }],
+            },
+            response: {
+              201: successResponse,
+              400: errorResponse,
+            },
+          },
+          async (context) => {
+            try {
+              logger.info("Creating new team");
+              const result = await teamController.createTeam(context);
+              context.set.status = 201;
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to create team", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Get team by ID
+        .get(
+          "/:teamId",
+          {
+            detail: {
+              tags: ["Teams"],
+              summary: "Get team by ID",
+              security: [{ bearerAuth: [] }],
+            },
+            response: {
+              200: successResponse,
+              404: errorResponse,
+            },
+          },
+          async (context) => {
+            try {
+              const result = await teamController.getTeamById(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to get team", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Update team
+        .put(
+          "/:teamId",
           {
             body: t.Object({
-              name: t.String({ minLength: 2, maxLength: 50 }),
+              name: t.Optional(t.String()),
               description: t.Optional(t.String()),
-              maxMembers: t.Optional(t.Number({ minimum: 2, maximum: 6 })),
             }),
+            detail: {
+              tags: ["Teams"],
+              summary: "Update team details",
+              security: [{ bearerAuth: [] }],
+            },
             response: {
-              201: t.Object({
-                success: t.Boolean(),
-                data: t.Object({
-                  _id: t.String(),
-                  name: t.String(),
-                  members: t.Array(t.Any()),
-                }),
-              }),
-              400: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              500: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
+              200: successResponse,
+              404: errorResponse,
             },
           },
           async (context) => {
             try {
-              logger.info("📝 Team creation requested");
-              return await teamController.createTeam(context);
+              const result = await teamController.updateTeam(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Failed to create team:", error);
+              logger.error("Failed to update team", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -122,41 +207,65 @@ export default function teamRoutes(app) {
           }
         )
 
-        // Team invitation endpoints
+        // Delete team
+        .delete(
+          "/:teamId",
+          {
+            detail: {
+              tags: ["Teams"],
+              summary: "Delete a team",
+              security: [{ bearerAuth: [] }],
+            },
+            response: {
+              200: successResponse,
+              404: errorResponse,
+            },
+          },
+          async (context) => {
+            try {
+              const result = await teamController.deleteTeam(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to delete team", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Team invitations
         .post(
-          "/:teamId/invite",
+          "/invite",
           {
             body: inviteSchema,
             detail: {
               tags: ["Teams"],
-              summary: "Invite student to team",
+              summary: "Invite a user to a team",
               security: [{ bearerAuth: [] }],
             },
             response: {
-              201: t.Object({
-                success: t.Boolean(),
-                message: t.String(),
-              }),
-              400: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              404: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
+              201: successResponse,
+              400: errorResponse,
             },
           },
           async (context) => {
             try {
-              logger.info("📨 Team invitation requested");
-              return await teamInvitationController.sendTeamInvitation(context);
+              logger.info("Sending team invitation");
+              const result = await teamController.inviteUser(context);
+              context.set.status = 201;
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Failed to send team invitation:", error);
+              logger.error("Failed to send invitation", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -167,89 +276,31 @@ export default function teamRoutes(app) {
           }
         )
 
+        // Get pending invitations
         .get(
           "/invitations/pending",
           {
-            response: {
-              200: t.Object({
-                success: t.Boolean(),
-                data: t.Array(
-                  t.Object({
-                    id: t.String(),
-                    team: t.Object({
-                      id: t.String(),
-                      name: t.String(),
-                      currentMembers: t.Number(),
-                      maxMembers: t.Number(),
-                    }),
-                    invitedBy: t.Object({
-                      id: t.String(),
-                      name: t.String(),
-                    }),
-                    message: t.Optional(t.String()),
-                    expiresAt: t.String(),
-                  })
-                ),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              500: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-            },
-          },
-          async (context) => {
-            try {
-              return teamInvitationController.getPendingInvitations(context);
-            } catch (error) {
-              logger.error("❌ Failed to get pending invitations:", error);
-              context.set.status = error.status || 500;
-              return {
-                success: false,
-                error: error.message,
-                timestamp: new Date().toISOString(),
-              };
-            }
-          }
-        )
-
-        .post(
-          "/:teamId/invitations/:inviteId/respond",
-          {
-            body: inviteResponseSchema,
             detail: {
               tags: ["Teams"],
-              summary: "Respond to team invitation",
+              summary: "Get pending team invitations",
               security: [{ bearerAuth: [] }],
             },
             response: {
-              200: t.Object({
-                success: t.Boolean(),
-                message: t.String(),
-              }),
-              400: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              404: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
+              200: successResponse,
+              401: errorResponse,
             },
           },
           async (context) => {
             try {
-              logger.info("✉️ Processing invitation response");
-              return teamInvitationController.respondToInvitation(context);
+              const result = await teamController.getPendingInvitations(
+                context
+              );
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Failed to process invitation response:", error);
+              logger.error("Failed to get pending invitations", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -260,45 +311,29 @@ export default function teamRoutes(app) {
           }
         )
 
-        // Team member management
-        .delete(
-          "/:teamId/leave",
+        // Accept invitation
+        .put(
+          "/invitations/:invitationId/accept",
           {
             detail: {
-              summary: "Leave a team",
               tags: ["Teams"],
+              summary: "Accept a team invitation",
               security: [{ bearerAuth: [] }],
-              responses: {
-                200: { description: "Left team successfully" },
-                401: { description: "Unauthorized" },
-                403: { description: "Forbidden - not a team member" },
-                404: { description: "Team not found" },
-              },
             },
             response: {
-              200: t.Object({
-                success: t.Boolean(),
-                message: t.String(),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              403: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              404: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
+              200: successResponse,
+              400: errorResponse,
             },
           },
           async (context) => {
             try {
-              return teamController.leaveTeam(context);
+              const result = await teamController.acceptInvitation(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Failed to leave team:", error);
+              logger.error("Failed to accept invitation", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -309,30 +344,29 @@ export default function teamRoutes(app) {
           }
         )
 
-        // Team details
-        .get(
-          "/:teamId",
+        // Decline invitation
+        .put(
+          "/invitations/:invitationId/decline",
           {
+            detail: {
+              tags: ["Teams"],
+              summary: "Decline a team invitation",
+              security: [{ bearerAuth: [] }],
+            },
             response: {
-              200: t.Object({
-                success: t.Boolean(),
-                data: teamResponse,
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              404: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
+              200: successResponse,
+              400: errorResponse,
             },
           },
           async (context) => {
             try {
-              return teamController.getTeamDetails(context);
+              const result = await teamController.declineInvitation(context);
+              return {
+                ...result,
+                timestamp: new Date().toISOString(),
+              };
             } catch (error) {
-              logger.error("❌ Failed to get team details:", error);
+              logger.error("Failed to decline invitation", error);
               context.set.status = error.status || 500;
               return {
                 success: false,
@@ -342,170 +376,6 @@ export default function teamRoutes(app) {
             }
           }
         )
-
-        .get(
-          "/:teamId/members",
-          {
-            response: {
-              200: t.Object({
-                success: t.Boolean(),
-                data: t.Array(t.Any()),
-              }),
-              401: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-              404: t.Object({
-                success: t.Boolean(),
-                error: t.String(),
-              }),
-            },
-          },
-          async (context) => {
-            try {
-              return teamController.getTeamMembers(context);
-            } catch (error) {
-              logger.error("❌ Failed to get team members:", error);
-              context.set.status = error.status || 500;
-              return {
-                success: false,
-                error: error.message,
-                timestamp: new Date().toISOString(),
-              };
-            }
-          }
-        )
-
-        // Team chat functionality
-        .group("/:teamId/chat", (app) => {
-          return app
-            .get(
-              "/",
-              {
-                query: t.Object({
-                  limit: t.Optional(t.Number()),
-                  before: t.Optional(t.String()),
-                }),
-                response: {
-                  200: t.Object({
-                    success: t.Boolean(),
-                    data: t.Array(
-                      t.Object({
-                        _id: t.String(),
-                        sender: t.Object({
-                          _id: t.String(),
-                          fullName: t.String(),
-                        }),
-                        content: t.String(),
-                        timestamp: t.String(),
-                        readBy: t.Array(t.String()),
-                        isAnnouncement: t.Boolean(),
-                      })
-                    ),
-                  }),
-                  401: t.Object({
-                    success: t.Boolean(),
-                    error: t.String(),
-                  }),
-                  404: t.Object({
-                    success: t.Boolean(),
-                    error: t.String(),
-                  }),
-                },
-              },
-              async (context) => {
-                try {
-                  return teamChatController.getTeamChatMessages(context);
-                } catch (error) {
-                  logger.error("❌ Failed to get team chat messages:", error);
-                  context.set.status = error.status || 500;
-                  return {
-                    success: false,
-                    error: error.message,
-                    timestamp: new Date().toISOString(),
-                  };
-                }
-              }
-            )
-
-            .post(
-              "/",
-              {
-                body: t.Object({
-                  content: t.String(),
-                  isAnnouncement: t.Optional(t.Boolean()),
-                  attachments: t.Optional(
-                    t.Array(
-                      t.Object({
-                        url: t.String(),
-                        type: t.String(),
-                      })
-                    )
-                  ),
-                }),
-              },
-              async (context) => {
-                return teamChatController.sendTeamMessage(context);
-              }
-            )
-
-            .get(
-              "/unread",
-              {
-                response: {
-                  200: t.Object({
-                    success: t.Boolean(),
-                    data: t.Object({
-                      unreadCount: t.Number(),
-                    }),
-                  }),
-                },
-              },
-              async (context) => {
-                return teamChatController.getUnreadCount(context);
-              }
-            )
-
-            .post(
-              "/mark-read",
-              {
-                response: {
-                  200: t.Object({
-                    success: t.Boolean(),
-                    message: t.String(),
-                  }),
-                },
-              },
-              async (context) => {
-                return teamChatController.markMessagesAsRead(context);
-              }
-            )
-
-            .get(
-              "/announcements",
-              {
-                response: {
-                  200: t.Object({
-                    success: t.Boolean(),
-                    data: t.Array(
-                      t.Object({
-                        _id: t.String(),
-                        content: t.String(),
-                        timestamp: t.String(),
-                        sender: t.Object({
-                          _id: t.String(),
-                          fullName: t.String(),
-                        }),
-                      })
-                    ),
-                  }),
-                },
-              },
-              async (context) => {
-                return teamChatController.getAnnouncements(context);
-              }
-            );
-        })
     );
   });
 }

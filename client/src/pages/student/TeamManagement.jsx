@@ -1,4 +1,4 @@
-import { PageTransition } from "@/components/PageTransition";
+import PageTransition from "@/components/PageTransition";
 import TeamChat from "@/components/student/TeamChat";
 import TeamCreation from "@/components/student/TeamCreation";
 import TeamDetails from "@/components/student/TeamDetails";

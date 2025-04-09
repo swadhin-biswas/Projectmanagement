@@ -9,252 +9,318 @@ import {
   respondToInvite,
   sendTeamMessage,
 } from "../controllers/studentTeamController.js";
-import { authorize } from "../middleware/auth.js";
+import { jwtAuth } from "../middleware/auth.js";
+import { ValidationError } from "../utils/errors.js";
+import logger from "../utils/logger.js";
 
-export const studentTeamRoutes = (app) => {
-  return (
-    app
-      // Get teams for current student
-      .get(
-        "/teams",
-        {
-          detail: {
-            summary: "Get all teams for the current student",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "List of student's teams" },
-              401: { description: "Unauthorized" },
-              404: { description: "Student profile not found" },
-            },
-          },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return getMyTeams({ ...context, user });
-        }
-      )
+export default function studentTeamRoutes(app) {
+  return app.group("/api/student-teams", (app) => {
+    // Apply JWT authentication to all routes in this group
+    app.use(jwtAuth());
 
-      // Create a new team
-      .post(
-        "/teams",
-        {
-          body: {
-            type: "object",
-            properties: {
-              name: { type: "string", minLength: 3, maxLength: 50 },
-            },
-            required: ["name"],
-          },
-          detail: {
-            summary: "Create a new team",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              201: { description: "Team created successfully" },
-              400: { description: "Validation error" },
-              401: { description: "Unauthorized" },
-              404: { description: "Student profile not found" },
-            },
-          },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return createTeam({ ...context, user });
-        }
-      )
+    // Common authorization middleware for student-only routes
+    app.derive(({ user, set }) => {
+      if (!user || user.role !== "student") {
+        set.status = 403;
+        throw new ValidationError("Student access only");
+      }
+      return { user };
+    });
 
-      // Get team details by ID
-      .get(
-        "/teams/:id",
-        {
-          detail: {
-            summary: "Get team details by ID",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Team details" },
-              401: { description: "Unauthorized" },
-              403: { description: "Forbidden - not a team member" },
-              404: { description: "Team not found" },
+    return (
+      app
+        // Get teams for current student
+        .get(
+          "/",
+          {
+            detail: {
+              summary: "Get all teams for the current student",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return getTeamById({ ...context, user });
-        }
-      )
+          async (context) => {
+            try {
+              const result = await getMyTeams(context);
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to get student teams", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      // Invite student to team
-      .post(
-        "/teams/:id/invite",
-        {
-          body: {
-            type: "object",
-            properties: {
-              studentId: { type: "string" },
+        // Create a new team
+        .post(
+          "/",
+          {
+            body: {
+              type: "object",
+              properties: {
+                name: { type: "string", minLength: 3, maxLength: 50 },
+              },
+              required: ["name"],
             },
-            required: ["studentId"],
-          },
-          detail: {
-            summary: "Invite a student to join the team",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Invitation sent successfully" },
-              400: { description: "Validation error or team is full" },
-              401: { description: "Unauthorized" },
-              403: { description: "Forbidden - not a team member" },
-              404: { description: "Team or student not found" },
+            detail: {
+              summary: "Create a new team",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return inviteStudent({ ...context, user });
-        }
-      )
+          async (context) => {
+            try {
+              const result = await createTeam(context);
+              context.set.status = 201;
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to create team", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      // Respond to team invitation
-      .post(
-        "/teams/:id/respond",
-        {
-          body: {
-            type: "object",
-            properties: {
-              response: { type: "string", enum: ["accepted", "declined"] },
-            },
-            required: ["response"],
-          },
-          detail: {
-            summary: "Respond to a team invitation",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Response processed successfully" },
-              400: { description: "Validation error" },
-              401: { description: "Unauthorized" },
-              404: { description: "Team or invitation not found" },
+        // Get team details by ID
+        .get(
+          "/:id",
+          {
+            detail: {
+              summary: "Get team details by ID",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return respondToInvite({ ...context, user });
-        }
-      )
+          async (context) => {
+            try {
+              const result = await getTeamById(context);
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to get team details", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
 
-      // Send message in team chat
-      .post(
-        "/teams/:id/chat",
-        {
-          body: {
-            type: "object",
-            properties: {
-              content: { type: "string", minLength: 1 },
-              attachments: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    url: { type: "string" },
-                    type: { type: "string" },
+        // Invite student to team
+        .post(
+          "/:id/invite",
+          {
+            body: {
+              type: "object",
+              properties: {
+                studentId: { type: "string" },
+              },
+              required: ["studentId"],
+            },
+            detail: {
+              summary: "Invite a student to join the team",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
+            },
+          },
+          async (context) => {
+            try {
+              const result = await inviteStudent(context);
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to send invitation", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Respond to team invitation
+        .post(
+          "/:id/respond",
+          {
+            body: {
+              type: "object",
+              properties: {
+                response: { type: "string", enum: ["accepted", "declined"] },
+              },
+              required: ["response"],
+            },
+            detail: {
+              summary: "Respond to a team invitation",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
+            },
+          },
+          async (context) => {
+            try {
+              const result = await respondToInvite(context);
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to respond to invitation", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+
+        // Send message in team chat
+        .post(
+          "/:id/chat",
+          {
+            body: {
+              type: "object",
+              properties: {
+                content: { type: "string", minLength: 1 },
+                attachments: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      url: { type: "string" },
+                      type: { type: "string" },
+                    },
                   },
                 },
               },
+              required: ["content"],
             },
-            required: ["content"],
-          },
-          detail: {
-            summary: "Send a message in team chat",
-            tags: ["Student", "Teams", "Chat"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Message sent successfully" },
-              400: { description: "Validation error" },
-              401: { description: "Unauthorized" },
-              403: { description: "Forbidden - not a team member" },
-              404: { description: "Team not found" },
+            detail: {
+              summary: "Send a message in team chat",
+              tags: ["Student", "Teams", "Chat"],
+              security: [{ bearerAuth: [] }],
+              responses: {
+                200: { description: "Message sent successfully" },
+                400: { description: "Validation error" },
+                401: { description: "Unauthorized" },
+                403: { description: "Forbidden - not a team member" },
+                404: { description: "Team not found" },
+              },
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return sendTeamMessage({ ...context, user });
-        }
-      )
+          async (context) => {
+            const { user } = await authorize(["student"])(context);
+            return sendTeamMessage({ ...context, user });
+          }
+        )
 
-      // Get team chat messages
-      .get(
-        "/teams/:id/chat",
-        {
-          query: {
-            type: "object",
-            properties: {
-              limit: { type: "number", default: 50 },
-              before: { type: "string", format: "date-time" },
+        // Get team chat messages
+        .get(
+          "/:id/chat",
+          {
+            query: {
+              type: "object",
+              properties: {
+                limit: { type: "number", default: 50 },
+                before: { type: "string", format: "date-time" },
+              },
+            },
+            detail: {
+              summary: "Get team chat messages",
+              tags: ["Student", "Teams", "Chat"],
+              security: [{ bearerAuth: [] }],
+              responses: {
+                200: { description: "List of chat messages" },
+                401: { description: "Unauthorized" },
+                403: { description: "Forbidden - not a team member" },
+                404: { description: "Team not found" },
+              },
             },
           },
-          detail: {
-            summary: "Get team chat messages",
-            tags: ["Student", "Teams", "Chat"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "List of chat messages" },
-              401: { description: "Unauthorized" },
-              403: { description: "Forbidden - not a team member" },
-              404: { description: "Team not found" },
-            },
-          },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return getTeamMessages({ ...context, user });
-        }
-      )
+          async (context) => {
+            const { user } = await authorize(["student"])(context);
+            return getTeamMessages({ ...context, user });
+          }
+        )
 
-      // Leave team
-      .delete(
-        "/teams/:id/leave",
-        {
-          detail: {
-            summary: "Leave a team",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "Left team successfully" },
-              401: { description: "Unauthorized" },
-              403: { description: "Forbidden - not a team member" },
-              404: { description: "Team not found" },
+        // Leave team
+        .delete(
+          "/:id/leave",
+          {
+            detail: {
+              summary: "Leave a team",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
+              responses: {
+                200: { description: "Left team successfully" },
+                401: { description: "Unauthorized" },
+                403: { description: "Forbidden - not a team member" },
+                404: { description: "Team not found" },
+              },
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return leaveTeam({ ...context, user });
-        }
-      )
+          async (context) => {
+            const { user } = await authorize(["student"])(context);
+            return leaveTeam({ ...context, user });
+          }
+        )
 
-      // Get pending team invitations
-      .get(
-        "/invitations",
-        {
-          detail: {
-            summary: "Get pending team invitations",
-            tags: ["Student", "Teams"],
-            security: [{ bearerAuth: [] }],
-            responses: {
-              200: { description: "List of pending invitations" },
-              401: { description: "Unauthorized" },
-              404: { description: "Student profile not found" },
+        // Get pending team invitations
+        .get(
+          "/invitations",
+          {
+            detail: {
+              summary: "Get pending team invitations",
+              tags: ["Student", "Teams"],
+              security: [{ bearerAuth: [] }],
             },
           },
-        },
-        async (context) => {
-          const { user } = await authorize(["student"])(context);
-          return getPendingInvites({ ...context, user });
-        }
-      )
-  );
-};
+          async (context) => {
+            try {
+              const result = await getPendingInvites(context);
+              return {
+                success: true,
+                data: result,
+                timestamp: new Date().toISOString(),
+              };
+            } catch (error) {
+              logger.error("Failed to get pending invitations", error);
+              context.set.status = error.status || 500;
+              return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+              };
+            }
+          }
+        )
+    );
+  });
+}

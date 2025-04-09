@@ -156,14 +156,21 @@ process.on("uncaughtException", (error) => {
     stack: error.stack,
     location: "uncaughtException handler",
   });
-  // Ensure process exits after logging
-  winston.on("finish", () => {
+
+  // More robust way to handle process exit
+  try {
+    // Give logger time to flush
+    logger.end();
+
+    // Force exit after a timeout regardless
+    setTimeout(() => {
+      process.exit(1);
+    }, 2000); // Force exit after timeout
+  } catch (err) {
+    // If logger.end() throws, still exit
+    console.error("Error during logger shutdown:", err);
     process.exit(1);
-  });
-  logger.end(); // Trigger finish event
-  setTimeout(() => {
-    process.exit(1);
-  }, 2000); // Force exit after timeout
+  }
 });
 
 // --- API Call Logger (Simplified) ---
