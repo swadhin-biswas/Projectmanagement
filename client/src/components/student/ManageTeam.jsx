@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
 import { Crown, Loader2, User, UserPlus, UserX } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -31,9 +31,9 @@ const ManageTeam = () => {
   const fetchTeam = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/api/teams/my-team");
-      if (response.data.success) {
-        setTeam(response.data.data);
+      const response = await TeamAPI.getUserTeam();
+      if (response.success) {
+        setTeam(response.data);
       } else {
         // User doesn't have a team yet
         setTeam(null);
@@ -63,22 +63,19 @@ const ManageTeam = () => {
 
     try {
       setIsInviting(true);
-      const response = await api.post(`/api/teams/${team._id}/invite`, {
+      const response = await TeamAPI.inviteStudent({
         studentId: inviteStudent.trim(),
       });
 
-      if (response.data.success) {
-        toast.success("Invitation sent successfully");
+      if (response.success) {
+        toast.success("Invitation sent successfully!");
         setInviteStudent("");
       } else {
-        toast.error(response.data.error || "Failed to send invitation");
+        toast.error(response.error || "Failed to send invitation");
       }
     } catch (error) {
       console.error("Error inviting student:", error);
-      toast.error(
-        error.response?.data?.error ||
-          "An error occurred while sending the invitation"
-      );
+      toast.error(error.response?.data?.error || "Failed to send invitation");
     } finally {
       setIsInviting(false);
     }
@@ -93,22 +90,18 @@ const ManageTeam = () => {
 
     try {
       setIsRemovingMember(true);
-      const response = await api.post(`/api/teams/${team._id}/remove-member`, {
-        memberId,
-      });
+      const response = await TeamAPI.removeMember({ memberId });
 
-      if (response.data.success) {
-        toast.success("Member removed successfully");
-        // Refresh team data
-        fetchTeam();
+      if (response.success) {
+        toast.success("Team member removed successfully");
+        fetchTeam(); // Refresh team data
       } else {
-        toast.error(response.data.error || "Failed to remove member");
+        toast.error(response.error || "Failed to remove team member");
       }
     } catch (error) {
-      console.error("Error removing member:", error);
+      console.error("Error removing team member:", error);
       toast.error(
-        error.response?.data?.error ||
-          "An error occurred while removing the member"
+        error.response?.data?.error || "Failed to remove team member"
       );
     } finally {
       setIsRemovingMember(false);
@@ -121,12 +114,12 @@ const ManageTeam = () => {
     }
 
     try {
-      const response = await api.post(`/api/teams/${team._id}/leave`);
-      if (response.data.success) {
+      const response = await TeamAPI.leaveTeam();
+      if (response.success) {
         toast.success("You have left the team");
         setTeam(null);
       } else {
-        toast.error(response.data.error || "Failed to leave team");
+        toast.error(response.error || "Failed to leave team");
       }
     } catch (error) {
       console.error("Error leaving team:", error);

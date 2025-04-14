@@ -1,29 +1,23 @@
 import Elysia from "elysia";
 import { getTeamDetails } from "../controllers/teamController";
-
-// TODO: Add actual JWT configuration if not handled globally in startup.js
-// const jwtConfig = {
-//   name: 'jwt',
-//   secret: process.env.JWT_SECRET!,
-// };
+import { requireAuth } from "../src/utils/authUtils.js";
 
 export const teamRoutes = new Elysia({ prefix: "/teams" })
-  // Apply JWT middleware to all routes in this group if needed globally,
-  // or apply individually as shown below.
-  // .use(jwt(jwtConfig))
-  // .derive(async ({ jwt, cookie: { auth } }) => {
-  //   const profile = await jwt.verify(auth?.value);
-  //   return { user: profile };
-  // })
-  // .onRequest(({ user, set }) => {
-  //    if (!user) {
-  //      set.status = 401;
-  //      return "Unauthorized";
-  //    }
-  //  })
+  // GET /teams/:teamId - Using our standardized auth utility
+  .get("/:teamId", async (context) => {
+    try {
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
 
-  // GET /teams/:teamId - Authentication handled by global guard in src/index.js
-  .get("/:teamId", getTeamDetails);
-// No need for specific beforeHandle here as global guard covers /teams/*
+      // Pass both context and authenticated user to controller
+      return await getTeamDetails({ ...context, user });
+    } catch (error) {
+      context.set.status = error.status || 500;
+      return {
+        success: false,
+        error: error.message || "Failed to get team details",
+      };
+    }
+  });
 
-// Add other team routes here (POST /, POST /:teamId/invite, etc.)
+// Add other team routes here with proper authentication

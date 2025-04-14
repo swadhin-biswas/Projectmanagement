@@ -2,82 +2,91 @@ import { api } from "../lib/api";
 
 /**
  * Comprehensive Team API service with role-based endpoints
- *
- * This service provides access to all team-related endpoints,
- * organized by user role (common, student, supervisor, admin)
- * for better clarity and to avoid endpoint duplication.
  */
 export const teamAPI = {
-  // Common team operations (available to all roles)
   common: {
-    // Get a specific team by ID
     getTeam: async (teamId) => {
       try {
-        const response = await api.get(`/api/teams/${teamId}`);
-        return response.data;
+        const response = await api.get(`/student-teams/${teamId}`);
+        return response.data.data; // Extract data from structured response
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to fetch team details" }
+          error.response?.data?.error || {
+            message: "Failed to fetch team details",
+          }
         );
       }
     },
 
-    // Get all teams the current user is part of
     getMyTeams: async () => {
       try {
-        const response = await api.get("/api/teams/my-teams");
-        return response.data;
+        const response = await api.get("/student-teams");
+        return response.data.data;
       } catch (error) {
-        throw error.response?.data || { message: "Failed to fetch your teams" };
+        throw (
+          error.response?.data?.error || {
+            message: "Failed to fetch your teams",
+          }
+        );
       }
     },
 
-    // Team chat operations
     chat: {
       getMessages: async (teamId, { limit = 50, before = null } = {}) => {
         try {
           const params = new URLSearchParams();
           if (limit) params.append("limit", limit);
           if (before) params.append("before", before);
-          const response = await api.get(`/api/teams/${teamId}/chat?${params}`);
-          return response.data;
+          const response = await api.get(
+            `/student-teams/${teamId}/chat?${params}`
+          );
+          return response.data.data;
         } catch (error) {
-          throw error.response?.data || { message: "Failed to fetch messages" };
+          throw (
+            error.response?.data?.error || {
+              message: "Failed to fetch messages",
+            }
+          );
         }
       },
 
       sendMessage: async (teamId, data) => {
         try {
-          const response = await api.post(`/api/teams/${teamId}/chat`, data);
-          return response.data;
+          const response = await api.post(
+            `/student-teams/${teamId}/chat`,
+            data
+          );
+          return response.data.data;
         } catch (error) {
-          throw error.response?.data || { message: "Failed to send message" };
+          throw (
+            error.response?.data?.error || { message: "Failed to send message" }
+          );
         }
       },
 
+      // These endpoints aren't in studentTeamRoutes.js - might need separate implementation
       getUnreadCount: async (teamId) => {
         try {
-          const response = await api.get(`/api/teams/${teamId}/chat/unread`);
-          return response.data;
+          const response = await api.get(`/teams/${teamId}/chat/unread`);
+          return response.data.data;
         } catch (error) {
           throw (
-            error.response?.data || { message: "Failed to get unread count" }
+            error.response?.data?.error || {
+              message: "Failed to get unread count",
+            }
           );
         }
       },
 
       markMessagesAsRead: async (teamId, messageIds) => {
         try {
-          const response = await api.post(
-            `/api/teams/${teamId}/chat/mark-read`,
-            {
-              messageIds,
-            }
-          );
-          return response.data;
+          const response = await api.post(`/teams/${teamId}/chat/mark-read`, {
+            messageIds,
+          });
+          return response.data.data;
         } catch (error) {
           throw (
-            error.response?.data || {
+            error.response?.data?.error || {
               message: "Failed to mark messages as read",
             }
           );
@@ -86,101 +95,107 @@ export const teamAPI = {
 
       getAnnouncements: async (teamId) => {
         try {
-          const response = await api.get(
-            `/api/teams/${teamId}/chat/announcements`
-          );
-          return response.data;
+          const response = await api.get(`/teams/${teamId}/chat/announcements`);
+          return response.data.data;
         } catch (error) {
           throw (
-            error.response?.data || { message: "Failed to fetch announcements" }
+            error.response?.data?.error || {
+              message: "Failed to fetch announcements",
+            }
           );
         }
       },
     },
   },
 
-  // Student-specific team operations
   student: {
-    // Get the current student's team
     getCurrentTeam: async () => {
       try {
-        const response = await api.get("/api/student/teams");
-        return response.data;
-      } catch (error) {
-        throw error.response?.data || { message: "Failed to fetch your team" };
-      }
-    },
-
-    // Create a new team
-    createTeam: async (data) => {
-      try {
-        const response = await api.post("/api/student/teams/create", data);
-        return response.data;
-      } catch (error) {
-        throw error.response?.data || { message: "Failed to create team" };
-      }
-    },
-
-    // Leave the current team
-    leaveTeam: async (teamId) => {
-      try {
-        const response = await api.delete(`/api/student/teams/${teamId}/leave`);
-        return response.data;
-      } catch (error) {
-        throw error.response?.data || { message: "Failed to leave team" };
-      }
-    },
-
-    // Get pending invitations
-    getPendingInvites: async () => {
-      try {
-        const response = await api.get("/api/student/teams/invitations");
+        const response = await api.get("/api/student/team");
         return response.data;
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to fetch invitations" }
+          error.response?.data?.error || {
+            message: "Failed to fetch your team",
+          }
         );
       }
     },
 
-    // Invite a student to join team
-    inviteStudent: async (teamId, data) => {
+    createTeam: async (data) => {
       try {
-        const response = await api.post(
-          `/api/student/teams/${teamId}/invite`,
-          data
-        );
+        const response = await api.post("/api/student/team/create", data);
         return response.data;
       } catch (error) {
-        throw error.response?.data || { message: "Failed to send invitation" };
+        throw (
+          error.response?.data?.error || { message: "Failed to create team" }
+        );
       }
     },
 
-    // Respond to team invitation
+    leaveTeam: async (teamId) => {
+      try {
+        const response = await api.post("/api/student/team/leave-team");
+        return response.data;
+      } catch (error) {
+        throw (
+          error.response?.data?.error || { message: "Failed to leave team" }
+        );
+      }
+    },
+
+    getPendingInvites: async () => {
+      try {
+        const response = await api.get("/api/student/team/invitations");
+        return response.data;
+      } catch (error) {
+        throw (
+          error.response?.data?.error || {
+            message: "Failed to fetch invitations",
+          }
+        );
+      }
+    },
+
+    inviteStudent: async (teamId, data) => {
+      try {
+        const response = await api.post("/api/student/team/invite", data);
+        return response.data;
+      } catch (error) {
+        throw (
+          error.response?.data?.error || {
+            message: "Failed to send invitation",
+          }
+        );
+      }
+    },
+
     respondToInvite: async (teamId, action) => {
       try {
         const response = await api.post(
-          `/api/student/teams/${teamId}/respond`,
+          "/api/student/team/respond-to-invitation",
           {
-            response: action, // 'accepted' or 'declined'
+            teamId,
+            response: action,
           }
         );
         return response.data;
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to respond to invitation" }
+          error.response?.data?.error || {
+            message: "Failed to respond to invitation",
+          }
         );
       }
     },
 
-    // Get available students for invite
     getAvailableStudents: async () => {
       try {
-        const response = await api.get("/api/student/available-students");
+        const response = await api.get("/api/student/team/available-students");
         return response.data;
       } catch (error) {
         throw (
-          error.response?.data || {
+          error.response?.data?.error || {
             message: "Failed to fetch available students",
           }
         );
@@ -188,96 +203,90 @@ export const teamAPI = {
     },
   },
 
-  // Supervisor-specific team operations
   supervisor: {
-    // Get teams supervised by current user
     getSupervisedTeams: async () => {
       try {
-        const response = await api.get("/api/supervisor/teams");
-        return response.data;
+        const response = await api.get("/supervisor/teams");
+        return response.data.data;
       } catch (error) {
         throw (
-          error.response?.data || {
+          error.response?.data?.error || {
             message: "Failed to fetch supervised teams",
           }
         );
       }
     },
 
-    // Get specific team details with full info
     getTeamDetails: async (teamId) => {
       try {
-        const response = await api.get(`/api/supervisor/teams/${teamId}`);
-        return response.data;
+        const response = await api.get(`/supervisor/teams/${teamId}`);
+        return response.data.data;
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to fetch team details" }
+          error.response?.data?.error || {
+            message: "Failed to fetch team details",
+          }
         );
       }
     },
 
-    // Update team progress
     updateTeamProgress: async (teamId, data) => {
       try {
         const response = await api.put(
-          `/api/supervisor/teams/${teamId}/progress`,
+          `/supervisor/teams/${teamId}/progress`,
           data
         );
-        return response.data;
+        return response.data.data;
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to update team progress" }
+          error.response?.data?.error || {
+            message: "Failed to update team progress",
+          }
         );
       }
     },
   },
 
-  // Admin-specific team operations
   admin: {
-    // Get all teams (with filtering options)
     getAllTeams: async (filters = {}) => {
       try {
-        const params = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params.append(key, value);
-          }
-        });
-        const query = params.toString();
-        const url = `/api/admin/teams${query ? `?${query}` : ""}`;
+        const params = new URLSearchParams(filters);
+        const url = `/admin/teams${params.toString() ? `?${params}` : ""}`;
         const response = await api.get(url);
-        return response.data;
+        return response.data.data;
       } catch (error) {
-        throw error.response?.data || { message: "Failed to fetch teams" };
+        throw (
+          error.response?.data?.error || { message: "Failed to fetch teams" }
+        );
       }
     },
 
-    // Assign supervisor to team
     assignSupervisor: async (teamId, data) => {
       try {
         const response = await api.post(
-          `/api/teams/${teamId}/assign-supervisor`,
+          `/teams/${teamId}/assign-supervisor`,
           data
         );
-        return response.data;
+        return response.data.data;
       } catch (error) {
         throw (
-          error.response?.data || { message: "Failed to assign supervisor" }
+          error.response?.data?.error || {
+            message: "Failed to assign supervisor",
+          }
         );
       }
     },
 
-    // Get teams without supervisors
     getTeamsWithoutSupervisors: async (sessionId) => {
       try {
         const params = sessionId ? `?sessionId=${sessionId}` : "";
         const response = await api.get(
-          `/api/admin/teams/without-supervisors${params}`
+          `/admin/teams/without-supervisors${params}`
         );
-        return response.data;
+        return response.data.data;
       } catch (error) {
         throw (
-          error.response?.data || {
+          error.response?.data?.error || {
             message: "Failed to fetch teams without supervisors",
           }
         );
@@ -286,55 +295,28 @@ export const teamAPI = {
   },
 };
 
-/**
- * COMPATIBILITY LAYER
- * These individual exports maintain backward compatibility with existing code
- * while we transition to the new structured API above.
- *
- * For new code, prefer using the teamAPI object structure above.
- */
+// Compatibility layer
+export const getUserTeam = () => teamAPI.student.getCurrentTeam();
+export const createTeam = (teamData) => teamAPI.student.createTeam(teamData);
+export const inviteToTeam = (teamId, studentId) =>
+  teamAPI.student.inviteStudent(teamId, { studentId });
+export const getInvitations = () => teamAPI.student.getPendingInvites();
+export const respondToInvitation = (teamId, action) =>
+  teamAPI.student.respondToInvite(teamId, action);
+export const leaveTeam = (teamId) => teamAPI.student.leaveTeam(teamId);
+export const getAvailableStudents = () =>
+  teamAPI.student.getAvailableStudents();
 
-// Get the current user's team information
-export const getUserTeam = () => {
-  return teamAPI.student.getCurrentTeam();
-};
-
-// Create a new team
-export const createTeam = (teamData) => {
-  return teamAPI.student.createTeam(teamData);
-};
-
-// Send an invitation to join a team
-export const inviteToTeam = (studentId) => {
-  const teamId = localStorage.getItem("currentTeamId"); // Assuming we store the current team ID
-  return teamAPI.student.inviteStudent(teamId, { studentId });
-};
-
-// Get pending invitations for the current user
-export const getInvitations = () => {
-  return teamAPI.student.getPendingInvites();
-};
-
-// Respond to a team invitation
-export const respondToInvitation = (invitationId, action) => {
-  return teamAPI.student.respondToInvite(invitationId, action);
-};
-
-// Remove a member from the team (team leader only)
-export const removeMember = (memberId) => {
-  const teamId = localStorage.getItem("currentTeamId");
-  return api.post(`/api/teams/${teamId}/remove-member`, { memberId });
-};
-
-// Leave the current team
-export const leaveTeam = () => {
-  const teamId = localStorage.getItem("currentTeamId");
-  return teamAPI.student.leaveTeam(teamId);
-};
-
-// Get all students available for invitation
-export const getAvailableStudents = () => {
-  return teamAPI.student.getAvailableStudents();
+// Updated removeMember to match typical REST conventions
+export const removeMember = (teamId, memberId) => {
+  return api
+    .post(`/student-teams/${teamId}/remove-member`, { memberId })
+    .then((response) => response.data.data)
+    .catch((error) => {
+      throw (
+        error.response?.data?.error || { message: "Failed to remove member" }
+      );
+    });
 };
 
 export default teamAPI;

@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { api } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Mail, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -85,11 +85,11 @@ const TeamInvitationsList = () => {
   const fetchInvitations = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/api/teams/invitations");
-      if (response.data.success) {
-        setInvitations(response.data.data);
+      const response = await TeamAPI.getPendingInvitations();
+      if (response.success) {
+        setInvitations(response.data.invitations || []);
       } else {
-        setError(response.data.error || "Failed to fetch invitations");
+        setError(response.error || "Failed to fetch invitations");
       }
     } catch (error) {
       console.error("Error fetching invitations:", error);
@@ -105,14 +105,16 @@ const TeamInvitationsList = () => {
     try {
       setProcessingId(invitationId);
       setProcessingAction("accept");
-      const response = await api.post(
-        `/api/teams/invitations/${invitationId}/accept`
-      );
-      if (response.data.success) {
+      const response = await TeamAPI.respondToInvitation({
+        invitationId,
+        accept: true,
+      });
+
+      if (response.success) {
         toast.success("You have joined the team!");
         setInvitations(invitations.filter((inv) => inv._id !== invitationId));
       } else {
-        toast.error(response.data.error || "Failed to accept invitation");
+        toast.error(response.error || "Failed to accept invitation");
       }
     } catch (error) {
       console.error("Error accepting invitation:", error);
@@ -129,14 +131,16 @@ const TeamInvitationsList = () => {
     try {
       setProcessingId(invitationId);
       setProcessingAction("reject");
-      const response = await api.post(
-        `/api/teams/invitations/${invitationId}/reject`
-      );
-      if (response.data.success) {
+      const response = await TeamAPI.respondToInvitation({
+        invitationId,
+        accept: false,
+      });
+
+      if (response.success) {
         toast.success("Invitation rejected");
         setInvitations(invitations.filter((inv) => inv._id !== invitationId));
       } else {
-        toast.error(response.data.error || "Failed to reject invitation");
+        toast.error(response.error || "Failed to reject invitation");
       }
     } catch (error) {
       console.error("Error rejecting invitation:", error);

@@ -2,8 +2,11 @@ import axios from "axios";
 import { toast } from "sonner";
 
 // Constants
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:30000";
 const TOKEN_KEY = "auth_token";
+// Standardize all token keys to avoid inconsistencies
+const USER_KEY = "user";
+const AUTH_DATA_KEY = "auth_data";
 
 // Create axios instance
 export const api = axios.create({
@@ -27,10 +30,49 @@ export const invalidateCache = (pattern) => {
   }
 };
 
+// Function to attempt to load the token from all possible places
+export const loadToken = () => {
+  // First try the standard token key
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    return token;
+  }
+
+  // Try legacy keys as fallback
+  const legacyKeys = ["token", "authToken"];
+  for (const key of legacyKeys) {
+    const value = localStorage.getItem(key);
+    if (value) {
+      // Migrate to standard key
+      localStorage.setItem(TOKEN_KEY, value);
+      return value;
+    }
+  }
+
+  // Then try AUTH_DATA which needs parsing
+  const authData = localStorage.getItem(AUTH_DATA_KEY);
+  if (authData) {
+    try {
+      const parsed = JSON.parse(authData);
+      if (parsed && parsed.token) {
+        // Migrate to standard key
+        localStorage.setItem(TOKEN_KEY, parsed.token);
+        return parsed.token;
+      }
+    } catch (e) {
+      console.error("Failed to parse AUTH_DATA:", e);
+    }
+  }
+
+  return null;
+};
+
 // Add JWT token to requests if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(TOKEN_KEY);
+    // Get token with fallback to other locations
+    const token = loadToken();
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -55,16 +97,24 @@ api.interceptors.response.use(
     // Handle specific error codes
     switch (statusCode) {
       case 401: // Unauthorized
-        // Clear token and redirect to login if not already there
-        localStorage.removeItem(TOKEN_KEY);
-        if (
-          window.location.pathname !== "/login" &&
-          window.location.pathname !== "/register"
-        ) {
-          toast.error("Your session has expired. Please log in again.");
-          setTimeout(() => {
-            window.location.href = "/login";
-          }, 1000);
+        // Check if token exists but is invalid/expired
+        const token = loadToken();
+        if (token) {
+          // Token exists but is invalid/expired - clear it
+          console.warn("Auth token expired or invalid. Clearing token.");
+          clearAuthToken();
+
+          // Don't redirect from login/register pages
+          const isAuthPage =
+            window.location.pathname.includes("/login") ||
+            window.location.pathname.includes("/register");
+
+          if (!isAuthPage) {
+            toast.error("Your session has expired. Please log in again.");
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 1000);
+          }
         }
         break;
 
@@ -106,8 +156,10 @@ api.interceptors.response.use(
 export const setAuthToken = (token) => {
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
+    // Update axios headers for future requests
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   } else {
-    localStorage.removeItem(TOKEN_KEY);
+    clearAuthToken();
   }
 };
 
@@ -116,7 +168,7 @@ export const setAuthToken = (token) => {
  * @returns {string|null} JWT token
  */
 export const getAuthToken = () => {
-  return localStorage.getItem(TOKEN_KEY);
+  return loadToken();
 };
 
 /**
@@ -124,6 +176,10 @@ export const getAuthToken = () => {
  */
 export const clearAuthToken = () => {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("token");
+  localStorage.removeItem(AUTH_DATA_KEY);
+  localStorage.removeItem(USER_KEY);
+  delete api.defaults.headers.common["Authorization"];
 };
 
 /**
@@ -131,7 +187,7 @@ export const clearAuthToken = () => {
  * @returns {boolean} True if user has a valid auth token
  */
 export const isAuthenticated = () => {
-  return !!localStorage.getItem(TOKEN_KEY);
+  return !!loadToken();
 };
 
 export default api;

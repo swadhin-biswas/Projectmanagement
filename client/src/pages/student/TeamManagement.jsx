@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import PageTransition from "@/components/PageTransition";
 import TeamChat from "@/components/student/TeamChat";
 import TeamCreation from "@/components/student/TeamCreation";
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Info, Loader2, MessageSquare, UserPlus, Users } from "lucide-react";
 import React, { useState } from "react";
@@ -31,10 +31,10 @@ const TeamManagement = () => {
   } = useQuery({
     queryKey: ["team-data"],
     queryFn: async () => {
-      const response = await api.get("/api/student/teams");
-      if (response.data.success) {
-        // If team data exists, return the first team (assuming students can only be in one team at a time)
-        return response.data.data?.[0] || null;
+      const response = await TeamAPI.getUserTeam();
+      if (response.success) {
+        // Return the team data
+        return response.data || null;
       }
       return null;
     },
@@ -48,8 +48,8 @@ const TeamManagement = () => {
   } = useQuery({
     queryKey: ["team-invites"],
     queryFn: async () => {
-      const response = await api.get("/api/student/invitations");
-      return response.data.success ? response.data.data : [];
+      const response = await TeamAPI.getPendingInvitations();
+      return response.success ? response.data.invitations || [] : [];
     },
     enabled: !teamData, // Only fetch invites if student isn't in a team
   });
@@ -70,15 +70,13 @@ const TeamManagement = () => {
 
     try {
       setIsLeaving(true);
-      const response = await api.delete(
-        `/api/student/teams/${teamData._id}/leave`
-      );
+      const response = await TeamAPI.leaveTeam();
 
-      if (response.data.success) {
-        toast.success(response.data.message || "Left team successfully");
+      if (response.success) {
+        toast.success(response.message || "Left team successfully");
         handleTeamUpdate();
       } else {
-        toast.error(response.data.error || "Failed to leave team");
+        toast.error(response.error || "Failed to leave team");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to leave team");

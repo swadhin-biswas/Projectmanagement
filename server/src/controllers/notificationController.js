@@ -11,28 +11,32 @@ import logger from "../utils/logger.js";
 export const createNotifications = async (notifications) => {
   try {
     const notificationDocs = await Notification.insertMany(
-      notifications.map(n => ({
+      notifications.map((n) => ({
         ...n,
         createdAt: new Date(),
-        status: "unread"
+        status: "unread",
       }))
     );
 
     // Send emails for urgent notifications
-    const urgentNotifications = notifications.filter(n => n.priority === "high");
+    const urgentNotifications = notifications.filter(
+      (n) => n.priority === "high"
+    );
     if (urgentNotifications.length > 0) {
       const users = await User.find({
-        _id: { $in: urgentNotifications.map(n => n.userId) }
+        _id: { $in: urgentNotifications.map((n) => n.userId) },
       });
 
       for (const notification of urgentNotifications) {
-        const user = users.find(u => u._id.toString() === notification.userId.toString());
+        const user = users.find(
+          (u) => u._id.toString() === notification.userId.toString()
+        );
         if (user && user.email) {
           await sendEmail({
             to: user.email,
             subject: notification.title,
             text: notification.message,
-            priority: "high"
+            priority: "high",
           });
         }
       }
@@ -53,8 +57,10 @@ export const sendSupervisorFeedback = async ({ params, body, user }) => {
       throw new NotFoundError("Supervisor profile not found");
     }
 
-    const student = await Student.findById(params.studentId)
-      .populate("user", "email");
+    const student = await Student.findById(params.studentId).populate(
+      "user",
+      "email"
+    );
     if (!student) {
       throw new NotFoundError("Student not found");
     }
@@ -63,31 +69,36 @@ export const sendSupervisorFeedback = async ({ params, body, user }) => {
     const team = await Team.findOne({
       "members.user": student._id,
       "supervisors.supervisor": supervisor._id,
-      "supervisors.status": "active"
+      "supervisors.status": "active",
     });
 
     if (!team) {
-      throw new ForbiddenError("Not authorized to provide feedback to this student");
+      throw new ForbiddenError(
+        "Not authorized to provide feedback to this student"
+      );
     }
 
     // Create feedback notification
     const notification = await Notification.create({
       userId: student.user._id,
-      title: body.type === "warning" ? "Important Feedback from Supervisor" : "Supervisor Feedback",
+      title:
+        body.type === "warning"
+          ? "Important Feedback from Supervisor"
+          : "Supervisor Feedback",
       message: body.message,
       type: "supervisor_feedback",
       priority: body.type === "warning" ? "high" : "normal",
       relatedTo: {
         model: "Project",
-        id: team.project
+        id: team.project,
       },
       from: {
         role: "supervisor",
-        user: user.id
+        user: user.id,
       },
       requiresAction: body.requiresAction || false,
       dueDate: body.dueDate,
-      status: "unread"
+      status: "unread",
     });
 
     // Send email for warnings or if marked as urgent
@@ -96,21 +107,20 @@ export const sendSupervisorFeedback = async ({ params, body, user }) => {
         to: student.user.email,
         subject: notification.title,
         text: notification.message,
-        priority: "high"
+        priority: "high",
       });
     }
 
     return {
       success: true,
       message: "Feedback sent successfully",
-      data: notification
+      data: notification,
     };
-
   } catch (error) {
     logger.error("Failed to send supervisor feedback", {
       error,
       userId: user.id,
-      studentId: params.studentId
+      studentId: params.studentId,
     });
     throw error;
   }
@@ -148,7 +158,7 @@ export const getNotifications = async ({ user, query }) => {
     // Get unread count
     const unreadCount = await Notification.countDocuments({
       userId: user.id,
-      status: "unread"
+      status: "unread",
     });
 
     return {
@@ -159,12 +169,11 @@ export const getNotifications = async ({ user, query }) => {
           total,
           page,
           pages: Math.ceil(total / limit),
-          limit
+          limit,
         },
-        unreadCount
-      }
+        unreadCount,
+      },
     };
-
   } catch (error) {
     logger.error("Failed to get notifications", { error, userId: user.id });
     throw error;
@@ -172,15 +181,17 @@ export const getNotifications = async ({ user, query }) => {
 };
 
 // Get unread count
-export const getUnreadCount = async (userId) => {
+export const getUnreadCount = async ({ user }) => {
   try {
+    // Ensure we're using the user ID from the context
+    const userId = user.id;
     const count = await Notification.countDocuments({
       userId,
-      status: "unread"
+      status: "unread",
     });
     return count;
   } catch (error) {
-    logger.error("Failed to get unread count", { error, userId });
+    logger.error("Failed to get unread count", { error, userId: user?.id });
     throw error;
   }
 };
@@ -204,14 +215,13 @@ export const markAsRead = async ({ params, user }) => {
 
     return {
       success: true,
-      message: "Notification marked as read"
+      message: "Notification marked as read",
     };
-
   } catch (error) {
     logger.error("Failed to mark notification as read", {
       error,
       userId: user.id,
-      notificationId: params.notificationId
+      notificationId: params.notificationId,
     });
     throw error;
   }
@@ -227,12 +237,12 @@ export const markAllAsRead = async ({ user }) => {
 
     return {
       success: true,
-      message: "All notifications marked as read"
+      message: "All notifications marked as read",
     };
   } catch (error) {
     logger.error("Failed to mark all notifications as read", {
       error,
-      userId: user.id
+      userId: user.id,
     });
     throw error;
   }
@@ -256,13 +266,13 @@ export const deleteNotification = async ({ params, user }) => {
 
     return {
       success: true,
-      message: "Notification deleted successfully"
+      message: "Notification deleted successfully",
     };
   } catch (error) {
     logger.error("Failed to delete notification", {
       error,
       notificationId: params.notificationId,
-      userId: user.id
+      userId: user.id,
     });
     throw error;
   }
@@ -279,25 +289,25 @@ export const updatePreferences = async ({ user, body }) => {
     // Update notification preferences
     userDoc.notificationPreferences = {
       ...userDoc.notificationPreferences,
-      ...body
+      ...body,
     };
 
     await userDoc.save();
 
     logger.info("Notification preferences updated", {
       userId: user.id,
-      preferences: body
+      preferences: body,
     });
 
     return {
       success: true,
       message: "Notification preferences updated successfully",
-      data: userDoc.notificationPreferences
+      data: userDoc.notificationPreferences,
     };
   } catch (error) {
     logger.error("Failed to update notification preferences", {
       error,
-      userId: user.id
+      userId: user.id,
     });
     throw error;
   }

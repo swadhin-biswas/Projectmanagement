@@ -50,11 +50,9 @@ export const createTeam = async ({ body, user }) => {
       throw new ValidationError("You are already a member of a team");
     }
 
-    // Get active session
+    // Get active session - but don't require it
     const currentSession = await Session.findOne({ status: "active" });
-    if (!currentSession) {
-      throw new ValidationError("No active session found");
-    }
+    // Allow team creation even without an active session
 
     // Generate unique team ID
     const teamId = generateRandomId(8);
@@ -63,7 +61,7 @@ export const createTeam = async ({ body, user }) => {
     const team = new Team({
       name: body.name,
       teamId,
-      session: currentSession._id,
+      session: currentSession?._id, // Use optional chaining to handle null case
       maxMembers: 4, // Maximum of 4 members per team
       members: [
         {
@@ -107,13 +105,13 @@ export const createTeam = async ({ body, user }) => {
       success: true,
       message: "Team created successfully! You are now the team leader.",
       data: {
-        _id: team._id,
+        _id: team._id.toString(),
         name: team.name,
         teamId: team.teamId,
         members: [
           {
             user: {
-              _id: student._id,
+              _id: student._id.toString(),
               fullName: student.user.fullName,
               email: student.user.email,
               profilePicture: student.profilePicture || "",
@@ -125,7 +123,7 @@ export const createTeam = async ({ body, user }) => {
         maxMembers: team.maxMembers,
         description: team.description,
         status: team.status,
-        session: currentSession._id,
+        session: currentSession ? currentSession._id.toString() : null,
       },
     };
   } catch (error) {
@@ -272,66 +270,71 @@ export const inviteToTeam = async ({ params, body, user }) => {
 };
 
 /**
- * Respond to a team invitation (accept/decline)
+ * Respond to a team invitation
+ * - Students can accept or decline team invitations
+ * - Accepting an invitation will add the student to the team
  */
-export const respondToInvitation = async ({ params, body, user }) => {
+export const respondToInvitation = async ({ body, user }) => {
   try {
+    if (!body.teamId) {
+      throw new ValidationError("Team ID is required");
+    }
+
+    if (body.response !== "accept" && body.response !== "decline") {
+      throw new ValidationError(
+        "Response must be either 'accept' or 'decline'"
+      );
+    }
+
     const student = await Student.findOne({ user: user.id }).populate(
       "user",
       "fullName email"
     );
+
     if (!student) {
       throw new NotFoundError("Student profile not found");
     }
 
-    const team = await Team.findById(params.teamId).populate({
-      path: "members.user",
-      select: "user",
-      populate: { path: "user", select: "fullName email" },
-    });
+    // Check if student already has a team
+    if (student.team && body.response === "accept") {
+      throw new ValidationError("You are already a member of a team");
+    }
 
+    // Find the team
+    const team = await Team.findById(body.teamId);
     if (!team) {
       throw new NotFoundError("Team not found");
     }
 
-    // Find the invitation
-    const inviteIndex = team.invites.findIndex(
+    // Check if team is full
+    if (
+      body.response === "accept" &&
+      team.members.filter((m) => m.status === "active").length >=
+        team.maxMembers
+    ) {
+      throw new ValidationError("This team has reached its maximum capacity");
+    }
+
+    // Check if student has been invited to this team
+    const invitationIndex = team.invites.findIndex(
       (invite) =>
         invite.student.toString() === student._id.toString() &&
         invite.status === "pending"
     );
 
-    if (inviteIndex === -1) {
-      throw new NotFoundError("No pending invitation found for this team");
+    if (invitationIndex === -1) {
+      throw new ValidationError(
+        "You do not have a pending invitation to this team"
+      );
     }
 
-    // Check if invitation has expired
-    if (new Date() > team.invites[inviteIndex].expiresAt) {
-      team.invites[inviteIndex].status = "expired";
-      await team.save();
-      throw new ValidationError("This invitation has expired");
-    }
+    // Update invitation status
+    team.invites[invitationIndex].status =
+      body.response === "accept" ? "accepted" : "declined";
+    team.invites[invitationIndex].respondedAt = new Date();
 
-    // Process the response (accept or decline)
-    const accept = body.response === "accept";
-    team.invites[inviteIndex].status = accept ? "accepted" : "declined";
-    team.invites[inviteIndex].respondedAt = new Date();
-
-    if (accept) {
-      // Check if student is already in another team
-      if (student.team) {
-        throw new ValidationError("You are already a member of another team");
-      }
-
-      // Check if team is still under max capacity
-      const activeMembers = team.members.filter((m) => m.status === "active");
-      if (activeMembers.length >= team.maxMembers) {
-        throw new ValidationError(
-          "This team is now full and cannot accept new members"
-        );
-      }
-
-      // Add student to team
+    if (body.response === "accept") {
+      // Add student to team members
       team.members.push({
         user: student._id,
         role: "member",
@@ -341,60 +344,49 @@ export const respondToInvitation = async ({ params, body, user }) => {
 
       // Update student record
       student.team = team._id;
-      student.isTeamLeader = false;
       await student.save();
 
-      // Get team leader for notification
-      const teamLeader = team.members.find((m) => m.role === "leader");
-      if (teamLeader) {
-        // Notify team leader
-        await Notification.create({
-          user: teamLeader.user.user,
-          type: "team_member_joined",
-          title: "New Team Member",
-          message: `${student.user.fullName} has joined your team "${team.name}"`,
-          team: team._id,
-          link: "/student/team/management",
-        });
-      }
-
-      // Add a system message to team chat
+      // Add notification in team chat
       await TeamChat.findOneAndUpdate(
         { team: team._id },
         {
           $push: {
             messages: {
               type: "system",
-              content: `${student.user.fullName} has joined the team`,
+              content: `${student.user.fullName} has joined the team.`,
               timestamp: new Date(),
             },
           },
         }
       );
+
+      // Track activity
+      await trackTeamMemberActivity({
+        teamId: team._id,
+        memberId: student._id,
+        action: "joined_team",
+        details: "Accepted team invitation",
+      });
     }
 
     await team.save();
 
     return {
       success: true,
-      message: accept
-        ? "You have successfully joined the team!"
-        : "Invitation declined",
-      data: accept
-        ? {
-            team: {
-              _id: team._id,
-              name: team.name,
-              teamId: team.teamId,
-            },
-          }
-        : null,
+      message:
+        body.response === "accept"
+          ? "You have successfully joined the team!"
+          : "You have declined the team invitation.",
+      data:
+        body.response === "accept"
+          ? {
+              teamId: team._id,
+              teamName: team.name,
+            }
+          : null,
     };
   } catch (error) {
-    logger.error("Failed to process invitation response", {
-      error,
-      userId: user.id,
-    });
+    logger.error("Failed to respond to invitation", { error, userId: user.id });
     throw error;
   }
 };
@@ -450,6 +442,113 @@ export const removeTeamMember = async ({ params, body, user }) => {
     };
   } catch (error) {
     logger.error("Failed to remove team member", error);
+    throw error;
+  }
+};
+
+/**
+ * Remove a member from a team
+ * - Only team leaders can remove members
+ * - Team leaders cannot remove themselves (they should use leaveTeam)
+ */
+export const removeMember = async ({ body, user }) => {
+  try {
+    if (!body.memberId) {
+      throw new ValidationError("Member ID is required");
+    }
+
+    const leader = await Student.findOne({ user: user.id }).populate(
+      "user",
+      "fullName email"
+    );
+
+    if (!leader) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find the team where the requester is a leader
+    const team = await Team.findOne({
+      "members.user": leader._id,
+      "members.role": "leader",
+      "members.status": "active",
+    });
+
+    if (!team) {
+      throw new ForbiddenError("You must be a team leader to remove members");
+    }
+
+    // Find the member to remove
+    const memberToRemove = await Student.findById(body.memberId).populate(
+      "user",
+      "fullName email"
+    );
+
+    if (!memberToRemove) {
+      throw new NotFoundError("Member not found");
+    }
+
+    // Check if member is in the team
+    const isMember = team.members.some(
+      (m) =>
+        m.user.toString() === memberToRemove._id.toString() &&
+        m.status === "active"
+    );
+
+    if (!isMember) {
+      throw new ValidationError(
+        "This user is not an active member of your team"
+      );
+    }
+
+    // Prevent removing oneself as a leader (use leaveTeam for that)
+    if (memberToRemove._id.toString() === leader._id.toString()) {
+      throw new ValidationError(
+        "Team leaders cannot remove themselves. Use the leave team function instead."
+      );
+    }
+
+    // Update member status in team
+    const memberIndex = team.members.findIndex(
+      (m) => m.user.toString() === memberToRemove._id.toString()
+    );
+
+    if (memberIndex !== -1) {
+      team.members[memberIndex].status = "removed";
+      await team.save();
+    }
+
+    // Update student record
+    memberToRemove.team = undefined;
+    await memberToRemove.save();
+
+    // Add notification in team chat
+    await TeamChat.findOneAndUpdate(
+      { team: team._id },
+      {
+        $push: {
+          messages: {
+            type: "system",
+            content: `${memberToRemove.user.fullName} has been removed from the team by ${leader.user.fullName}.`,
+            timestamp: new Date(),
+          },
+        },
+      }
+    );
+
+    // Add activity record
+    await trackTeamMemberActivity({
+      teamId: team._id,
+      memberId: memberToRemove._id,
+      action: "removed_from_team",
+      details: `Removed by team leader (${leader.user.fullName})`,
+    });
+
+    return {
+      success: true,
+      message: `${memberToRemove.user.fullName} has been removed from the team.`,
+    };
+  } catch (error) {
+    logger.error("Failed to remove team member", { error, userId: user.id });
     throw error;
   }
 };
@@ -952,6 +1051,290 @@ export const getTeamInvitations = async ({ params, user }) => {
     };
   } catch (error) {
     logger.error("Error fetching team invitations:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get the currently authenticated student's team
+ * Returns the team the student is currently a part of
+ */
+export const getUserTeam = async ({ user }) => {
+  try {
+    const student = await Student.findOne({ user: user.id });
+
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find the team where the student is an active member
+    const team = await Team.findOne({
+      "members.user": student._id,
+      "members.status": "active",
+    }).populate({
+      path: "members.user",
+      select: "user",
+      populate: { path: "user", select: "fullName email profilePicture" },
+    });
+
+    if (!team) {
+      // Use more helpful empty response
+      return {
+        success: true,
+        message: "Student is not part of any team",
+        data: null,
+      };
+    }
+
+    // Format the response
+    return {
+      success: true,
+      data: {
+        _id: team._id.toString(),
+        name: team.name,
+        teamId: team.teamId,
+        members: team.members.map((member) => ({
+          user: {
+            _id: member.user._id.toString(),
+            fullName: member.user.user?.fullName || "Unknown",
+            email: member.user.user?.email || "",
+            profilePicture: member.user.user?.profilePicture || "",
+          },
+          role: member.role,
+          status: member.status,
+          joinedAt: member.joinedAt,
+        })),
+        maxMembers: team.maxMembers,
+        description: team.description || "",
+        status: team.status,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get user team", { error, userId: user.id });
+    throw error;
+  }
+};
+
+/**
+ * Get a list of students available to join a team
+ * These are students who are not part of any team
+ */
+export const getAvailableStudents = async ({ user }) => {
+  try {
+    const currentStudent = await Student.findOne({ user: user.id });
+
+    if (!currentStudent) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find the active session
+    const activeSession = await Session.findOne({ status: "active" });
+    // Don't throw an error if no active session, just display available students without session filter
+
+    // Find students who are not part of any team
+    const query = {
+      team: { $exists: false },
+      _id: { $ne: currentStudent._id },
+    };
+
+    // Add session filter only if an active session exists
+    if (activeSession) {
+      query.session = activeSession._id;
+    }
+
+    const students = await Student.find(query).populate(
+      "user",
+      "fullName email department profilePicture"
+    );
+
+    // Format the response
+    return {
+      success: true,
+      data: students.map((student) => ({
+        _id: student._id.toString(),
+        fullName: student.user?.fullName || "Unknown",
+        email: student.user?.email || "",
+        department: student.user?.department || "",
+        studentId: student.studentId,
+        profilePicture: student.user?.profilePicture || "",
+      })),
+    };
+  } catch (error) {
+    logger.error("Failed to get available students", {
+      error,
+      userId: user.id,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Leave a team
+ * - Student will be removed from the team
+ * - If the student is the team leader, the team will be disbanded unless another leader is assigned
+ */
+export const leaveTeam = async ({ user }) => {
+  try {
+    const student = await Student.findOne({ user: user.id }).populate(
+      "user",
+      "fullName email"
+    );
+
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find the team the student is part of
+    const team = await Team.findOne({
+      "members.user": student._id,
+      "members.status": "active",
+    });
+
+    if (!team) {
+      throw new ValidationError("You are not a member of any team");
+    }
+
+    // Check if student is the team leader
+    const isLeader = team.members.some(
+      (m) =>
+        m.user.toString() === student._id.toString() &&
+        m.role === "leader" &&
+        m.status === "active"
+    );
+
+    if (isLeader) {
+      // Count active members excluding leader
+      const activeMembers = team.members.filter(
+        (m) =>
+          m.status === "active" && m.user.toString() !== student._id.toString()
+      );
+
+      // If there are other active members, assign another member as leader
+      if (activeMembers.length > 0) {
+        // Assign next member as leader
+        const newLeaderId = activeMembers[0].user;
+
+        // Update leader's role
+        const leaderIndex = team.members.findIndex(
+          (m) => m.user.toString() === student._id.toString()
+        );
+        team.members[leaderIndex].status = "inactive";
+        team.members[leaderIndex].role = "member";
+
+        // Find new leader's index and update role
+        const newLeaderIndex = team.members.findIndex(
+          (m) => m.user.toString() === newLeaderId.toString()
+        );
+        team.members[newLeaderIndex].role = "leader";
+
+        // Update student record
+        student.team = undefined;
+        student.isTeamLeader = false;
+        await student.save();
+
+        // Add notification in team chat
+        await TeamChat.findOneAndUpdate(
+          { team: team._id },
+          {
+            $push: {
+              messages: {
+                type: "system",
+                content: `${student.user.fullName} has left the team. A new leader has been assigned.`,
+                timestamp: new Date(),
+              },
+            },
+          }
+        );
+
+        await team.save();
+
+        // Update new leader's student record
+        const newLeaderStudent = await Student.findById(newLeaderId);
+        if (newLeaderStudent) {
+          newLeaderStudent.isTeamLeader = true;
+          await newLeaderStudent.save();
+        }
+
+        // Add activity record
+        await trackTeamMemberActivity({
+          teamId: team._id,
+          memberId: student._id,
+          action: "left_team",
+          details: "Team leader left and transferred leadership",
+        });
+
+        return {
+          success: true,
+          message: "You have left the team. A new leader has been assigned.",
+        };
+      } else {
+        // If no other active members, disband the team
+        team.status = "archived";
+        await team.save();
+
+        student.team = undefined;
+        student.isTeamLeader = false;
+        await student.save();
+
+        // Add activity record
+        await trackTeamMemberActivity({
+          teamId: team._id,
+          memberId: student._id,
+          action: "disbanded_team",
+          details: "Team was disbanded as the last member left",
+        });
+
+        return {
+          success: true,
+          message:
+            "You have left the team. The team has been disbanded as you were the only member.",
+        };
+      }
+    } else {
+      // Not a leader, just leave the team
+      // Update member status
+      const memberIndex = team.members.findIndex(
+        (m) => m.user.toString() === student._id.toString()
+      );
+
+      if (memberIndex !== -1) {
+        team.members[memberIndex].status = "inactive";
+        await team.save();
+      }
+
+      // Remove team reference from student
+      student.team = undefined;
+      await student.save();
+
+      // Add notification in team chat
+      await TeamChat.findOneAndUpdate(
+        { team: team._id },
+        {
+          $push: {
+            messages: {
+              type: "system",
+              content: `${student.user.fullName} has left the team.`,
+              timestamp: new Date(),
+            },
+          },
+        }
+      );
+
+      // Add activity record
+      await trackTeamMemberActivity({
+        teamId: team._id,
+        memberId: student._id,
+        action: "left_team",
+        details: "Member left the team",
+      });
+
+      return {
+        success: true,
+        message: "You have successfully left the team.",
+      };
+    }
+  } catch (error) {
+    logger.error("Failed to leave team", { error, userId: user.id });
     throw error;
   }
 };

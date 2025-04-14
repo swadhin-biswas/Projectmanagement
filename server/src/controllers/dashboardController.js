@@ -11,23 +11,21 @@ import { TeamInvitation } from "../models/TeamInvitation.js";
 import { User } from "../models/User.js";
 
 // Import Logger - VERIFY PATH
-import logger from "../utils/logger.js";
-
-// --- Helper Function for Standard Error Response ---
-const createErrorResponse = (error, defaultMessage, set, status = 500) => {
-  logger.error(`${defaultMessage}:`, error);
-  if (set) set.status = status;
-  return {
-    success: false,
-    error: defaultMessage,
-    details: process.env.NODE_ENV === "development" ? error.message : undefined,
-    timestamp: new Date().toISOString(),
-  };
-};
+import logger, { createErrorResponse } from "../utils/logger.js";
 
 // --- Refactored Student Dashboard ---
 export const getStudentDashboard = async ({ user, set }) => {
   try {
+    // Validate user input first
+    if (!user || !user.id) {
+      if (set) set.status = 401;
+      return {
+        success: false,
+        error: "Authentication required",
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     const student = await Student.findOne({ user: user.id })
       .populate("user", "fullName email profilePicture studentId department")
       .populate({
@@ -44,7 +42,7 @@ export const getStudentDashboard = async ({ user, set }) => {
           },
         ],
       })
-      .lean(); // Use lean
+      .lean(); // Use lean for performance
 
     if (!student) {
       if (set) set.status = 404;
@@ -52,66 +50,159 @@ export const getStudentDashboard = async ({ user, set }) => {
         success: false,
         error: "Student profile not found",
         timestamp: new Date().toISOString(),
+        data: {
+          currentSession: {
+            id: "",
+            name: "",
+            startDate: "",
+            endDate: "",
+          },
+          team: null,
+          upcomingDeadlines: [],
+          recentActivities: [],
+          notifications: [],
+          projectStatus: {
+            status: "not_started",
+            progress: 0,
+            lastUpdated: "",
+          },
+        },
       };
     }
 
-    // Find active session
-    const currentSession = await Session.findOne({ status: "active" }).lean();
+    // Find active session - Add error handling for session query
+    let currentSession = null;
+    try {
+      currentSession = await Session.findOne({ status: "active" }).lean();
+    } catch (sessionErr) {
+      logger.warn("Error fetching active session:", sessionErr);
+      // Continue without session data
+    }
 
     // Fetch Additional Data (Project, Notifications, Events, Invites)
     let project = null;
     let notifications = [];
     let upcomingEvents = [];
     let pendingInvites = [];
+    let recentActivities = [];
 
-    if (student.team) {
+    // Add Promise.all to run queries in parallel and handle errors better
+    const [
+      projectData,
+      notificationsData,
+      pendingInvitesData,
+      upcomingEventsData,
+      recentActivitiesData,
+    ] = await Promise.allSettled([
       // Project
-      const teamWithProject = await Team.findById(student.team._id)
-        .populate("project")
-        .lean();
-      if (teamWithProject?.project) {
-        project = teamWithProject.project;
-      }
-      // Alternative: project = await Project.findOne({ team: student.team._id }).lean();
+      student.team
+        ? Team.findById(student.team._id).populate("project").lean()
+        : Promise.resolve(null),
+
+      // Notifications
+      Notification.find({
+        $or: [
+          { recipientUser: user.id },
+          ...(student.team ? [{ recipientTeam: student.team._id }] : []),
+        ],
+        type: { $ne: "team_invite" },
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate("sender", "fullName")
+        .lean(),
+
+      // Pending Team Invitations
+      TeamInvitation.find({
+        invitedStudent: student._id,
+        status: "pending",
+      })
+        .populate({ path: "team", select: "name" })
+        .populate({
+          path: "from",
+          select: "user",
+          populate: { path: "user", select: "fullName" },
+        })
+        .lean(),
+
+      // Upcoming Deadlines/Events
+      CalendarEvent.find({
+        endDate: { $gte: new Date() },
+        $or: [
+          { visibility: "public" },
+          ...(student.team ? [{ relatedTeam: student.team._id }] : []),
+        ],
+      })
+        .sort({ startDate: 1 })
+        .limit(5)
+        .lean(),
+
+      // Recent Activities - can be from notification or other activity logs
+      Notification.find({
+        $or: [
+          { recipientUser: user.id },
+          ...(student.team ? [{ recipientTeam: student.team._id }] : []),
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("sender", "fullName")
+        .lean(),
+    ]);
+
+    // Process results from Promise.allSettled, handling errors gracefully
+    if (projectData.status === "fulfilled" && projectData.value?.project) {
+      project = projectData.value.project;
     }
 
-    // Notifications
-    notifications = await Notification.find({
-      $or: [
-        { recipientUser: user.id },
-        ...(student.team ? [{ recipientTeam: student.team._id }] : []),
-      ],
-      type: { $ne: "team_invite" },
-    })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate("sender", "fullName")
-      .lean();
+    if (notificationsData.status === "fulfilled") {
+      notifications = notificationsData.value || [];
+    }
 
-    // Pending Team Invitations
-    pendingInvites = await TeamInvitation.find({
-      invitedStudent: student._id,
-      status: "pending",
-    })
-      .populate({ path: "team", select: "name" })
-      .populate({
-        path: "from",
-        select: "user",
-        populate: { path: "user", select: "fullName" },
-      })
-      .lean();
+    if (pendingInvitesData.status === "fulfilled") {
+      pendingInvites = pendingInvitesData.value || [];
+    }
 
-    // Upcoming Deadlines/Events
-    upcomingEvents = await CalendarEvent.find({
-      endDate: { $gte: new Date() },
-      $or: [
-        { visibility: "public" },
-        ...(student.team ? [{ relatedTeam: student.team._id }] : []),
-      ],
-    })
-      .sort({ startDate: 1 })
-      .limit(5)
-      .lean();
+    if (upcomingEventsData.status === "fulfilled") {
+      upcomingEvents = upcomingEventsData.value || [];
+    }
+
+    if (recentActivitiesData.status === "fulfilled") {
+      recentActivities = recentActivitiesData.value || [];
+    }
+
+    // Transform upcomingEvents into upcomingDeadlines format
+    const upcomingDeadlines = upcomingEvents.map((event) => ({
+      id: event._id.toString(),
+      title: event.title || "Unnamed Event",
+      dueDate: event.endDate || new Date().toISOString(),
+      type: event.type || "event",
+      isOverdue: new Date(event.endDate) < new Date(),
+      daysRemaining: Math.ceil(
+        (new Date(event.endDate) - new Date()) / (1000 * 60 * 60 * 24)
+      ),
+    }));
+
+    // Transform notifications into recentActivities format if needed
+    const formattedRecentActivities = recentActivities.map((activity) => ({
+      id: activity._id.toString(),
+      type: activity.type || "notification",
+      description: activity.message || "Activity notification",
+      timestamp: activity.createdAt || new Date().toISOString(),
+    }));
+
+    // Format project status
+    const projectStatus = project
+      ? {
+          status: project.status || "not_started",
+          progress: project.progress || 0,
+          lastUpdated: project.updatedAt || new Date().toISOString(),
+        }
+      : {
+          status: "not_started",
+          progress: 0,
+          lastUpdated: new Date().toISOString(),
+        };
 
     // --- Assemble and Convert IDs ---
     const data = {
@@ -119,37 +210,44 @@ export const getStudentDashboard = async ({ user, set }) => {
         _id: student._id.toString(),
         user: { ...student.user, _id: student.user._id.toString() },
         department: student.user.department,
-        year: student.year, // Add if 'year' exists on Student model
+        year: student.year,
       },
       currentSession: currentSession
-        ? { ...currentSession, _id: currentSession._id.toString() }
-        : null,
+        ? {
+            id: currentSession._id.toString(),
+            name: currentSession.name || "",
+            startDate: currentSession.startDate || "",
+            endDate: currentSession.endDate || "",
+          }
+        : {
+            id: "",
+            name: "",
+            startDate: "",
+            endDate: "",
+          },
       team: student.team
         ? {
-            ...student.team,
-            _id: student.team._id.toString(),
+            id: student.team._id.toString(),
+            name: student.team.name || "",
             members: student.team.members.map((m) => ({
-              ...m,
-              user: { ...m.user, _id: m.user._id.toString() },
+              id: m.user._id.toString(),
+              name: m.user.fullName || "",
+              role: m.role || "member",
+              status: m.status || "active",
             })),
-            supervisor: student.team.supervisor
-              ? {
-                  ...student.team.supervisor,
-                  _id: student.team.supervisor._id.toString(),
-                  user: {
-                    ...student.team.supervisor.user,
-                    _id: student.team.supervisor.user._id.toString(),
-                  },
-                }
-              : null,
+            projectId: project ? project._id.toString() : "",
           }
         : null,
-      project: project ? { ...project, _id: project._id.toString() } : null,
+      upcomingDeadlines: upcomingDeadlines,
+      recentActivities: formattedRecentActivities,
       notifications: notifications.map((n) => ({
-        ...n,
-        _id: n._id.toString(),
-        sender: n.sender ? { ...n.sender, _id: n.sender._id.toString() } : null,
+        id: n._id.toString(),
+        message: n.message || "",
+        type: n.type || "general",
+        isRead: n.isRead || false,
+        createdAt: n.createdAt || new Date().toISOString(),
       })),
+      projectStatus: projectStatus,
       pendingInvites: pendingInvites.map((inv) => ({
         ...inv,
         _id: inv._id.toString(),
@@ -160,19 +258,37 @@ export const getStudentDashboard = async ({ user, set }) => {
           user: { ...inv.from.user, _id: inv.from.user._id.toString() },
         },
       })),
-      upcomingEvents: upcomingEvents.map((e) => ({
-        ...e,
-        _id: e._id.toString(),
-      })),
     };
 
     if (set) set.status = 200;
-    return { success: true, timestamp: new Date().toISOString(), data };
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data,
+    };
   } catch (error) {
     return createErrorResponse(
       error,
       "Failed to fetch student dashboard data",
-      set
+      set,
+      500,
+      {
+        currentSession: {
+          id: "",
+          name: "",
+          startDate: "",
+          endDate: "",
+        },
+        team: null,
+        upcomingDeadlines: [],
+        recentActivities: [],
+        notifications: [],
+        projectStatus: {
+          status: "not_started",
+          progress: 0,
+          lastUpdated: "",
+        },
+      }
     );
   }
 };

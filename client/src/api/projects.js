@@ -1,24 +1,24 @@
 // API functions for project management
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 
 export const projectAPI = {
   // Create a new project
   createProject: async (projectData) => {
     try {
-      const response = await api.post('/api/projects', projectData);
+      const response = await api.post("/api/projects", projectData);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to create project' };
+      throw error.response?.data || { message: "Failed to create project" };
     }
   },
 
   // Get all projects
   getAllProjects: async () => {
     try {
-      const response = await api.get('/api/projects');
+      const response = await api.get("/api/projects");
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch projects' };
+      throw error.response?.data || { message: "Failed to fetch projects" };
     }
   },
 
@@ -28,7 +28,7 @@ export const projectAPI = {
       const response = await api.get(`/api/projects/${projectId}`);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch project' };
+      throw error.response?.data || { message: "Failed to fetch project" };
     }
   },
 
@@ -38,17 +38,20 @@ export const projectAPI = {
       const response = await api.patch(`/api/projects/${projectId}`, data);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to update project' };
+      throw error.response?.data || { message: "Failed to update project" };
     }
   },
 
   // Submit project files
   submitProject: async (projectId, data) => {
     try {
-      const response = await api.post(`/api/projects/${projectId}/submissions`, data);
+      const response = await api.post(
+        `/api/projects/${projectId}/submissions`,
+        data
+      );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to submit project' };
+      throw error.response?.data || { message: "Failed to submit project" };
     }
   },
 
@@ -58,37 +61,74 @@ export const projectAPI = {
       const response = await api.get(`/api/projects/${projectId}/submissions`);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch submissions' };
+      throw error.response?.data || { message: "Failed to fetch submissions" };
+    }
+  },
+
+  // Get available supervisors for project creation
+  getAvailableSupervisors: async () => {
+    try {
+      const response = await api.get("/api/projects/supervisors/available");
+      return response.data;
+    } catch (error) {
+      throw (
+        error.response?.data || {
+          message: "Failed to fetch available supervisors",
+        }
+      );
+    }
+  },
+
+  // Submit a project report
+  submitProjectReport: async (projectId, reportData) => {
+    try {
+      const response = await api.post(
+        `/api/projects/${projectId}/reports`,
+        reportData
+      );
+      return response.data;
+    } catch (error) {
+      throw (
+        error.response?.data || { message: "Failed to submit project report" }
+      );
     }
   },
 
   // Milestone management
   createMilestone: async (projectId, data) => {
     try {
-      const response = await api.post(`/api/projects/${projectId}/milestones`, data);
+      const response = await api.post(
+        `/api/projects/${projectId}/milestones`,
+        data
+      );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to create milestone' };
+      throw error.response?.data || { message: "Failed to create milestone" };
     }
   },
 
   updateMilestone: async (projectId, milestoneId, data) => {
     try {
-      const response = await api.patch(`/api/projects/${projectId}/milestones/${milestoneId}`, data);
+      const response = await api.patch(
+        `/api/projects/${projectId}/milestones/${milestoneId}`,
+        data
+      );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to update milestone' };
+      throw error.response?.data || { message: "Failed to update milestone" };
     }
   },
 
   deleteMilestone: async (projectId, milestoneId) => {
     try {
-      const response = await api.delete(`/api/projects/${projectId}/milestones/${milestoneId}`);
+      const response = await api.delete(
+        `/api/projects/${projectId}/milestones/${milestoneId}`
+      );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to delete milestone' };
+      throw error.response?.data || { message: "Failed to delete milestone" };
     }
-  }
+  },
 };
 
 export default projectAPI;

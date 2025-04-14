@@ -1,0 +1,526 @@
+{
+  "passed": [
+    {
+      "success": true,
+      "status": 200,
+      "data": {
+        "success": true,
+        "data": {
+          "id": "67f6527cb735cb94e0ca95b4",
+          "email": "teststudent1@gmail.com",
+          "role": "student"
+        },
+        "error": null,
+        "timestamp": "2025-04-11T14:24:12.205Z"
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/auth/profile",
+        "description": "Get user profile",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      }
+    },
+    {
+      "success": true,
+      "status": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-11T14:24:12.223Z",
+        "data": {}
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/notifications",
+        "description": "Get user notifications",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      }
+    }
+  ],
+  "failed": [
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.207Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/teams",
+        "description": "Get all teams",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.209Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/teams/:teamId",
+        "description": "Get team details",
+        "expectedStatus": 200,
+        "requiresAuth": true,
+        "params": {
+          "teamId": null
+        }
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.210Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/teams",
+        "description": "Create team",
+        "body": {
+          "name": "Test Team",
+          "description": "Created during API test"
+        },
+        "expectedStatus": 201,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.212Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "PUT",
+        "path": "/api/teams/:teamId",
+        "description": "Update team",
+        "body": {
+          "description": "Updated during API test"
+        },
+        "expectedStatus": 200,
+        "requiresAuth": true,
+        "params": {
+          "teamId": null
+        }
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.214Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/projects",
+        "description": "Get all projects",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.215Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/projects/:projectId",
+        "description": "Get project details",
+        "expectedStatus": 200,
+        "requiresAuth": true,
+        "params": {
+          "projectId": null
+        }
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.216Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/projects",
+        "description": "Create project",
+        "body": {
+          "title": "Test Project",
+          "description": "Created during API test"
+        },
+        "expectedStatus": 201,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.218Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "PUT",
+        "path": "/api/projects/:projectId",
+        "description": "Update project",
+        "body": {
+          "description": "Updated during API test"
+        },
+        "expectedStatus": 200,
+        "requiresAuth": true,
+        "params": {
+          "projectId": null
+        }
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.220Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/sessions",
+        "description": "Get all sessions",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.221Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/sessions",
+        "description": "Create session",
+        "body": {
+          "name": "Test Session",
+          "startDate": "2025-04-11T14:24:12.102Z"
+        },
+        "expectedStatus": 201,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.224Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/notifications/mark-read",
+        "description": "Mark notifications as read",
+        "body": {
+          "all": true
+        },
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.225Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/dashboard",
+        "description": "Get dashboard data",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.226Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/dashboard/stats",
+        "description": "Get dashboard statistics",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.227Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/users",
+        "description": "Get all users",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.229Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/users/me",
+        "description": "Get current user details",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.230Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/reports",
+        "description": "Get all reports",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.231Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/reports",
+        "description": "Submit a report",
+        "body": {
+          "title": "Test Report",
+          "content": "Generated during API test"
+        },
+        "expectedStatus": 201,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.232Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/feedback",
+        "description": "Get all feedback",
+        "expectedStatus": 200,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    },
+    {
+      "success": false,
+      "status": 404,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T14:24:12.233Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/feedback",
+        "description": "Submit feedback",
+        "body": {
+          "content": "Test feedback submitted during API test"
+        },
+        "expectedStatus": 201,
+        "requiresAuth": true
+      },
+      "error": "Request failed with status code 404"
+    }
+  ],
+  "timestamp": "2025-04-11T14:24:12.104Z",
+  "summary": {
+    "total": 21,
+    "passed": 2,
+    "failed": 19
+  }
+}

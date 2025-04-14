@@ -9,15 +9,11 @@ import {
   respondToInvite,
   sendTeamMessage,
 } from "../controllers/studentTeamController.js";
-import { jwtAuth } from "../middleware/auth.js";
 import { ValidationError } from "../utils/errors.js";
 import logger from "../utils/logger.js";
 
-export default function studentTeamRoutes(app) {
-  return app.group("/api/student-teams", (app) => {
-    // Apply JWT authentication to all routes in this group
-    app.use(jwtAuth());
-
+export const teamRoutes = (app) => {
+  return app.group("/api/teams", (app) => {
     // Common authorization middleware for student-only routes
     app.derive(({ user, set }) => {
       if (!user || user.role !== "student") {
@@ -36,7 +32,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Get all teams for the current student",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -73,7 +68,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Create a new team",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -104,7 +98,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Get team details by ID",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -141,7 +134,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Invite a student to join the team",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -178,7 +170,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Respond to a team invitation",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -225,7 +216,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Send a message in team chat",
               tags: ["Student", "Teams", "Chat"],
-              security: [{ bearerAuth: [] }],
               responses: {
                 200: { description: "Message sent successfully" },
                 400: { description: "Validation error" },
@@ -255,7 +245,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Get team chat messages",
               tags: ["Student", "Teams", "Chat"],
-              security: [{ bearerAuth: [] }],
               responses: {
                 200: { description: "List of chat messages" },
                 401: { description: "Unauthorized" },
@@ -277,7 +266,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Leave a team",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
               responses: {
                 200: { description: "Left team successfully" },
                 401: { description: "Unauthorized" },
@@ -299,7 +287,6 @@ export default function studentTeamRoutes(app) {
             detail: {
               summary: "Get pending team invitations",
               tags: ["Student", "Teams"],
-              security: [{ bearerAuth: [] }],
             },
           },
           async (context) => {
@@ -323,4 +310,4 @@ export default function studentTeamRoutes(app) {
         )
     );
   });
-}
+};

@@ -1,4 +1,10 @@
 import { authAPI } from "@/api/auth"; // Import authAPI
+import {
+  clearAuthToken,
+  getAuthToken,
+  isAuthenticated,
+  setAuthToken,
+} from "@/lib/api";
 import React, {
   createContext,
   useCallback,
@@ -10,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const CACHE_KEYS = {
-  TOKEN: "token",
+  TOKEN: "auth_token",
   USER: "user",
   AUTH_DATA: "auth_data",
   THEME: "theme",
@@ -35,14 +41,31 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const clearAuth = useCallback(() => {
-    localStorage.removeItem(CACHE_KEYS.TOKEN);
-    localStorage.removeItem(CACHE_KEYS.USER);
-    localStorage.removeItem(CACHE_KEYS.AUTH_DATA);
+    clearAuthToken();
     setUser(null);
     setAuthData(null);
     setError(null);
     setLoading(false);
   }, []);
+
+  // Synchronize auth state across tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // If token was removed in another tab, log out in this tab too
+      if (e.key === CACHE_KEYS.TOKEN && !e.newValue && user) {
+        clearAuth();
+        toast.info("You were logged out in another tab");
+      }
+
+      // If token was added in another tab, reload to update auth state
+      if (e.key === CACHE_KEYS.TOKEN && e.newValue && !user) {
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [user, clearAuth]);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,7 +75,8 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
 
       try {
-        const token = localStorage.getItem(CACHE_KEYS.TOKEN);
+        // Check if we have a token using the improved loadToken method
+        const token = getAuthToken();
         const storedUser = localStorage.getItem(CACHE_KEYS.USER);
 
         if (!token) {
@@ -69,6 +93,9 @@ export const AuthProvider = ({ children }) => {
               setAuthData({ token, user: parsedUser });
               setError(null);
               setLoading(false);
+
+              // Ensure the token is properly set in the API layer
+              setAuthToken(token);
             }
           } catch (e) {
             console.error("Failed to parse stored user data:", e);
@@ -87,7 +114,11 @@ export const AuthProvider = ({ children }) => {
           if (isMounted) {
             setUser(freshUser);
             setAuthData({ token, user: freshUser });
+            localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(freshUser));
             setError(null);
+
+            // Ensure the token is properly set in the API layer
+            setAuthToken(token);
           }
         } else {
           clearAuth();
@@ -116,6 +147,10 @@ export const AuthProvider = ({ children }) => {
         setUser(result.user);
         setAuthData(result);
         setError(null);
+
+        // Ensure the token is set in both localStorage and API headers
+        setAuthToken(result.token);
+
         toast.success("Welcome back!", {
           description: `Logged in as ${result.user.fullName}`,
         });
@@ -141,6 +176,10 @@ export const AuthProvider = ({ children }) => {
         setUser(result.user);
         setAuthData(result);
         setError(null);
+
+        // Ensure the token is set in both localStorage and API headers
+        setAuthToken(result.token);
+
         toast.success("Registration successful!", {
           description: result.message || "Your account has been created.",
         });
@@ -175,6 +214,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated: !!user,
+    checkAuth: isAuthenticated, // Expose the auth check function
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

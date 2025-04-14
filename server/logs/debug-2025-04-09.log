@@ -2052,3 +2052,129 @@
 {"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 22:40:08.329"}
 {"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 22:40:08.330"}
 {"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 22:40:08.334"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:27.995"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:27.995"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:28.798"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:28.798"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:28.803"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:29.529"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:29.530"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:30.169"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:30.169"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 22:43:30.173"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 22:44:00.393"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 22:44:00.393"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 22:44:01.061"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 22:44:01.061"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 22:44:01.066"}
+{"error":"Can't find variable: teamRoutes","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"ReferenceError: Can't find variable: teamRoutes\n    at <anonymous> (/home/swadhin/r/server/src/index.js:431:20)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at /home/swadhin/r/server/src/index.js:410:5\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 22:46:47.645"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 22:47:17.006"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 22:47:17.006"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 22:47:17.763"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 22:47:17.763"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 22:47:17.767"}
+{"external":"28 MB","heapTotal":"28 MB","heapUsed":"51 MB","level":"info","message":"Memory usage stats:","rss":"204 MB","service":"research-mgmt-api","timestamp":"2025-04-09 22:52:17.013"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:05:12.156"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:05:12.157"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:05:13.011"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:05:13.011"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:05:13.015"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:08:33.081"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:08:33.345"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:08:34.360"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:08:36.364"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:09:05.844"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:09:05.844"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:09:06.848"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:09:06.850"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:24:18.327"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:24:18.327"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:24:19.078"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:24:19.078"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:24:19.082"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:25:13.128"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:25:13.225"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:25:14.231"}
+{"level":"error","message":"Application error: Too many requests, please try again later","service":"research-mgmt-api","stack":"Error: Too many requests, please try again later\n    at <anonymous> (/home/swadhin/r/server/src/index.js:289:15)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:22:13)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-09 23:25:16.443"}
+{"external":"35 MB","heapTotal":"29 MB","heapUsed":"58 MB","level":"info","message":"Memory usage stats:","rss":"213 MB","service":"research-mgmt-api","timestamp":"2025-04-09 23:29:18.335"}
+{"external":"22 MB","heapTotal":"28 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"201 MB","service":"research-mgmt-api","timestamp":"2025-04-09 23:34:18.338"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:12.447"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:12.447"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:13.254"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:13.255"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:13.259"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:48.816"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:48.816"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:49.251"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:49.252"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:49.924"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:49.925"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:36:49.929"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:48:28.094"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:48:28.094"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:48:28.784"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:48:28.784"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:48:28.789"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:15.616"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:15.617"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:16.222"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:16.222"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:16.227"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:37.553"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:37.553"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:38.153"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:38.154"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:38.756"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:38.756"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:38.761"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:52.492"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:52.492"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:53.099"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:53.099"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:49:53.104"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:17.465"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:17.466"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:17.854"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:17.854"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:18.760"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:18.760"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:18.764"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:31.220"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:31.221"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:31.819"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:31.819"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:31.824"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:49.423"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:49.424"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:49.839"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:49.840"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:50.449"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:50.449"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:50:50.454"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:02.710"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:02.711"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:03.330"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:03.330"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:03.335"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:06.056"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:06.056"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:06.651"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:06.651"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:06.656"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:23.902"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:23.902"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:24.513"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:24.513"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:24.518"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:27.066"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:27.067"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:27.558"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:27.559"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:28.160"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:28.161"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:51:28.165"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-09 23:52:15.904"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-09 23:52:15.905"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-09 23:52:16.560"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-09 23:52:16.560"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-09 23:52:16.564"}

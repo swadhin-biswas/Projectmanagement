@@ -1,16 +1,30 @@
-import { config } from "dotenv";
 import { cors } from "@elysiajs/cors";
+import { config } from "dotenv";
 
 // Load environment variables
 config();
 
 export const elysiaCorsMiddleware = () => {
-  const allowedOrigins = process.env.NODE_ENV === "production"
-    ? [process.env.PRODUCTION_CLIENT_URL]
-    : ["http://localhost:5173", "http://localhost:3000"];
+  const allowedOrigins =
+    process.env.NODE_ENV === "production"
+      ? [process.env.PRODUCTION_CLIENT_URL]
+      : [
+          "http://localhost:5173",
+          "http://localhost:3000",
+          "http://localhost",
+          "http://127.0.0.1",
+          "http://127.0.0.0",
+          "http://127.0.0.1:3000",
+          "http://127.0.0.1:5173",
+          "http://127.0.0.0:3000",
+          "http://127.0.0.0:5173",
+          "http://[::1]",
+          "http://[::1]:3000",
+          "http://[::1]:5173",
+        ];
 
   const corsOptions = {
-    origin: allowedOrigins,
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
@@ -28,7 +42,7 @@ export const elysiaCorsMiddleware = () => {
       "referer",
       "accept-encoding",
       "accept-language",
-      "sec-fetch-site"
+      "sec-fetch-site",
     ],
     exposedHeaders: [
       "Content-Length",
@@ -46,15 +60,15 @@ export const elysiaCorsMiddleware = () => {
       "referer",
       "accept-encoding",
       "accept-language",
-      "sec-fetch-site"
+      "sec-fetch-site",
     ],
     credentials: true,
     preflight: {
       statusCode: 204,
-      cacheControl: "no-cache"
+      cacheControl: "no-cache",
     },
     maxAge: 3600,
-    strictPreflight: false
+    strictPreflight: false,
   };
 
   // Return a function that accepts the app instance and applies cors

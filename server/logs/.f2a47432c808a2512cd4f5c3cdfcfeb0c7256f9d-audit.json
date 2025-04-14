@@ -9,6 +9,26 @@
             "date": 1744192986575,
             "name": "/home/swadhin/r/server/logs/debug-2025-04-09.log",
             "hash": "a4bdae547e2205af702b6c8702c4cf9337c1298f0a7367eabd8509d1d74db876"
+        },
+        {
+            "date": 1744306403441,
+            "name": "/home/swadhin/r/server/logs/debug-2025-04-10.log",
+            "hash": "6996e41c9e1cedaad8ae2980b18733e959b097a75adb57f9a43771d0a70d2ef8"
+        },
+        {
+            "date": 1744308203510,
+            "name": "/home/swadhin/r/server/logs/debug-2025-04-11.log",
+            "hash": "2b0c3e509cb1c51d3b08811c26f7bb142696a7044e16d61075d55622c6b80ec9"
+        },
+        {
+            "date": 1744394426865,
+            "name": "/home/swadhin/r/server/logs/debug-2025-04-12.log",
+            "hash": "114c8cf92711c4c5ff1cf4238400b439effb1cdd7a933be4c72e614403ddc9c7"
+        },
+        {
+            "date": 1744480826465,
+            "name": "/home/swadhin/r/server/logs/debug-2025-04-13.log",
+            "hash": "139e812330ca9ae6ee53f75f8db2b2dd5e5d24f9164e3f457030e8b9ddc24cf4"
         }
     ],
     "hashType": "sha256"

@@ -1,11 +1,12 @@
-import axios from "axios";
+import { api, loadToken } from "../lib/api";
 
 // Export all API functions
 import { authAPI } from "./auth"; // Import authAPI from auth.js
 import dashboardAPI from "./dashboard";
 import projectAPI from "./projects";
 import sessionAPI from "./sessions";
-import teamAPI from "./teams";
+import studentAPI from "./student";
+import { teamAPI } from "./teams";
 
 // Cache keys - should match those in AuthContext
 const CACHE_KEYS = {
@@ -16,20 +17,13 @@ const CACHE_KEYS = {
 
 // Helper function to ensure token is synced from storage
 const syncTokenFromStorage = () => {
-  const token = localStorage.getItem(CACHE_KEYS.TOKEN);
+  const token = loadToken();
   if (token) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   } else {
     delete api.defaults.headers.common["Authorization"];
   }
 };
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 // Run sync on module load
 syncTokenFromStorage();
@@ -98,6 +92,7 @@ export {
   dashboardAPI,
   projectAPI,
   sessionAPI,
+  studentAPI,
   syncTokenFromStorage,
   teamAPI,
 };

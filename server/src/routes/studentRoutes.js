@@ -1,7 +1,6 @@
 import { t } from "elysia";
 import * as studentController from "../controllers/studentController.js";
 import * as teamController from "../controllers/teamController.js";
-import { jwtAuth } from "../middleware/auth.js";
 import {
   createTeamSchema,
   inviteToTeamSchema,
@@ -24,33 +23,45 @@ const errorResponse = t.Object({
   timestamp: t.Optional(t.String()),
 });
 
+// Export the function directly to be compatible with app.use()
 export default function studentRoutes(app) {
-  return app.group("/api/students", (app) => {
-    // Apply JWT authentication to all routes in this group
-    app.use(jwtAuth());
-
+  return app.group("", (app) => {
     // Common authorization middleware for student-only routes
     app.derive(({ user, set }) => {
-      if (!user || user.role !== "student") {
+      // Log the user object for debugging
+      logger.debug("Auth check for student endpoint:", {
+        userExists: !!user,
+        userId: user?.id,
+        userRole: user?.role,
+        headers: set.headers,
+      });
+
+      if (!user) {
+        set.status = 401;
+        throw new ValidationError("Authentication required");
+      }
+
+      if (user.role !== "student") {
         set.status = 403;
         throw new ValidationError("Student access only");
       }
+
       return { user };
     });
 
     // Team management routes section
     app.group("/team", (app) => {
       return app
-        .get("/", async (context) => {
+        .get("/", async ({ user, set }) => {
           try {
-            const result = await teamController.getUserTeam(context);
+            const result = await teamController.getUserTeam({ user });
             return {
               ...result,
               timestamp: new Date().toISOString(),
             };
           } catch (error) {
             logger.error("Failed to get user team", error);
-            context.set.status = error.status || 500;
+            set.status = error.status || 500;
             return {
               success: false,
               error: error.message,
@@ -63,17 +74,17 @@ export default function studentRoutes(app) {
           {
             body: createTeamSchema.body,
           },
-          async (context) => {
+          async ({ body, user, set }) => {
             try {
-              const result = await teamController.createTeam(context);
-              context.set.status = 201;
+              const result = await teamController.createTeam({ body, user });
+              set.status = 201;
               return {
                 ...result,
                 timestamp: new Date().toISOString(),
               };
             } catch (error) {
               logger.error("Failed to create team", error);
-              context.set.status = error.status || 500;
+              set.status = error.status || 500;
               return {
                 success: false,
                 error: error.message,
@@ -87,17 +98,17 @@ export default function studentRoutes(app) {
           {
             body: inviteToTeamSchema.body,
           },
-          async (context) => {
+          async ({ body, user, set }) => {
             try {
-              const result = await teamController.inviteUser(context);
-              context.set.status = 201;
+              const result = await teamController.inviteUser({ body, user });
+              set.status = 201;
               return {
                 ...result,
                 timestamp: new Date().toISOString(),
               };
             } catch (error) {
               logger.error("Failed to send invitation", error);
-              context.set.status = error.status || 500;
+              set.status = error.status || 500;
               return {
                 success: false,
                 error: error.message,
@@ -106,16 +117,16 @@ export default function studentRoutes(app) {
             }
           }
         )
-        .get("/invitations", async (context) => {
+        .get("/invitations", async ({ user, set }) => {
           try {
-            const result = await teamController.getPendingInvitations(context);
+            const result = await teamController.getPendingInvitations({ user });
             return {
               ...result,
               timestamp: new Date().toISOString(),
             };
           } catch (error) {
             logger.error("Failed to get invitations", error);
-            context.set.status = error.status || 500;
+            set.status = error.status || 500;
             return {
               success: false,
               error: error.message,
@@ -128,16 +139,19 @@ export default function studentRoutes(app) {
           {
             body: respondToInvitationSchema.body,
           },
-          async (context) => {
+          async ({ body, user, set }) => {
             try {
-              const result = await teamController.respondToInvitation(context);
+              const result = await teamController.respondToInvitation({
+                body,
+                user,
+              });
               return {
                 ...result,
                 timestamp: new Date().toISOString(),
               };
             } catch (error) {
               logger.error("Failed to respond to invitation", error);
-              context.set.status = error.status || 500;
+              set.status = error.status || 500;
               return {
                 success: false,
                 error: error.message,
@@ -151,16 +165,16 @@ export default function studentRoutes(app) {
           {
             body: removeMemberSchema.body,
           },
-          async (context) => {
+          async ({ body, user, set }) => {
             try {
-              const result = await teamController.removeMember(context);
+              const result = await teamController.removeMember({ body, user });
               return {
                 ...result,
                 timestamp: new Date().toISOString(),
               };
             } catch (error) {
               logger.error("Failed to remove team member", error);
-              context.set.status = error.status || 500;
+              set.status = error.status || 500;
               return {
                 success: false,
                 error: error.message,
@@ -169,16 +183,16 @@ export default function studentRoutes(app) {
             }
           }
         )
-        .post("/leave-team", async (context) => {
+        .post("/leave-team", async ({ user, set }) => {
           try {
-            const result = await teamController.leaveTeam(context);
+            const result = await teamController.leaveTeam({ user });
             return {
               ...result,
               timestamp: new Date().toISOString(),
             };
           } catch (error) {
             logger.error("Failed to leave team", error);
-            context.set.status = error.status || 500;
+            set.status = error.status || 500;
             return {
               success: false,
               error: error.message,
@@ -186,16 +200,16 @@ export default function studentRoutes(app) {
             };
           }
         })
-        .get("/available-students", async (context) => {
+        .get("/available-students", async ({ user, set }) => {
           try {
-            const result = await teamController.getAvailableStudents(context);
+            const result = await teamController.getAvailableStudents({ user });
             return {
               ...result,
               timestamp: new Date().toISOString(),
             };
           } catch (error) {
             logger.error("Failed to get available students", error);
-            context.set.status = error.status || 500;
+            set.status = error.status || 500;
             return {
               success: false,
               error: error.message,
@@ -205,10 +219,10 @@ export default function studentRoutes(app) {
         });
     });
 
-    // Continue with the rest of the student routes
+
     return (
       app
-        // Profile and session management
+
         .get(
           "/profile",
           {
@@ -245,14 +259,31 @@ export default function studentRoutes(app) {
             detail: {
               tags: ["Students"],
               summary: "Get student profile",
-              security: [{ bearerAuth: [] }],
             },
           },
           async ({ user, set }) => {
             try {
-              const result = await studentController.getStudentProfile(user.id);
+              logger.debug("Getting student profile for user:", {
+                userId: user.id,
+                userRole: user.role,
+                userEmail: user.email,
+              });
+
+              const result = await studentController.getStudentProfile({
+                user,
+              });
+
+              logger.debug("Student profile result:", {
+                success: result.success,
+                hasData: !!result.data,
+                studentData: result.data?.student ? "present" : "missing",
+                resultKeys: Object.keys(result),
+              });
+
+              // Make sure we're returning the result directly
               return result;
             } catch (error) {
+              logger.error("Student profile error:", error);
               set.status = error.status || 500;
               return {
                 success: false,
@@ -287,7 +318,6 @@ export default function studentRoutes(app) {
             detail: {
               tags: ["Students"],
               summary: "Get deadlines",
-              security: [{ bearerAuth: [] }],
             },
           },
           async ({ user, set }) => {
@@ -325,7 +355,6 @@ export default function studentRoutes(app) {
             detail: {
               tags: ["Students"],
               summary: "Submit report",
-              security: [{ bearerAuth: [] }],
             },
           },
           async ({ body, user, set }) => {
@@ -369,7 +398,6 @@ export default function studentRoutes(app) {
             detail: {
               tags: ["Students"],
               summary: "Get messages",
-              security: [{ bearerAuth: [] }],
             },
           },
           async ({ user, set }) => {
@@ -402,7 +430,6 @@ export default function studentRoutes(app) {
             detail: {
               tags: ["Students"],
               summary: "Mark message as read",
-              security: [{ bearerAuth: [] }],
             },
           },
           async ({ params, user, set }) => {
@@ -458,7 +485,6 @@ export default function studentRoutes(app) {
                 detail: {
                   tags: ["Students", "Results"],
                   summary: "Get all student results",
-                  security: [{ bearerAuth: [] }],
                 },
               },
               async ({ user, set }) => {
@@ -511,7 +537,6 @@ export default function studentRoutes(app) {
                 detail: {
                   tags: ["Students", "Results"],
                   summary: "Get detailed view of a specific result",
-                  security: [{ bearerAuth: [] }],
                 },
               },
               async ({ params, user, set }) => {

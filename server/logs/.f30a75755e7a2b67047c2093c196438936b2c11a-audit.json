@@ -9,6 +9,26 @@
             "date": 1744192986575,
             "name": "/home/swadhin/r/server/logs/exceptions-2025-04-09.log",
             "hash": "8695b2004cef54810857c795445a42c693d7e9724d30525dc0fb61093111323f"
+        },
+        {
+            "date": 1744306403441,
+            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-10.log",
+            "hash": "550f9d811f94344c028fd09dcf3e257367ec3cce5b8c2538e71682a32e42c3ef"
+        },
+        {
+            "date": 1744318832625,
+            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-11.log",
+            "hash": "007224b11f295a97f55573d9ae35129abb4ea91444ed074077b2c8cd12099fcc"
+        },
+        {
+            "date": 1744394665909,
+            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-12.log",
+            "hash": "6409a83550e8b3724dcda0591fa8d23f4827774469b15d8fcea5fb8bf543058e"
+        },
+        {
+            "date": 1744522750932,
+            "name": "/home/swadhin/r/server/logs/exceptions-2025-04-13.log",
+            "hash": "599c6bb8c332fa6e770216a3441e23a9d1745e9e8f488da550b5154f865ca79e"
         }
     ],
     "hashType": "sha256"

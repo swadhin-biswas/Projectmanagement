@@ -3,13 +3,26 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from 'framer-motion';
-import { Book, Calendar, FileText, MessageSquare, TrendingUp, Users } from 'lucide-react';
-import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { motion } from "framer-motion";
+import {
+  Book,
+  Calendar,
+  FileText,
+  MessageSquare,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { api } from "../lib/api";
 
 const StudentDashboard = () => {
@@ -21,6 +34,14 @@ const StudentDashboard = () => {
       const response = await api.get("/api/dashboard/student");
       return response.data;
     },
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+    refetchInterval: false,
+    onError: (err) => {
+      console.error("Dashboard fetch error:", err);
+    },
   });
 
   if (isLoading) return <LoadingOverlay />;
@@ -30,9 +51,12 @@ const StudentDashboard = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 flex items-center justify-center">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-red-600 dark:text-red-400">Error</CardTitle>
+            <CardTitle className="text-2xl text-red-600 dark:text-red-400">
+              Error
+            </CardTitle>
             <CardDescription>
-              {error.message || "Failed to load dashboard. Please try again later."}
+              {error.message ||
+                "Failed to load dashboard. Please try again later."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -50,28 +74,31 @@ const StudentDashboard = () => {
 
   const quickStats = [
     {
-      label: 'Due Assignments',
-      value: data?.deadlines?.length || '0',
+      label: "Due Assignments",
+      value: data?.deadlines?.length || "0",
       icon: Book,
-      color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+      color:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     },
     {
-      label: 'Team Messages',
-      value: data?.unreadMessages || '0',
+      label: "Team Messages",
+      value: data?.unreadMessages || "0",
       icon: MessageSquare,
-      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     },
     {
-      label: 'Project Progress',
-      value: data?.projectProgress || '0%',
+      label: "Project Progress",
+      value: data?.projectProgress || "0%",
       icon: TrendingUp,
-      color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+      color:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
     },
     {
-      label: 'Team Members',
-      value: data?.teamMembers?.length || '0',
+      label: "Team Members",
+      value: data?.teamMembers?.length || "0",
       icon: Users,
-      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+      color:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
     },
   ];
 
@@ -147,14 +174,22 @@ const StudentDashboard = () => {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h4 className="font-medium">{data.project.name}</h4>
-                    <Badge variant={data.project.status === 'active' ? 'success' : 'warning'}>
+                    <Badge
+                      variant={
+                        data.project.status === "active" ? "success" : "warning"
+                      }
+                    >
                       {data.project.status}
                     </Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Progress</span>
-                      <span className="font-medium">{data.projectProgress}%</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Progress
+                      </span>
+                      <span className="font-medium">
+                        {data.projectProgress}%
+                      </span>
                     </div>
                     <Progress value={data.projectProgress} />
                   </div>
@@ -163,17 +198,24 @@ const StudentDashboard = () => {
                     {data.deadlines?.length > 0 ? (
                       <ul className="space-y-3">
                         {data.deadlines.map((deadline) => (
-                          <li key={deadline._id} className="flex justify-between items-center">
+                          <li
+                            key={deadline._id}
+                            className="flex justify-between items-center"
+                          >
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-gray-400" />
                               <span className="text-sm">{deadline.name}</span>
                             </div>
-                            <Badge variant="outline">{new Date(deadline.date).toLocaleDateString()}</Badge>
+                            <Badge variant="outline">
+                              {new Date(deadline.date).toLocaleDateString()}
+                            </Badge>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming deadlines</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        No upcoming deadlines
+                      </p>
                     )}
                   </div>
                 </div>
@@ -213,8 +255,13 @@ const StudentDashboard = () => {
                         className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
                       >
                         <Avatar>
-                          <AvatarImage src={member.profilePicture} alt={member.name} />
-                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage
+                            src={member.profilePicture}
+                            alt={member.name}
+                          />
+                          <AvatarFallback>
+                            {member.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium text-sm">{member.name}</p>
@@ -226,7 +273,9 @@ const StudentDashboard = () => {
                     ))}
                   </div>
                   <div className="flex justify-end">
-                    <Button variant="outline" className="mr-2">Team Chat</Button>
+                    <Button variant="outline" className="mr-2">
+                      Team Chat
+                    </Button>
                     <Button>Manage Team</Button>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -240,12 +241,19 @@ const TeamsList = () => {
           setCurrentUserId(profileResponse.data.data._id);
         }
 
-        const teamsResponse = await api.get("/api/teams");
+        const teamsResponse = await TeamAPI.getUserTeam();
 
-        if (teamsResponse.data.success) {
-          setTeams(teamsResponse.data.data);
+        if (teamsResponse.success) {
+          // If teams data is an array, use it directly, otherwise create an array with single team
+          const teamsData = Array.isArray(teamsResponse.data)
+            ? teamsResponse.data
+            : teamsResponse.data
+            ? [teamsResponse.data]
+            : [];
+
+          setTeams(teamsData);
         } else {
-          setError(teamsResponse.data.error || "Failed to fetch teams");
+          setError(teamsResponse.error || "Failed to fetch teams");
         }
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -263,15 +271,15 @@ const TeamsList = () => {
 
   const handleInviteMember = async (teamId, studentId) => {
     try {
-      const response = await api.post(`/api/teams/${teamId}/invite`, {
+      const response = await TeamAPI.inviteStudent({
         studentId,
       });
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Invitation sent successfully!");
-        return response.data.data;
+        return response.data;
       } else {
-        throw new Error(response.data.error || "Failed to send invitation");
+        throw new Error(response.error || "Failed to send invitation");
       }
     } catch (error) {
       console.error("Error sending invitation:", error);
@@ -297,19 +305,15 @@ const TeamsList = () => {
 
       if (!confirmAction) return;
 
-      const endpoint = isLeader
-        ? `/api/teams/${teamId}/disband`
-        : `/api/teams/${teamId}/leave`;
+      const response = await TeamAPI.leaveTeam();
 
-      const response = await api.post(endpoint);
-
-      if (response.data.success) {
+      if (response.success) {
         toast.success(
           isLeader ? "Team disbanded successfully" : "Left team successfully"
         );
         setTeams(teams.filter((t) => t._id !== teamId));
       } else {
-        toast.error(response.data.error || "Failed to process your request");
+        toast.error(response.error || "Failed to process your request");
       }
     } catch (error) {
       console.error("Error leaving/disbanding team:", error);

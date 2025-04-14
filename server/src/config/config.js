@@ -8,14 +8,14 @@ dotenv.config();
 export const config = {
   // Server configuration
   server: {
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 30000,
     nodeEnv: process.env.NODE_ENV || 'development',
     clientUrl: process.env.CLIENT_URL || 'http://localhost:5173'
   },
 
   // JWT configuration
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-fallback-secret-key',
+    secret: process.env.JWT_SECRET || 'abfa71d5fae3e9520fe004cdde56c4f06cd9a7eded6a957673eb21c9be17356d',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d'
   },

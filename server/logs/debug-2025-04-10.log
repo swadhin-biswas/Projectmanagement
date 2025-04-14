@@ -1,0 +1,22 @@
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.500"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.501"}
+{"error":"Failed to start server. Is port 30000 in use?","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"Error: Failed to start server. Is port 30000 in use?\n    at serve (unknown)\n    at bun:main:25:49\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-10 23:33:23.516"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.507"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.508"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.495"}
+{"error":"Failed to start server. Is port 30000 in use?","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"Error: Failed to start server. Is port 30000 in use?\n    at serve (unknown)\n    at bun:main:25:49\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-10 23:33:23.526"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.496"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.507"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:23.508"}
+{"error":"Failed to start server. Is port 30000 in use?","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"Error: Failed to start server. Is port 30000 in use?\n    at serve (unknown)\n    at bun:main:25:49\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-10 23:33:23.532"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:24.855"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:24.855"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:24.860"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:48.121"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-10 23:33:48.121"}
+{"error":"Failed to start server. Is port 30000 in use?","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"Error: Failed to start server. Is port 30000 in use?\n    at serve (unknown)\n    at bun:main:25:49\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-10 23:33:48.133"}
+{"external":"28 MB","heapTotal":"29 MB","heapUsed":"51 MB","level":"info","message":"Memory usage stats:","rss":"203 MB","service":"research-mgmt-api","timestamp":"2025-04-10 23:38:23.507"}
+{"external":"29 MB","heapTotal":"30 MB","heapUsed":"54 MB","level":"info","message":"Memory usage stats:","rss":"206 MB","service":"research-mgmt-api","timestamp":"2025-04-10 23:43:23.508"}
+{"external":"29 MB","heapTotal":"31 MB","heapUsed":"56 MB","level":"info","message":"Memory usage stats:","rss":"208 MB","service":"research-mgmt-api","timestamp":"2025-04-10 23:48:23.508"}
+{"external":"22 MB","heapTotal":"28 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"199 MB","service":"research-mgmt-api","timestamp":"2025-04-10 23:53:23.509"}
+{"external":"22 MB","heapTotal":"28 MB","heapUsed":"40 MB","level":"info","message":"Memory usage stats:","rss":"200 MB","service":"research-mgmt-api","timestamp":"2025-04-10 23:58:23.508"}

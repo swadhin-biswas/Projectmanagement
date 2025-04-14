@@ -1,4 +1,6 @@
 import {
+  Bell,
+  Calendar,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -109,6 +111,16 @@ const StudentLayout = () => {
       name: "Results",
       path: "/student/results",
       icon: <Star className="w-4 h-4" />,
+    },
+    {
+      name: "Messages",
+      path: "/student/messages",
+      icon: <Bell className="w-4 h-4" />,
+    },
+    {
+      name: "Deadlines",
+      path: "/student/deadlines",
+      icon: <Calendar className="w-4 h-4" />,
     },
     {
       name: "Profile",
@@ -264,6 +276,10 @@ const StudentLayout = () => {
               ? "Profile"
               : location.pathname.includes("/results")
               ? "Results"
+              : location.pathname.includes("/messages")
+              ? "Messages"
+              : location.pathname.includes("/deadlines")
+              ? "Deadlines"
               : ""}
           </div>
 

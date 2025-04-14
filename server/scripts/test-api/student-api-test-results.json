@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-04-11T14:09:42.008Z",
+  "authentication": {
+    "success": false,
+    "error": "Unable to connect. Is the computer able to access the url?",
+    "response": null
+  },
+  "endpoints": [],
+  "summary": {
+    "total": 8,
+    "successful": 0,
+    "failed": 0
+  }
+}

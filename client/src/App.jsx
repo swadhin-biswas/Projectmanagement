@@ -5,9 +5,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { api, getAuthToken, setAuthToken } from "@/lib/api";
+import { initializeAuth } from "@/lib/authInitializer";
 import Routes from "@/routes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter } from "react-router-dom";
@@ -39,31 +42,57 @@ const queryClient = new QueryClient({
   },
 });
 
+// Initialize authentication on app startup
+initializeAuth();
+
+function AppContent() {
+  // Reinitialize auth on component mount in case token was added after initial load
+  useEffect(() => {
+    // Force a token sync to ensure auth headers are set properly
+    const token = getAuthToken();
+    if (token) {
+      setAuthToken(token);
+      // Verify the token was properly set in the API headers
+      if (
+        !api.defaults.headers.common["Authorization"] ||
+        api.defaults.headers.common["Authorization"] !== `Bearer ${token}`
+      ) {
+        console.warn("Auth headers were not set properly, forcing sync");
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+    }
+  }, []);
+
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem={true}
+      storageKey="project-management-theme"
+    >
+      <ThemeProvider>
+        <ToastProvider />
+        <QueryProvider>
+          <AuthProvider>
+            <WebSocketProvider>
+              <NotificationProvider>
+                <Routes />
+              </NotificationProvider>
+            </WebSocketProvider>
+          </AuthProvider>
+        </QueryProvider>
+      </ThemeProvider>
+    </NextThemesProvider>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <BrowserRouter>
           <HelmetProvider>
-            <NextThemesProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem={true}
-              storageKey="project-management-theme"
-            >
-              <ThemeProvider>
-                <ToastProvider />
-                <QueryProvider>
-                  <AuthProvider>
-                    <WebSocketProvider>
-                      <NotificationProvider>
-                        <Routes />
-                      </NotificationProvider>
-                    </WebSocketProvider>
-                  </AuthProvider>
-                </QueryProvider>
-              </ThemeProvider>
-            </NextThemesProvider>
+            <AppContent />
           </HelmetProvider>
         </BrowserRouter>
       </ErrorBoundary>

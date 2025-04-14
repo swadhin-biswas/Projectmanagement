@@ -1,98 +1,155 @@
-import React, { useState } from 'react';
-import { Card } from '../ui/Card';
-import { Progress } from '../ui/Progress';
-import { toast } from 'react-hot-toast';
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { projectAPI } from "../../api/projects";
+import { UploadCloud } from "lucide-react";
 
-const ProjectSubmission = ({ project, onSubmit }) => {
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+export default function ProjectSubmission({ project, onSubmissionComplete }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    fileUrl: "",
+    submissionType: "progress_report"
+  });
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.size <= 50 * 1024 * 1024) { // 50MB limit
-      setFile(selectedFile);
-    } else {
-      toast.error('File size must be less than 50MB');
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) return;
 
-    setUploading(true);
+    // Validate form
+    if (!formData.title.trim()) {
+      return toast.error("Please enter a title for your submission");
+    }
+
+    if (!formData.fileUrl.trim()) {
+      return toast.error("Please enter a file URL");
+    }
+
     try {
-      // Simulated upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        setProgress(i);
-        await new Promise(r => setTimeout(r, 200));
-      }
+      setIsSubmitting(true);
+      const response = await projectAPI.submitProjectReport(project._id, formData);
 
-      await onSubmit(file);
-      toast.success('Project submitted successfully!');
-      setFile(null);
+      toast.success("Report submitted successfully");
+
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        fileUrl: "",
+        submissionType: "progress_report"
+      });
+
+      // Callback to notify parent component
+      if (onSubmissionComplete) {
+        onSubmissionComplete(response.data);
+      }
     } catch (error) {
-      toast.error('Failed to submit project');
+      console.error("Failed to submit report:", error);
+      toast.error(error.response?.data?.message || "Failed to submit report");
     } finally {
-      setUploading(false);
-      setProgress(0);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Submit Project</h3>
-      
-      <div className="space-y-4">
-        <div className="p-4 border-2 border-dashed rounded-lg text-center">
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="hidden"
-            id="project-file"
-            accept=".pdf,.doc,.docx,.zip,.rar"
-            disabled={uploading}
-          />
-          <label
-            htmlFor="project-file"
-            className="cursor-pointer block p-4 text-gray-600 hover:text-gray-800"
-          >
-            {file ? (
-              <span className="text-blue-600">{file.name}</span>
-            ) : (
-              <>
-                <span className="block text-3xl mb-2">📁</span>
-                <span>Drop your file here or click to browse</span>
-                <span className="block text-sm mt-1 text-gray-500">
-                  Supported formats: PDF, DOC, DOCX, ZIP, RAR (Max 50MB)
-                </span>
-              </>
-            )}
-          </label>
-        </div>
-
-        {uploading && (
+    <Card>
+      <CardHeader>
+        <CardTitle>Submit Project Report</CardTitle>
+        <CardDescription>
+          Upload your project report, code, or other documents for review
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-center text-gray-500">
-              Uploading... {progress}%
+            <Label htmlFor="title">Title*</Label>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g. Progress Report Week 3"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="submissionType">Submission Type*</Label>
+            <Select
+              value={formData.submissionType}
+              onValueChange={(value) => handleSelectChange("submissionType", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="proposal">Project Proposal</SelectItem>
+                <SelectItem value="progress_report">Progress Report</SelectItem>
+                <SelectItem value="final_report">Final Report</SelectItem>
+                <SelectItem value="code">Code Submission</SelectItem>
+                <SelectItem value="presentation">Presentation</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fileUrl">File URL*</Label>
+            <Input
+              id="fileUrl"
+              name="fileUrl"
+              value={formData.fileUrl}
+              onChange={handleChange}
+              placeholder="https://drive.google.com/file/..."
+              required
+            />
+            <p className="text-xs text-gray-500">
+              Link to your report file (Google Drive, Dropbox, GitHub, etc.)
             </p>
           </div>
-        )}
 
-        <div className="flex justify-end">
-          <button
-            onClick={handleSubmit}
-            disabled={!file || uploading}
-            className="btn-primary"
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Briefly describe what this submission contains"
+              rows={3}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
           >
-            {uploading ? 'Uploading...' : 'Submit Project'}
-          </button>
-        </div>
-      </div>
+            {isSubmitting ? (
+              <>Submitting...</>
+            ) : (
+              <>
+                <UploadCloud className="mr-2 h-4 w-4" />
+                Submit Report
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
-};
-
-export default ProjectSubmission;
+}

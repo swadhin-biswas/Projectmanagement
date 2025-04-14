@@ -3,9 +3,7 @@ import { Session } from "../models/Session.js";
 import { Student } from "../models/Student.js";
 import { Supervisor } from "../models/Supervisor.js";
 import { Team } from "../models/Team.js";
-import {
-  trackSubmissionActivity
-} from '../services/activityService.js';
+import { trackSubmissionActivity } from "../services/activityService.js";
 import {
   ForbiddenError,
   NotFoundError,
@@ -23,18 +21,20 @@ export const createProject = async ({ body, user }) => {
     }
 
     if (!student.team) {
-      throw new ValidationError("You must be part of a team to create a project");
+      throw new ValidationError(
+        "You must be part of a team to create a project"
+      );
     }
 
     const team = await Team.findById(student.team._id);
 
     // Check if user is team leader
     const isLeader = team.members.find(
-      m => m.user.toString() === student._id.toString() && m.role === "leader"
+      (m) => m.user.toString() === user.id && m.role === "leader"
     );
 
     if (!isLeader) {
-      throw new ValidationError("Only team leader can create projects");
+      throw new ForbiddenError("Only team leader can create projects");
     }
 
     // Check if team already has a project
@@ -43,40 +43,66 @@ export const createProject = async ({ body, user }) => {
       throw new ValidationError("Team already has a project");
     }
 
-    // Validate project type
-    if (!["research_based", "project_based"].includes(body.type)) {
-      throw new ValidationError("Invalid project type. Must be 'research_based' or 'project_based'");
+    // Get active session
+    const session = await Session.findOne({ isActive: true });
+    if (!session) {
+      throw new ValidationError("No active session found");
     }
 
-    // Validate supervisor if provided
-    let supervisor = null;
-    if (body.supervisorId) {
-      supervisor = await User.findOne({
-        _id: body.supervisorId,
-        role: "supervisor",
-        isApproved: true,
-        status: "active"
-      });
-
-      if (!supervisor) {
-        throw new NotFoundError("Selected supervisor not found or not available");
-      }
+    // Validate supervisors
+    if (!body.supervisorIds || body.supervisorIds.length === 0) {
+      throw new ValidationError("At least one supervisor must be selected");
     }
 
+    const supervisors = await Supervisor.find({
+      _id: { $in: body.supervisorIds },
+      isApproved: true,
+      status: "active",
+    });
+
+    if (supervisors.length === 0) {
+      throw new NotFoundError("No valid supervisors found");
+    }
+
+    // Format supervisors for project schema
+    const supervisorsList = supervisors.map((supervisor, index) => ({
+      supervisor: supervisor._id,
+      status: "pending",
+      requestedAt: new Date(),
+      isMainSupervisor: index === 0, // First supervisor is the main one
+      role: index === 0 ? "primary" : "co_supervisor",
+    }));
+
+    // Create project with specified details
     const project = new Project({
       name: body.name,
-      description: body.description,
       type: body.type,
+      category: body.category,
+      description: body.description,
+      objectives: body.objectives || [],
       team: team._id,
-      supervisors: supervisor ? [{
-        user: supervisor._id,
-        status: "pending",
-        assignedAt: new Date()
-      }] : [],
-      expectedDeliverables: body.expectedDeliverables || [],
-      researchAreas: body.type === "research_based" ? (body.researchAreas || []) : [],
-      timeline: body.timeline || {},
-      status: "pending_approval"
+      supervisors: supervisorsList,
+      status: "pending_approval",
+      session: session._id,
+      technologies: body.technologies || [],
+      tags: body.tags || [],
+      createdBy: student._id,
+      timeline: {
+        startDate: body.timeline?.startDate
+          ? new Date(body.timeline.startDate)
+          : new Date(),
+        endDate: body.timeline?.endDate
+          ? new Date(body.timeline.endDate)
+          : null,
+        milestones:
+          body.timeline?.milestones?.map((m) => ({
+            title: m.title,
+            description: m.description,
+            dueDate: new Date(m.dueDate),
+            status: "pending",
+          })) || [],
+        currentPhase: "planning",
+      },
     });
 
     await project.save();
@@ -85,24 +111,20 @@ export const createProject = async ({ body, user }) => {
     team.project = project._id;
     await team.save();
 
-    // Send notification to supervisor if assigned
-    if (supervisor) {
+    // Send notifications to supervisors
+    for (const supervisor of supervisors) {
       await Notification.create({
-        recipient: supervisor._id,
+        recipient: supervisor.user,
         type: "project_supervision_request",
         title: "New Project Supervision Request",
-        message: `Team ${team.name} has requested your supervision for project "${project.name}"`,
+        message: `Team "${team.name}" has requested your supervision for project "${project.name}"`,
         relatedProject: project._id,
         relatedTeam: team._id,
-        sender: user.id
+        sender: user.id,
       });
     }
 
-    return {
-      success: true,
-      data: project,
-      message: "Project created successfully"
-    };
+    return project;
   } catch (error) {
     throw error;
   }
@@ -170,7 +192,7 @@ export const submitProject = async ({ params, body, user }) => {
       submittedBy: student._id,
       submittedAt: new Date(),
       status: "pending_review",
-      version: project.submissions.length + 1
+      version: project.submissions.length + 1,
     });
 
     // Update project status and notify team members
@@ -179,15 +201,15 @@ export const submitProject = async ({ params, body, user }) => {
 
     // Notify team members
     const teamMembers = team.members
-      .filter(m => m.user.toString() !== student._id.toString())
-      .map(m => m.user);
+      .filter((m) => m.user.toString() !== student._id.toString())
+      .map((m) => m.user);
 
-    const notifications = teamMembers.map(memberId => ({
+    const notifications = teamMembers.map((memberId) => ({
       user: memberId,
       type: "project_submission",
       title: "New Project Submission",
       message: `A new version of the project "${project.name}" has been submitted`,
-      link: `/student/project/${project._id}/submissions`
+      link: `/student/project/${project._id}/submissions`,
     }));
 
     if (notifications.length > 0) {
@@ -201,7 +223,7 @@ export const submitProject = async ({ params, body, user }) => {
         type: "submission_for_review",
         title: "New Project Submission",
         message: `Team ${team.name} has submitted a new version of project "${project.name}"`,
-        link: `/supervisor/review/project/${project._id}`
+        link: `/supervisor/review/project/${project._id}`,
       });
     }
 
@@ -219,6 +241,112 @@ export const submitProject = async ({ params, body, user }) => {
       userId: user.id,
       projectId: params.projectId,
     });
+    throw error;
+  }
+};
+
+// Submit project report
+export const submitProjectReport = async ({ params, body, user }) => {
+  try {
+    const student = await Student.findOne({ user: user.id }).populate("team");
+
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find the project
+    const project = await Project.findById(params.id);
+    if (!project) {
+      throw new NotFoundError("Project not found");
+    }
+
+    // Check if user is in the project team
+    const team = await Team.findById(project.team);
+    if (!team) {
+      throw new NotFoundError("Project team not found");
+    }
+
+    const isMember = team.members.some(
+      (m) => m.user.toString() === user.id && m.status === "active"
+    );
+
+    if (!isMember) {
+      throw new ForbiddenError("You are not a member of this project team");
+    }
+
+    // Check if current session is active
+    const session = await Session.findById(project.session);
+    if (!session?.isActive) {
+      throw new ValidationError(
+        "Submissions are only allowed during active sessions"
+      );
+    }
+
+    // Check for submission deadline if it exists
+    let isLate = false;
+    const submissionDeadline = session.deadlines?.find(
+      (d) => d.type === body.submissionType || d.type === "submission"
+    );
+
+    if (submissionDeadline) {
+      const deadlineDate = new Date(submissionDeadline.dueDate);
+      const now = new Date();
+      isLate = now > deadlineDate;
+
+      if (isLate && !submissionDeadline.allowLateSubmission) {
+        throw new ValidationError(
+          `Submission deadline (${deadlineDate.toLocaleDateString()}) has passed`
+        );
+      }
+    }
+
+    // Create new submission entry
+    const newSubmission = {
+      title: body.title,
+      description: body.description,
+      fileUrl: body.fileUrl,
+      submissionType: body.submissionType,
+      submittedBy: student._id,
+      submittedAt: new Date(),
+      attachments: body.attachments || [],
+      isLate: isLate,
+    };
+
+    // Add to project submissions
+    project.submissions.push(newSubmission);
+    await project.save();
+
+    // Track this activity
+    await trackSubmissionActivity({
+      user: user.id,
+      project: project._id,
+      team: team._id,
+      action: "submitted_report",
+      details: {
+        submissionType: body.submissionType,
+        title: body.title,
+      },
+    });
+
+    // Notify supervisors
+    for (const supervisorObj of project.supervisors) {
+      const supervisor = await Supervisor.findById(supervisorObj.supervisor);
+      if (supervisor) {
+        await Notification.create({
+          recipient: supervisor.user,
+          type: "project_submission",
+          title: "New Project Report Submission",
+          message: `Team "${team.name}" has submitted a "${body.submissionType}" for project "${project.name}"`,
+          relatedProject: project._id,
+          relatedTeam: team._id,
+          sender: user.id,
+        });
+      }
+    }
+
+    // Return the new submission
+    return project.submissions[project.submissions.length - 1];
+  } catch (error) {
     throw error;
   }
 };
@@ -466,17 +594,22 @@ export const getProjectSubmissions = async ({ params, user }) => {
       throw new NotFoundError("Student profile not found");
     }
 
-    const project = await Project.findById(params.projectId)
+    const project = await Project.findById(params.id)
       .populate({
         path: "submissions.submittedBy",
+        select: "user",
         populate: {
           path: "user",
-          select: "fullName profilePicture",
+          select: "fullName",
         },
       })
       .populate({
-        path: "submissions.feedback.providedBy",
-        select: "fullName",
+        path: "submissions.feedback.givenBy",
+        select: "user",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
       });
 
     if (!project) {
@@ -485,25 +618,128 @@ export const getProjectSubmissions = async ({ params, user }) => {
 
     // Check if user is in the project team
     const team = await Team.findById(project.team);
+    if (!team) {
+      throw new NotFoundError("Project team not found");
+    }
+
     const isMember = team.members.some(
-      (m) =>
-        m.user.toString() === student._id.toString() && m.status === "active"
+      (m) => m.user.toString() === user.id && m.status === "active"
     );
 
     if (!isMember) {
       throw new ForbiddenError("You are not a member of this project team");
     }
 
-    return {
-      success: true,
-      data: project.submissions,
-    };
+    // Format submissions with proper naming
+    const formattedSubmissions = project.submissions.map((submission) => {
+      return {
+        _id: submission._id,
+        title: submission.title,
+        description: submission.description || "",
+        fileUrl: submission.fileUrl || "",
+        submissionType: submission.submissionType || "other",
+        submittedBy: {
+          _id: submission.submittedBy?._id || "",
+          name: submission.submittedBy?.user?.fullName || "Unknown",
+        },
+        submittedAt: submission.submittedAt,
+        feedback: submission.feedback
+          ? {
+              content: submission.feedback.content,
+              givenBy: submission.feedback.givenBy?.user?.fullName || "Unknown",
+              givenAt: submission.feedback.givenAt,
+            }
+          : null,
+        isLate: submission.isLate || false,
+        attachments: submission.attachments || [],
+      };
+    });
+
+    // Sort submissions by date (newest first)
+    formattedSubmissions.sort(
+      (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+    );
+
+    return formattedSubmissions;
   } catch (error) {
     logger.error("Failed to get project submissions", {
       error,
       userId: user.id,
-      projectId: params.projectId,
+      projectId: params.id,
     });
+    throw error;
+  }
+};
+
+// Get available supervisors
+export const getAvailableSupervisors = async ({ user }) => {
+  try {
+    // Get active session
+    const activeSession = await Session.findOne({ isActive: true });
+    if (!activeSession) {
+      throw new ValidationError("No active session found");
+    }
+
+    // Get all approved and active supervisors
+    const supervisors = await Supervisor.find({
+      isApproved: true,
+      status: "active",
+    }).populate({
+      path: "user",
+      select: "fullName email department",
+    });
+
+    // Count how many projects each supervisor is already overseeing for the active session
+    const supervisorProjects = await Project.aggregate([
+      {
+        $match: {
+          session: activeSession._id,
+          "supervisors.status": { $in: ["accepted", "pending"] },
+        },
+      },
+      { $unwind: "$supervisors" },
+      {
+        $group: {
+          _id: "$supervisors.supervisor",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Map to a dictionary for easier lookup
+    const projectCounts = {};
+    supervisorProjects.forEach((item) => {
+      projectCounts[item._id.toString()] = item.count;
+    });
+
+    // Format response with necessary information
+    const formattedSupervisors = supervisors.map((supervisor) => {
+      const currentProjects = projectCounts[supervisor._id.toString()] || 0;
+
+      return {
+        _id: supervisor._id,
+        name: supervisor.user?.fullName || "Unknown",
+        email: supervisor.user?.email,
+        department: supervisor.user?.department || "Not specified",
+        expertise: supervisor.expertise || [],
+        researchInterests: supervisor.researchInterests || [],
+        maxProjects: supervisor.maxProjects || 5,
+        currentProjects: currentProjects,
+        availability: supervisor.maxProjects
+          ? Math.max(0, supervisor.maxProjects - currentProjects)
+          : "Unlimited",
+      };
+    });
+
+    // Sort by availability (most available first)
+    formattedSupervisors.sort((a, b) => {
+      if (a.availability === "Unlimited") return -1;
+      if (b.availability === "Unlimited") return 1;
+      return b.availability - a.availability;
+    });
+
+    return formattedSupervisors;
+  } catch (error) {
     throw error;
   }
 };

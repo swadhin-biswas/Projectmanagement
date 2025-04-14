@@ -1,7 +1,7 @@
+import TeamAPI from "@/api/team";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Clock, Users, X } from "lucide-react";
 import React, { useState } from "react";
@@ -14,22 +14,20 @@ const TeamInviteResponse = ({ invites = [], onInviteResponded }) => {
     try {
       setRespondingIds((prev) => ({ ...prev, [inviteId]: true }));
 
-      const response = await api.post(
-        `/api/student/teams/${inviteId}/respond`,
-        {
-          response: accept ? "accepted" : "declined",
-        }
-      );
+      const response = await TeamAPI.respondToInvitation({
+        invitationId: inviteId,
+        accept,
+      });
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success(
           accept ? "Successfully joined team!" : "Invitation declined"
         );
         if (onInviteResponded) {
-          onInviteResponded(response.data);
+          onInviteResponded(response);
         }
       } else {
-        toast.error(response.data.error || "Failed to respond to invitation");
+        toast.error(response.error || "Failed to respond to invitation");
       }
     } catch (error) {
       toast.error(

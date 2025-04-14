@@ -34,6 +34,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@/lib/utils": path.resolve(__dirname, "./src/lib/utils.js"),
       ...aliases,
       // Add core-js alias to help Bun locate these modules
       "core-js": path.resolve(__dirname, "node_modules/core-js"),

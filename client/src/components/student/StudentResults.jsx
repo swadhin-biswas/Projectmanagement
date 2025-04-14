@@ -1,50 +1,53 @@
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { ArrowLeft, ChevronRight, File } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { api } from '../../lib/api';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Skeleton } from '../ui/skeleton';
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ArrowLeft, ChevronRight, File } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { studentAPI } from "../../api/student";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
 
 export const StudentResults = () => {
   const [selectedResult, setSelectedResult] = useState(null);
 
   const { data: results, isLoading } = useQuery({
-    queryKey: ['student-results'],
+    queryKey: ["student-results"],
     queryFn: async () => {
-      const response = await api.get('/api/students/results');
-      return response.data;
+      try {
+        return await studentAPI.getStudentResults();
+      } catch (error) {
+        toast.error("Failed to load results");
+        throw error;
+      }
     },
-    onError: () => {
-      toast.error('Failed to load results');
-    }
   });
 
   const { data: resultDetail, isLoading: isLoadingDetail } = useQuery({
-    queryKey: ['result-detail', selectedResult],
+    queryKey: ["result-detail", selectedResult],
     queryFn: async () => {
       if (!selectedResult) return null;
-      const response = await api.get(`/api/students/results/${selectedResult}`);
-      return response.data;
+      try {
+        return await studentAPI.getResultDetail(selectedResult);
+      } catch (error) {
+        toast.error("Failed to load result details");
+        throw error;
+      }
     },
     enabled: !!selectedResult,
-    onError: () => {
-      toast.error('Failed to load result details');
-    }
   });
 
   const getScoreColor = (score) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 65) return 'bg-blue-500';
-    if (score >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return "bg-green-500";
+    if (score >= 65) return "bg-blue-500";
+    if (score >= 50) return "bg-yellow-500";
+    return "bg-red-500";
   };
 
   const formatDate = (date) => {
-    return format(new Date(date), 'PPP');
+    if (!date) return "N/A";
+    return format(new Date(date), "PPP");
   };
 
   if (isLoading) {
@@ -73,53 +76,49 @@ export const StudentResults = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Result Details</CardTitle>
-              <Badge className={getScoreColor(resultDetail.data.score)}>
-                {resultDetail.data.score}%
+              <Badge className={getScoreColor(resultDetail.score)}>
+                {resultDetail.score}%
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <h3 className="font-semibold mb-1">Category</h3>
-              <p className="text-gray-600">{resultDetail.data.category}</p>
+              <p className="text-gray-600">{resultDetail.category}</p>
             </div>
 
-            {resultDetail.data.project && (
+            {resultDetail.project && (
               <div>
                 <h3 className="font-semibold mb-1">Project</h3>
-                <p className="text-gray-600">{resultDetail.data.project.name}</p>
+                <p className="text-gray-600">{resultDetail.project.name}</p>
                 <p className="text-sm text-gray-500">
-                  Type: {resultDetail.data.project.type}
+                  Type: {resultDetail.project.type}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Submitted: {formatDate(resultDetail.data.project.submissionDate)}
+                  Submitted: {formatDate(resultDetail.project.submissionDate)}
                 </p>
               </div>
             )}
 
-            {resultDetail.data.supervisor && (
+            {resultDetail.supervisor && (
               <div>
                 <h3 className="font-semibold mb-1">Supervisor</h3>
-                <p className="text-gray-600">
-                  {resultDetail.data.supervisor.name}
-                </p>
+                <p className="text-gray-600">{resultDetail.supervisor.name}</p>
               </div>
             )}
 
-            {resultDetail.data.feedback && (
+            {resultDetail.feedback && (
               <div>
                 <h3 className="font-semibold mb-1">Feedback</h3>
                 <p className="text-gray-600 whitespace-pre-line">
-                  {resultDetail.data.feedback}
+                  {resultDetail.feedback}
                 </p>
               </div>
             )}
 
             <div>
               <h3 className="font-semibold mb-1">Marked On</h3>
-              <p className="text-gray-600">
-                {formatDate(resultDetail.data.date)}
-              </p>
+              <p className="text-gray-600">{formatDate(resultDetail.date)}</p>
             </div>
           </CardContent>
         </Card>
@@ -131,7 +130,7 @@ export const StudentResults = () => {
     <div className="space-y-4">
       <h2 className="text-2xl font-bold mb-4">Results</h2>
 
-      {results?.data.length === 0 ? (
+      {!results || results.length === 0 ? (
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -147,7 +146,7 @@ export const StudentResults = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {results?.data.map((result) => (
+          {results.map((result) => (
             <Card
               key={result.id}
               className="cursor-pointer hover:shadow-md transition-shadow"

@@ -2,49 +2,19 @@ import { Elysia } from "elysia";
 import { CalendarEvent } from "../models/CalendarEvent.js";
 import { Session } from "../models/Session.js";
 import { Team } from "../models/Team.js";
+import { authorize } from "../utils/authUtils.js";
 import logger from "../utils/logger.js";
 
 // Create an Elysia router for calendar service operations
 export const calendarServiceRoutes = new Elysia({
   prefix: "/api/calendar-service",
 })
-  .guard({
-    beforeHandle: [
-      // Auth middleware will be performed here
-      async ({ set, request, jwt, secret }) => {
-        try {
-          const authHeader = request.headers.get("authorization");
-          if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            set.status = 401;
-            return {
-              success: false,
-              error: "Unauthorized - No token provided",
-            };
-          }
-
-          const token = authHeader.split(" ")[1];
-          const decoded = jwt.verify(token, secret);
-
-          // Verify admin privileges for these routes
-          if (decoded.role !== "admin" && decoded.role !== "superadmin") {
-            set.status = 403;
-            return {
-              success: false,
-              error: "Forbidden - Admin access required",
-            };
-          }
-
-          return { user: decoded };
-        } catch (error) {
-          set.status = 401;
-          return { success: false, error: "Unauthorized - Invalid token" };
-        }
-      },
-    ],
-  })
   // Get calendar service status
-  .get("/status", async () => {
+  .get("/status", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       return {
         success: true,
         status: {
@@ -55,17 +25,20 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to get calendar service status:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to get calendar service status",
-        status: 500,
+        error: error.message || "Failed to get calendar service status",
       };
     }
   })
 
   // Start the calendar service
-  .post("/start", async () => {
+  .post("/start", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       if (global.calendarCronService?.isRunning) {
         return {
           success: true,
@@ -90,17 +63,20 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to start calendar service:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to start calendar service",
-        status: 500,
+        error: error.message || "Failed to start calendar service",
       };
     }
   })
 
   // Stop the calendar service
-  .post("/stop", async () => {
+  .post("/stop", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       if (!global.calendarCronService?.isRunning) {
         return {
           success: true,
@@ -123,22 +99,25 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to stop calendar service:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to stop calendar service",
-        status: 500,
+        error: error.message || "Failed to stop calendar service",
       };
     }
   })
 
   // Force run calendar events processing
-  .post("/process", async () => {
+  .post("/process", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       if (!global.calendarCronService) {
+        context.set.status = 500;
         return {
           success: false,
           error: "Calendar service is not initialized",
-          status: 500,
         };
       }
 
@@ -152,18 +131,21 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to process calendar events:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to process calendar events",
-        status: 500,
+        error: error.message || "Failed to process calendar events",
       };
     }
   })
 
   // Get all upcoming deadlines across sessions
-  .get("/deadlines", async ({ query }) => {
+  .get("/deadlines", async (context) => {
     try {
-      const { days = 30, role } = query;
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
+      const { days = 30, role } = context.query;
 
       // Find active sessions
       const activeSessions = await Session.find({ status: "active" });
@@ -202,17 +184,20 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to fetch upcoming deadlines:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to fetch upcoming deadlines",
-        status: 500,
+        error: error.message || "Failed to fetch upcoming deadlines",
       };
     }
   })
 
   // Get upcoming meetings for teams
-  .get("/team-meetings", async () => {
+  .get("/team-meetings", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       const now = new Date();
       const nextWeek = new Date(now);
       nextWeek.setDate(nextWeek.getDate() + 7);
@@ -250,17 +235,20 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to fetch upcoming team meetings:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to fetch upcoming team meetings",
-        status: 500,
+        error: error.message || "Failed to fetch upcoming team meetings",
       };
     }
   })
 
   // Get calendar events statistics
-  .get("/stats", async () => {
+  .get("/stats", async (context) => {
     try {
+      // Ensure only admin/superadmin can access these endpoints
+      await authorize(["admin", "superadmin"])(context);
+
       const now = new Date();
       const startOfToday = new Date(now);
       startOfToday.setHours(0, 0, 0, 0);
@@ -333,10 +321,10 @@ export const calendarServiceRoutes = new Elysia({
       };
     } catch (error) {
       logger.error("Failed to fetch calendar stats:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to fetch calendar stats",
-        status: 500,
+        error: error.message || "Failed to fetch calendar stats",
       };
     }
   });

@@ -1,14 +1,14 @@
 // server/src/controllers/adminController.js
-import { AdminAnalytics } from "../models/AdminAnalytics.js";
+import { Meeting } from "../models/Meeting.js";
 import { Notification } from "../models/Notification.js";
 import { Project } from "../models/Project.js";
 import { Session } from "../models/Session.js";
+import { SessionTimeline } from "../models/SessionTimeline.js";
 import { Student } from "../models/Student.js";
 import { Supervisor } from "../models/Supervisor.js";
 import { Team } from "../models/Team.js";
-import { Timeline } from "../models/Timeline.js";
 import { User } from "../models/User.js";
-import { NotFoundError, ValidationError } from "../utils/errors.js";
+import { ApiError, NotFoundError, ValidationError } from "../utils/errors.js";
 import logger from "../utils/logger.js";
 
 // Get all users
@@ -18,6 +18,173 @@ export const getUsers = async () => {
     return users;
   } catch (error) {
     throw new Error(`Failed to fetch users: ${error.message}`);
+  }
+};
+
+/**
+ * Get all supervisors with optional filtering and pagination
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} List of supervisors
+ */
+export const getSupervisors = async (context) => {
+  try {
+    const { query } = context;
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build filter
+    const filter = { role: "supervisor" };
+
+    // Add status filter if provided
+    if (query?.status) {
+      filter.status = query.status;
+    }
+
+    // Add search filter if provided
+    if (query?.search) {
+      filter.$or = [
+        { fullName: { $regex: query.search, $options: "i" } },
+        { email: { $regex: query.search, $options: "i" } },
+        { department: { $regex: query.search, $options: "i" } },
+      ];
+    }
+
+    // Count total documents
+    const totalSupervisors = await User.countDocuments(filter);
+
+    // Get supervisors with pagination
+    const users = await User.find(filter)
+      .select("-password")
+      .sort(query?.sort || { createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Get supervisor profiles
+    const supervisorIds = users.map((user) => user._id);
+    const supervisorProfiles = await Supervisor.find({
+      user: { $in: supervisorIds },
+    })
+      .populate("teams")
+      .populate("projects")
+      .lean();
+
+    // Combine user data with supervisor profiles
+    const supervisors = users.map((user) => {
+      const profile = supervisorProfiles.find(
+        (p) => p.user.toString() === user._id.toString()
+      );
+      return {
+        ...user.toObject(),
+        profile: profile || null,
+        teamCount: profile?.teams?.length || 0,
+        projectCount: profile?.projects?.length || 0,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        supervisors,
+        pagination: {
+          total: totalSupervisors,
+          page,
+          limit,
+          pages: Math.ceil(totalSupervisors / limit),
+        },
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get supervisors", { error });
+    throw error;
+  }
+};
+
+/**
+ * Get all students with optional filtering and pagination
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} List of students
+ */
+export const getStudents = async (context) => {
+  try {
+    const { query } = context;
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build filter for User collection
+    const userFilter = { role: "student" };
+
+    // Add status filter if provided
+    if (query?.status) {
+      userFilter.status = query.status;
+    }
+
+    // Add search filter if provided
+    if (query?.search) {
+      userFilter.$or = [
+        { fullName: { $regex: query.search, $options: "i" } },
+        { email: { $regex: query.search, $options: "i" } },
+        { department: { $regex: query.search, $options: "i" } },
+      ];
+    }
+
+    // Filter for Student collection
+    const studentFilter = {};
+
+    // Add session filter if provided
+    if (query?.sessionId) {
+      studentFilter.session = query.sessionId;
+    }
+
+    // Count total documents
+    const totalStudents = await User.countDocuments(userFilter);
+
+    // Get students with pagination
+    const users = await User.find(userFilter)
+      .select("-password")
+      .sort(query?.sort || { createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Get student profiles
+    const studentIds = users.map((user) => user._id);
+    const studentProfiles = await Student.find({
+      user: { $in: studentIds },
+      ...studentFilter,
+    })
+      .populate("team")
+      .lean();
+
+    // Combine user data with student profiles
+    const students = users.map((user) => {
+      const profile = studentProfiles.find(
+        (p) => p.user.toString() === user._id.toString()
+      );
+      return {
+        ...user.toObject(),
+        profile: profile || null,
+        hasTeam: !!profile?.team,
+        teamId: profile?.team?._id || null,
+        teamName: profile?.team?.name || null,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        students,
+        pagination: {
+          total: totalStudents,
+          page,
+          limit,
+          pages: Math.ceil(totalStudents / limit),
+        },
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get students", { error });
+    throw error;
   }
 };
 
@@ -44,7 +211,7 @@ export const getTeams = async ({ query }) => {
     const teams = await Team.find(matchQuery)
       .populate({
         path: "members.user",
-        select: "fullName email profilePicture",
+        select: "fullName email",
       })
       .populate({
         path: "supervisors.supervisor",
@@ -185,58 +352,117 @@ export const deleteUser = async (id) => {
   }
 };
 
-// Create a new session
+/**
+ * Create a new academic session
+ * @param {Object} options
+ * @param {Object} options.body - Request body containing session details
+ * @returns {Promise<Object>} Created session
+ */
 export const createSession = async ({ body }) => {
+  const {
+    name,
+    startDate,
+    endDate,
+    maxTeamSize = 5,
+    minTeamSize = 2,
+    allowStudentInitiatedTeams = true,
+    allowSupervisorInitiatedProjects = true,
+    description = "",
+    academicYear = "",
+    term = "",
+    academicPrograms = [],
+    departments = [],
+  } = body;
+
+  // Validate session duration (3-6 months)
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const durationMonths = (end - start) / (1000 * 60 * 60 * 24 * 30);
+
+  if (durationMonths < 3 || durationMonths > 6) {
+    throw new ApiError(400, "Session duration must be between 3 and 6 months");
+  }
+
+  // Calculate registration period (first 2 weeks)
+  const registrationStart = new Date(start);
+  const registrationEnd = new Date(start);
+  registrationEnd.setDate(registrationEnd.getDate() + 14);
+
+  // Calculate team formation period (first 3 weeks)
+  const teamFormationStart = new Date(start);
+  const teamFormationEnd = new Date(start);
+  teamFormationEnd.setDate(teamFormationEnd.getDate() + 21);
+
   try {
-    const {
+    // Create the session
+    const session = await Session.create({
       name,
       startDate,
       endDate,
-      maxTeamSize = 4,
-      minTeamSize = 2,
-      allowStudentInitiatedTeams = true,
-      allowSupervisorInitiatedProjects = true,
       description,
-      academicPrograms,
-      departments,
-    } = body;
-
-    // Validate session dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (end <= start) {
-      throw new ValidationError("End date must be after start date");
-    }
-
-    // Check if there's already an active session
-    if (body.status === "active") {
-      const activeSession = await Session.findOne({ status: "active" });
-      if (activeSession) {
-        throw new ValidationError("There is already an active session");
-      }
-    }
-
-    // Create session
-    const session = new Session({
-      name,
-      startDate: start,
-      endDate: end,
+      status: "active",
       maxTeamSize,
       minTeamSize,
       allowStudentInitiatedTeams,
       allowSupervisorInitiatedProjects,
-      description,
+      academicYear,
+      term,
       academicPrograms,
       departments,
-      status: body.status || "upcoming",
+      registrationPeriod: {
+        start: registrationStart,
+        end: registrationEnd,
+      },
+      teamFormationPeriod: {
+        start: teamFormationStart,
+        end: teamFormationEnd,
+      },
     });
 
-    // Generate standard deadlines based on session duration
-    session.generateAllDeadlines();
-    // Add standard project types
-    session.addProjectTypes();
+    // Create default deadlines for the session
+    const endDateObj = new Date(endDate);
+    const startDateObj = new Date(startDate);
+
+    // Calculate mid-point for progress report
+    const midPoint = new Date(
+      startDateObj.getTime() +
+        (endDateObj.getTime() - startDateObj.getTime()) / 2
+    );
+
+    // Create deadlines based on session duration
+    session.deadlines = [
+      {
+        title: "Team Formation",
+        dueDate: teamFormationEnd,
+        type: "team_formation",
+        description: "Deadline for forming teams and requesting supervisors",
+      },
+      {
+        title: "Initial Project Proposal",
+        dueDate: new Date(
+          startDateObj.getTime() +
+            (endDateObj.getTime() - startDateObj.getTime()) * 0.2
+        ),
+        type: "proposal",
+        description: "Submit initial project proposal",
+      },
+      {
+        title: "Progress Report",
+        dueDate: midPoint,
+        type: "progress_report",
+        description: "Mid-term progress report submission",
+      },
+      {
+        title: "Final Submission",
+        dueDate: new Date(endDateObj.getTime() - 7 * 24 * 60 * 60 * 1000), // 1 week before end
+        type: "final_submission",
+        description: "Final project submission deadline",
+      },
+    ];
 
     await session.save();
+
+    logger.info(`Created new session: ${name}`);
 
     return {
       success: true,
@@ -244,490 +470,1351 @@ export const createSession = async ({ body }) => {
       data: session,
     };
   } catch (error) {
-    logger.error("Failed to create session", { error });
-    throw error;
+    logger.error(`Error creating session: ${error.message}`);
+    throw new ApiError(500, `Error creating session: ${error.message}`);
   }
 };
 
-// Update session
-export const updateSession = async ({ params, body }) => {
+/**
+ * Get all sessions with pagination and filtering
+ * @param {Object} options
+ * @param {Object} options.query - Query parameters
+ * @returns {Promise<Object>} Sessions with pagination
+ */
+export const getAllSessions = async ({ query }) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    term,
+    academicYear,
+    search,
+    sort = "-createdAt",
+  } = query;
+
+  const pageNumber = parseInt(page);
+  const limitNumber = parseInt(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+
   try {
-    const session = await Session.findById(params.id);
+    // Build filter
+    const filter = {};
+    if (status) filter.status = status;
+    if (term) filter.term = term;
+    if (academicYear) filter.academicYear = academicYear;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Count total documents
+    const total = await Session.countDocuments(filter);
+
+    // Get sessions
+    let sessions = await Session.find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNumber)
+      .lean();
+
+    // Calculate current date for progress calculation
+    const currentDate = new Date();
+
+    // Process sessions to include progress
+    sessions = sessions.map((session) => {
+      const startDate = new Date(session.startDate);
+      const endDate = new Date(session.endDate);
+
+      // Calculate progress based on current date relative to session duration
+      let progress = 0;
+
+      if (currentDate < startDate) {
+        progress = 0;
+      } else if (currentDate > endDate) {
+        progress = 100;
+      } else {
+        const totalDuration = endDate - startDate;
+        const elapsed = currentDate - startDate;
+        progress = Math.round((elapsed / totalDuration) * 100);
+      }
+
+      return {
+        ...session,
+        progress,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        sessions,
+        pagination: {
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          pages: Math.ceil(total / limitNumber),
+        },
+      },
+    };
+  } catch (error) {
+    logger.error(`Error fetching sessions: ${error.message}`);
+    throw new ApiError(500, `Error fetching sessions: ${error.message}`);
+  }
+};
+
+/**
+ * Get detailed session analytics for admin dashboard
+ */
+export const getSessionDetailedAnalytics = async ({ params, query }) => {
+  try {
+    const sessionId = params.sessionId;
+    const session = await Session.findById(sessionId);
 
     if (!session) {
       throw new NotFoundError("Session not found");
     }
 
-    // If updating to active, check if there's another active session
-    if (body.status === "active" && session.status !== "active") {
-      const activeSession = await Session.findOne({
-        status: "active",
-        _id: { $ne: params.id },
-      });
+    // Time range filter
+    const timeRange = query.timeRange || "all";
+    let startDate, endDate;
 
-      if (activeSession) {
-        throw new ValidationError(
-          "There is already an active session. Please end it before activating this session."
-        );
+    if (timeRange === "week") {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      endDate = new Date();
+    } else if (timeRange === "month") {
+      startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 1);
+      endDate = new Date();
+    } else if (timeRange === "custom" && query.fromDate && query.toDate) {
+      startDate = new Date(query.fromDate);
+      endDate = new Date(query.toDate);
+    } else {
+      // Default to session date range
+      startDate = new Date(session.startDate);
+      endDate = new Date(session.endDate);
+    }
+
+    // Get teams in this session
+    const teams = await Team.find({ session: sessionId })
+      .populate("members.user", "fullName email")
+      .populate({
+        path: "supervisors.supervisor",
+        populate: {
+          path: "user",
+          select: "fullName email",
+        },
+      })
+      .populate("project")
+      .lean();
+
+    // Get projects in this session
+    const projects = await Project.find({
+      session: sessionId,
+      createdAt: { $gte: startDate, $lte: endDate },
+    })
+      .populate("team")
+      .lean();
+
+    // Group submissions by date for timeline view
+    const submissions = [];
+    for (const project of projects) {
+      if (project.submissions && project.submissions.length > 0) {
+        for (const submission of project.submissions) {
+          const submissionDate = new Date(submission.submittedAt);
+          if (submissionDate >= startDate && submissionDate <= endDate) {
+            submissions.push({
+              ...submission,
+              projectName: project.name,
+              projectId: project._id,
+              teamName: project.team?.name || "Unknown",
+              submittedAt: submission.submittedAt,
+            });
+          }
+        }
       }
     }
 
-    // Update fields
-    if (body.name) session.name = body.name;
-    if (body.description) session.description = body.description;
-    if (body.startDate) session.startDate = new Date(body.startDate);
-    if (body.endDate) session.endDate = new Date(body.endDate);
-    if (body.status) session.status = body.status;
-    if (body.deadlines) session.deadlines = body.deadlines;
-
-    await session.save();
-
-    logger.info("Session updated", {
-      sessionId: session._id,
-      name: session.name,
-    });
-
-    return {
-      success: true,
-      message: "Session updated successfully",
-      data: session,
-    };
-  } catch (error) {
-    logger.error("Failed to update session", { error, sessionId: params.id });
-    throw error;
-  }
-};
-
-// Assign supervisor to team
-export const assignSupervisor = async ({ params, body }) => {
-  try {
-    const team = await Team.findById(params.teamId);
-    if (!team) {
-      throw new NotFoundError("Team not found");
+    // Analyze team activity
+    const teamProgressUpdates = [];
+    for (const team of teams) {
+      // Get supervisor progress tracking updates within the time range
+      const supervisors = team.supervisors || [];
+      for (const supervisor of supervisors) {
+        if (
+          supervisor.progressTracking &&
+          supervisor.progressTracking.milestones
+        ) {
+          for (const milestone of supervisor.progressTracking.milestones) {
+            const updateDate = new Date(milestone.lastUpdated);
+            if (updateDate >= startDate && updateDate <= endDate) {
+              teamProgressUpdates.push({
+                teamId: team._id,
+                teamName: team.name,
+                milestone: milestone.title,
+                status: milestone.status,
+                progress: milestone.progress,
+                supervisorName:
+                  supervisor.supervisor?.user?.fullName || "Unknown",
+                date: milestone.lastUpdated,
+              });
+            }
+          }
+        }
+      }
     }
 
-    const supervisor = await Supervisor.findById(body.supervisorId);
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor not found");
-    }
-
-    // Check if supervisor is already assigned to this team
-    const isAlreadyAssigned = team.supervisors.some(
-      (s) => s.supervisor.toString() === supervisor._id.toString()
+    // Calculate overall session statistics
+    const totalTeams = teams.length;
+    const totalStudents = teams.reduce(
+      (count, team) => count + (team.members?.length || 0),
+      0
     );
-    if (isAlreadyAssigned) {
-      throw new ValidationError("Supervisor is already assigned to this team");
-    }
+    const totalProjects = projects.length;
+    const totalSubmissions = submissions.length;
 
-    // Add supervisor to team
-    team.addSupervisor(supervisor._id);
-    await team.save();
+    // Calculate project type distribution
+    const projectTypeDistribution = {};
+    projects.forEach((project) => {
+      const type = project.type || "unknown";
+      projectTypeDistribution[type] = (projectTypeDistribution[type] || 0) + 1;
+    });
 
-    // Add team to supervisor's list
-    if (!supervisor.teams.includes(team._id)) {
-      supervisor.teams.push(team._id);
-      await supervisor.save();
-    }
+    // Calculate project status distribution
+    const projectStatusDistribution = {};
+    projects.forEach((project) => {
+      const status = project.status || "unknown";
+      projectStatusDistribution[status] =
+        (projectStatusDistribution[status] || 0) + 1;
+    });
 
-    logger.info("Supervisor assigned to team", {
-      teamId: team._id,
-      supervisorId: supervisor._id,
+    // Get all deadlines for this session
+    const deadlines = session.deadlines || [];
+    const deadlinesWithStats = deadlines.map((deadline) => {
+      const dueDate = new Date(deadline.dueDate);
+      const isPast = dueDate < new Date();
+      const daysRemaining = isPast
+        ? 0
+        : Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+
+      return {
+        ...deadline,
+        isPast,
+        daysRemaining,
+      };
+    });
+
+    // Group submissions by day/week/month based on query parameter
+    const groupBy = query.groupBy || "day";
+    const submissionTimeline = {};
+
+    submissions.forEach((submission) => {
+      let key;
+      const date = new Date(submission.submittedAt);
+
+      if (groupBy === "day") {
+        key = date.toISOString().split("T")[0]; // YYYY-MM-DD
+      } else if (groupBy === "week") {
+        // Get the week number and year
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const weekNumber = Math.ceil(
+          ((date - firstDayOfYear) / 86400000 + firstDayOfYear.getDay() + 1) / 7
+        );
+        key = `${date.getFullYear()}-W${weekNumber}`;
+      } else if (groupBy === "month") {
+        key = `${date.getFullYear()}-${date.getMonth() + 1}`; // YYYY-MM
+      }
+
+      submissionTimeline[key] = (submissionTimeline[key] || 0) + 1;
     });
 
     return {
       success: true,
-      message: "Supervisor assigned to team successfully",
       data: {
-        teamId: team._id,
-        teamName: team.name,
-        supervisor: {
-          id: supervisor._id,
-          name: supervisor.user.fullName,
+        session: {
+          ...session.toObject(),
+          progress: calculateSessionProgress(session),
+        },
+        timeRange: {
+          start: startDate,
+          end: endDate,
+          label: timeRange,
+        },
+        overview: {
+          totalTeams,
+          totalStudents,
+          totalProjects,
+          totalSubmissions,
+          projectTypeDistribution,
+          projectStatusDistribution,
+        },
+        deadlines: deadlinesWithStats,
+        activity: {
+          submissions: submissions.sort(
+            (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+          ),
+          teamProgressUpdates: teamProgressUpdates.sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+          ),
+          submissionTimeline,
         },
       },
     };
   } catch (error) {
-    logger.error("Failed to assign supervisor", {
+    logger.error("Failed to get session analytics", {
       error,
-      teamId: params.teamId,
-      supervisorId: body?.supervisorId,
+      sessionId: params.sessionId,
     });
     throw error;
   }
 };
 
-// Alias for assignSupervisor for backward compatibility
-export const assignSupervisorToTeam = async ({ params, body }) => {
-  try {
-    const { teamId } = params;
-    const { supervisorIds, sessionId } = body;
-
-    // Validate team exists
-    const team = await Team.findById(teamId).populate("session");
-    if (!team) {
-      throw new NotFoundError("Team not found");
-    }
-
-    // Check if team belongs to the session
-    if (sessionId && team.session._id.toString() !== sessionId) {
-      throw new ValidationError(
-        "Team does not belong to the specified session"
-      );
-    }
-
-    // Validate supervisors exist and are approved
-    const supervisors = await Supervisor.find({
-      _id: { $in: supervisorIds },
-      "user.isApproved": true,
-    }).populate("user");
-
-    if (supervisors.length !== supervisorIds.length) {
-      throw new ValidationError(
-        "One or more supervisors are invalid or not approved"
-      );
-    }
-
-    // Check supervisor capacity
-    for (const supervisor of supervisors) {
-      const supervisorTeams = await Team.countDocuments({
-        "supervisors.supervisor": supervisor._id,
-        session: team.session._id,
-      });
-
-      if (supervisorTeams >= team.session.supervisorCapacity) {
-        throw new ValidationError(
-          `Supervisor ${supervisor.user.fullName} has reached maximum team capacity`
-        );
-      }
-    }
-
-    // Add supervisors to team
-    const existingSupervisorIds = team.supervisors.map((s) =>
-      s.supervisor.toString()
-    );
-    const newSupervisors = supervisorIds.filter(
-      (id) => !existingSupervisorIds.includes(id)
-    );
-
-    if (newSupervisors.length === 0) {
-      return {
-        success: true,
-        message: "All specified supervisors are already assigned to this team",
-        data: team,
-      };
-    }
-
-    // Add new supervisors to team
-    for (const supervisorId of newSupervisors) {
-      team.supervisors.push({
-        supervisor: supervisorId,
-        assignedAt: new Date(),
-        status: "active",
-      });
-
-      // Add team to supervisor's teams
-      await Supervisor.findByIdAndUpdate(supervisorId, {
-        $addToSet: { teams: teamId },
-      });
-
-      // Notify team members
-      const members = team.members.map((m) => m.user);
-      await Notification.insertMany(
-        members.map((userId) => ({
-          title: "Supervisor Assigned",
-          message: `A new supervisor has been assigned to your team ${team.name}.`,
-          type: "supervisor_assignment",
-          user: userId,
-          isRead: false,
-          metadata: {
-            teamId: team._id,
-            supervisorId,
-          },
-        }))
-      );
-
-      // Notify supervisor
-      const supervisor = await Supervisor.findById(supervisorId).populate(
-        "user"
-      );
-      if (supervisor && supervisor.user) {
-        await Notification.create({
-          title: "Team Assignment",
-          message: `You have been assigned to supervise team ${team.name}.`,
-          type: "team_assignment",
-          user: supervisor.user._id,
-          isRead: false,
-          metadata: {
-            teamId: team._id,
-          },
-        });
-      }
-    }
-
-    await team.save();
-
-    return {
-      success: true,
-      message: `${newSupervisors.length} supervisor(s) assigned successfully`,
-      data: team,
-    };
-  } catch (error) {
-    logger.error("Failed to assign supervisor to team", { error });
-    throw error;
-  }
-};
-
-// Helper function to calculate session progress
+/**
+ * Helper function to calculate session progress based on start and end dates
+ * @param {Object} session - Session object with startDate and endDate
+ * @returns {Number} Progress percentage (0-100)
+ */
 const calculateSessionProgress = (session) => {
   const now = new Date();
   const start = new Date(session.startDate);
   const end = new Date(session.endDate);
 
-  if (now < start) return 0;
-  if (now > end) return 100;
+  if (now < start) {
+    return 0;
+  }
+
+  if (now > end) {
+    return 100;
+  }
 
   const totalDuration = end - start;
   const elapsed = now - start;
   return Math.round((elapsed / totalDuration) * 100);
 };
 
-// Get system overview and analytics
-export const getSystemAnalytics = async ({ query }) => {
+/**
+ * Get work data within a specific time range for a session
+ */
+export const getSessionWorkData = async ({ params, query }) => {
   try {
-    // Get current session or specific session
-    let session;
-    if (query.sessionId) {
-      session = await Session.findById(query.sessionId);
-      if (!session) {
-        throw new NotFoundError("Session not found");
-      }
-    } else {
-      session = await Session.findOne({ status: "active" });
+    const sessionId = params.sessionId;
+    const session = await Session.findById(sessionId);
+
+    if (!session) {
+      throw new NotFoundError("Session not found");
     }
 
-    // Get all sessions for comparison
-    const sessions = await Session.find().sort({ startDate: -1 }).limit(5);
+    // Parse date range
+    let startDate, endDate;
 
-    // Get all users with role counts
-    const userCounts = await User.aggregate([
-      { $group: { _id: "$role", count: { $sum: 1 } } },
-    ]);
+    if (query.startDate && query.endDate) {
+      startDate = new Date(query.startDate);
+      endDate = new Date(query.endDate);
+    } else {
+      // Default to session dates
+      startDate = new Date(session.startDate);
+      endDate = new Date(session.endDate);
+    }
 
-    const roleDistribution = {};
-    userCounts.forEach((item) => {
-      roleDistribution[item._id] = item.count;
-    });
+    // Validate date range
+    if (startDate > endDate) {
+      throw new ValidationError("Start date cannot be after end date");
+    }
 
-    // Get all supervisors with their loads
-    const supervisors = await Supervisor.find()
-      .populate("user", "fullName email department isApproved")
+    // Get all work data within the specified time range
+    const projects = await Project.find({
+      session: sessionId,
+      $or: [
+        { createdAt: { $gte: startDate, $lte: endDate } },
+        { updatedAt: { $gte: startDate, $lte: endDate } },
+        { "submissions.submittedAt": { $gte: startDate, $lte: endDate } },
+      ],
+    })
+      .populate("team")
+      .lean();
+
+    // Get all teams with progress updates in the time range
+    const teams = await Team.find({
+      session: sessionId,
+      $or: [
+        { createdAt: { $gte: startDate, $lte: endDate } },
+        { updatedAt: { $gte: startDate, $lte: endDate } },
+        {
+          "supervisors.progressTracking.milestones.lastUpdated": {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      ],
+    })
+      .populate("members.user", "fullName email")
       .populate({
-        path: "teams",
-        match: { session: session?._id },
-        select: "name members projects",
-      });
+        path: "supervisors.supervisor",
+        populate: {
+          path: "user",
+          select: "fullName email",
+        },
+      })
+      .lean();
 
-    const supervisorAnalytics = supervisors.map((sup) => ({
-      _id: sup._id,
-      name: sup.user.fullName,
-      department: sup.user.department,
-      currentLoad: sup.teams.length,
-      maxLoad: session?.teamsPerSupervisor || 5,
-      studentCount: sup.teams.reduce(
-        (acc, team) => acc + team.members.length,
-        0
-      ),
-      projectCount: sup.teams.reduce(
-        (acc, team) => acc + (team.projects ? team.projects.length : 0),
-        0
-      ),
-      isApproved: sup.user.isApproved,
-    }));
+    // Extract all work events in chronological order
+    const workEvents = [];
 
-    // Get pending supervisor approvals
-    const pendingSupervisors = await User.countDocuments({
-      role: "supervisor",
-      isApproved: false,
-    });
-
-    // Get project type distribution
-    const projects = await Project.find(
-      session ? { session: session._id } : {}
-    );
-    const projectTypeStats = projects.reduce((acc, project) => {
-      acc[project.type] = (acc[project.type] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Get project status distribution
-    const projectStatusStats = projects.reduce((acc, project) => {
-      acc[project.status] = (acc[project.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Get team statistics
-    const teams = await Team.find(session ? { session: session._id } : {});
-    const teamStats = {
-      total: teams.length,
-      withSupervisor: teams.filter(
-        (t) => t.supervisors && t.supervisors.length > 0
-      ).length,
-      withoutSupervisor: teams.filter(
-        (t) => !t.supervisors || t.supervisors.length === 0
-      ).length,
-      averageSize:
-        teams.reduce(
-          (acc, team) => acc + (team.members ? team.members.length : 0),
-          0
-        ) / (teams.length || 1),
-      sizeDistribution: {
-        1: teams.filter((t) => t.members && t.members.length === 1).length,
-        2: teams.filter((t) => t.members && t.members.length === 2).length,
-        3: teams.filter((t) => t.members && t.members.length === 3).length,
-        4: teams.filter((t) => t.members && t.members.length === 4).length,
-      },
-    };
-
-    // Get submission statistics with timeline data
-    const submissions = [];
+    // Add project creation and submission events
     projects.forEach((project) => {
+      const createdAt = new Date(project.createdAt);
+      if (createdAt >= startDate && createdAt <= endDate) {
+        workEvents.push({
+          type: "project_created",
+          date: createdAt,
+          project: {
+            id: project._id,
+            name: project.name,
+            type: project.type,
+          },
+          team: project.team
+            ? {
+                id: project.team._id,
+                name: project.team.name,
+              }
+            : null,
+        });
+      }
+
       if (project.submissions && project.submissions.length > 0) {
-        project.submissions.forEach((sub) => {
-          submissions.push({
-            date: sub.submittedAt,
-            projectId: project._id,
-            projectName: project.name,
-            type: sub.submissionType || "default",
-          });
+        project.submissions.forEach((submission) => {
+          const submittedAt = new Date(submission.submittedAt);
+          if (submittedAt >= startDate && submittedAt <= endDate) {
+            workEvents.push({
+              type: "submission",
+              date: submittedAt,
+              submission: {
+                id: submission._id,
+                title: submission.title,
+                type: submission.submissionType,
+              },
+              project: {
+                id: project._id,
+                name: project.name,
+              },
+              team: project.team
+                ? {
+                    id: project.team._id,
+                    name: project.team.name,
+                  }
+                : null,
+            });
+          }
+
+          // Add feedback events if they exist
+          if (submission.feedback && submission.feedback.givenAt) {
+            const feedbackDate = new Date(submission.feedback.givenAt);
+            if (feedbackDate >= startDate && feedbackDate <= endDate) {
+              workEvents.push({
+                type: "feedback",
+                date: feedbackDate,
+                submission: {
+                  id: submission._id,
+                  title: submission.title,
+                },
+                project: {
+                  id: project._id,
+                  name: project.name,
+                },
+                team: project.team
+                  ? {
+                      id: project.team._id,
+                      name: project.team.name,
+                    }
+                  : null,
+                supervisor: submission.feedback.givenBy
+                  ? {
+                      id: submission.feedback.givenBy,
+                      name: submission.feedback.givenByName || "Unknown",
+                    }
+                  : null,
+              });
+            }
+          }
         });
       }
     });
 
-    // Group submissions by week for trend analysis
-    const submissionTrend = {};
-    submissions.forEach((sub) => {
-      const date = new Date(sub.date);
-      const weekKey = `${date.getFullYear()}-${Math.floor(date.getDate() / 7)}`;
-      submissionTrend[weekKey] = (submissionTrend[weekKey] || 0) + 1;
+    // Add team formation and progress update events
+    teams.forEach((team) => {
+      const createdAt = new Date(team.createdAt);
+      if (createdAt >= startDate && createdAt <= endDate) {
+        workEvents.push({
+          type: "team_created",
+          date: createdAt,
+          team: {
+            id: team._id,
+            name: team.name,
+            size: team.members?.length || 0,
+          },
+        });
+      }
+
+      // Add progress tracking updates
+      if (team.supervisors && team.supervisors.length > 0) {
+        team.supervisors.forEach((supervisor) => {
+          if (
+            supervisor.progressTracking &&
+            supervisor.progressTracking.milestones
+          ) {
+            supervisor.progressTracking.milestones.forEach((milestone) => {
+              const updateDate = new Date(milestone.lastUpdated);
+              if (updateDate >= startDate && updateDate <= endDate) {
+                workEvents.push({
+                  type: "progress_update",
+                  date: updateDate,
+                  team: {
+                    id: team._id,
+                    name: team.name,
+                  },
+                  milestone: {
+                    title: milestone.title,
+                    status: milestone.status,
+                    progress: milestone.progress,
+                  },
+                  supervisor: supervisor.supervisor?.user
+                    ? {
+                        id: supervisor.supervisor._id,
+                        name: supervisor.supervisor.user.fullName,
+                      }
+                    : null,
+                });
+              }
+            });
+          }
+        });
+      }
     });
 
-    // Get recent activity for the dashboard
-    const recentActivities = await Notification.find()
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate("user", "fullName role")
-      .lean();
+    // Sort all events by date
+    workEvents.sort((a, b) => a.date - b.date);
 
-    // Calculate department distribution
-    const departmentStats = await User.aggregate([
-      { $match: { role: { $in: ["student", "supervisor"] } } },
-      { $group: { _id: "$department", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-    ]);
+    // Generate summary statistics
+    const summary = {
+      totalProjects: projects.length,
+      totalTeams: teams.length,
+      totalSubmissions: workEvents.filter((e) => e.type === "submission")
+        .length,
+      totalFeedbacks: workEvents.filter((e) => e.type === "feedback").length,
+      totalProgressUpdates: workEvents.filter(
+        (e) => e.type === "progress_update"
+      ).length,
+      submissionsByType: {},
+      progressUpdatesByStatus: {
+        not_started: 0,
+        in_progress: 0,
+        completed: 0,
+        delayed: 0,
+      },
+    };
 
-    // Get teams without supervisors for quick assignment
-    const teamsWithoutSupervisor = await Team.countDocuments({
-      session: session?._id,
-      supervisors: { $size: 0 },
+    // Calculate submission distribution by type
+    workEvents.forEach((event) => {
+      if (event.type === "submission" && event.submission.type) {
+        const type = event.submission.type;
+        summary.submissionsByType[type] =
+          (summary.submissionsByType[type] || 0) + 1;
+      }
+
+      if (event.type === "progress_update" && event.milestone.status) {
+        const status = event.milestone.status;
+        summary.progressUpdatesByStatus[status] =
+          (summary.progressUpdatesByStatus[status] || 0) + 1;
+      }
     });
-
-    // Get top supervisors by team count
-    const topSupervisors = await User.aggregate([
-      { $match: { role: "supervisor", isApproved: true } },
-      {
-        $lookup: {
-          from: "teams",
-          localField: "_id",
-          foreignField: "supervisors",
-          as: "assignedTeams",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          fullName: 1,
-          department: 1,
-          teamsCount: { $size: "$assignedTeams" },
-        },
-      },
-      { $sort: { teamsCount: -1 } },
-      { $limit: 10 },
-    ]);
 
     return {
       success: true,
       data: {
-        sessions: sessions.map((s) => ({
-          _id: s._id,
-          name: s.name,
-          startDate: s.startDate,
-          endDate: s.endDate,
-          status: s.status,
-          progress: calculateSessionProgress(s),
-        })),
-        currentSession: session
-          ? {
-              _id: session._id,
-              name: session.name,
-              startDate: session.startDate,
-              endDate: session.endDate,
-              status: session.status,
-              progress: calculateSessionProgress(session),
-              deadlines: session.deadlines.map((d) => ({
-                title: d.title,
-                dueDate: d.dueDate,
-                type: d.type,
-                isPast: new Date(d.dueDate) < new Date(),
-                daysRemaining: Math.ceil(
-                  (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24)
-                ),
-              })),
+        timeRange: {
+          start: startDate,
+          end: endDate,
+          durationDays: Math.ceil(
+            (endDate - startDate) / (1000 * 60 * 60 * 24)
+          ),
+        },
+        session: {
+          id: session._id,
+          name: session.name,
+          status: session.status,
+        },
+        summary,
+        workEvents,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get session work data", {
+      error,
+      sessionId: params.sessionId,
+      timeRange: `${query.startDate} to ${query.endDate}`,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Fix missing or incomplete supervisor functionality
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Result of the fix operation
+ */
+export const fixSupervisorFunctionality = async (context) => {
+  try {
+    const { params, body } = context;
+    const supervisorId = params.id;
+    const { action } = body;
+
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate("user");
+
+    if (!supervisor) {
+      throw new NotFoundError("Supervisor not found");
+    }
+
+    let result = {
+      success: false,
+      message: "No action taken",
+    };
+
+    switch (action) {
+      case "initialize_progress_tracking":
+        // Initialize progress tracking for all teams
+        const supervisorTeams = await Team.find({
+          "supervisors.supervisor": supervisorId,
+        });
+
+        for (const team of supervisorTeams) {
+          // Find the supervisor entry for this team
+          const supervisorEntry = team.supervisors.find(
+            (s) => s.supervisor.toString() === supervisorId
+          );
+
+          if (supervisorEntry && !supervisorEntry.progressTracking) {
+            // Initialize progress tracking
+            supervisorEntry.progressTracking = {
+              lastUpdated: new Date(),
+              milestones: [
+                {
+                  title: "Project Planning",
+                  description: "Initial project planning and scope definition",
+                  status: "not_started",
+                  progress: 0,
+                  lastUpdated: new Date(),
+                },
+                {
+                  title: "Research Phase",
+                  description: "Literature review and methodology research",
+                  status: "not_started",
+                  progress: 0,
+                  lastUpdated: new Date(),
+                },
+                {
+                  title: "Implementation",
+                  description: "Development and implementation of the solution",
+                  status: "not_started",
+                  progress: 0,
+                  lastUpdated: new Date(),
+                },
+                {
+                  title: "Testing & Validation",
+                  description:
+                    "Testing and validation of the implemented solution",
+                  status: "not_started",
+                  progress: 0,
+                  lastUpdated: new Date(),
+                },
+                {
+                  title: "Documentation",
+                  description:
+                    "Project documentation and final report preparation",
+                  status: "not_started",
+                  progress: 0,
+                  lastUpdated: new Date(),
+                },
+              ],
+            };
+
+            await team.save();
+          }
+        }
+
+        result = {
+          success: true,
+          message: `Progress tracking initialized for ${supervisorTeams.length} teams`,
+          teamsUpdated: supervisorTeams.length,
+        };
+        break;
+
+      case "fix_missing_marks":
+        // Find submissions reviewed by this supervisor without marks
+        const projects = await Project.find({
+          "submissions.reviewedBy": supervisorId,
+          "submissions.marks": { $exists: false },
+        });
+
+        let fixedCount = 0;
+
+        for (const project of projects) {
+          let updated = false;
+
+          for (const submission of project.submissions) {
+            if (
+              submission.reviewedBy &&
+              submission.reviewedBy.toString() === supervisorId &&
+              !submission.marks
+            ) {
+              // Add default marks based on feedback
+              submission.marks = {
+                content: 0,
+                presentation: 0,
+                methodology: 0,
+                results: 0,
+                discussion: 0,
+                total: 0,
+              };
+
+              updated = true;
+              fixedCount++;
             }
-          : null,
-        analytics: {
-          totalSessions: sessions.length,
-          totalSupervisors: roleDistribution.supervisor || 0,
-          totalStudents: roleDistribution.student || 0,
-          totalTeams: teams.length,
-          pendingApprovals: pendingSupervisors,
-          projectSubmissions: submissions.length,
-          projectsInProgress: projectStatusStats["in_progress"] || 0,
-          projectsCompleted: projectStatusStats["completed"] || 0,
-          sessionProgress: session ? calculateSessionProgress(session) : 0,
-          supervisorAssignmentStats: {
-            teamsWithoutSupervisor,
-            supervisorDistribution: topSupervisors,
+          }
+
+          if (updated) {
+            await project.save();
+          }
+        }
+
+        result = {
+          success: true,
+          message: `Fixed ${fixedCount} submissions with missing marks`,
+          submissionsFixed: fixedCount,
+        };
+        break;
+
+      case "add_meeting_template":
+        // Add meeting templates to supervisor
+        if (
+          !supervisor.meetingTemplates ||
+          supervisor.meetingTemplates.length === 0
+        ) {
+          supervisor.meetingTemplates = [
+            {
+              title: "Weekly Progress Check",
+              description:
+                "Regular weekly meeting to check team progress and address any issues",
+              duration: 30, // minutes
+              allowRecording: true,
+              agendaTemplate:
+                "1. Progress updates\n2. Challenges faced\n3. Next steps\n4. Questions and clarifications",
+            },
+            {
+              title: "Project Review",
+              description:
+                "Detailed review of project deliverables and quality assessment",
+              duration: 60, // minutes
+              allowRecording: true,
+              agendaTemplate:
+                "1. Review of deliverables\n2. Quality assessment\n3. Feedback\n4. Action items",
+            },
+            {
+              title: "Quick Consultation",
+              description:
+                "Short consultation for urgent issues or quick questions",
+              duration: 15, // minutes
+              allowRecording: false,
+              agendaTemplate:
+                "1. Issue description\n2. Quick discussion\n3. Resolution",
+            },
+          ];
+
+          await supervisor.save();
+
+          result = {
+            success: true,
+            message: "Added meeting templates to supervisor",
+            templatesAdded: supervisor.meetingTemplates.length,
+          };
+        } else {
+          result = {
+            success: false,
+            message: "Supervisor already has meeting templates",
+            templatesExisting: supervisor.meetingTemplates.length,
+          };
+        }
+        break;
+
+      default:
+        result = {
+          success: false,
+          message: `Unknown action: ${action}`,
+          validActions: [
+            "initialize_progress_tracking",
+            "fix_missing_marks",
+            "add_meeting_template",
+          ],
+        };
+    }
+
+    // Log the action
+    logger.info(`Admin fixed supervisor functionality: ${action}`, {
+      supervisorId,
+      action,
+      result,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("Failed to fix supervisor functionality", {
+      error,
+      supervisorId: context.params.id,
+      action: context.body.action,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get session timeline with all important events
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Session timeline events
+ */
+export const getSessionTimeline = async (context) => {
+  try {
+    const { params } = context;
+    const sessionId = params.sessionId;
+
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    // Gather timeline events
+    const timelineEvents = [];
+
+    // Add session start and end
+    timelineEvents.push({
+      type: "session_start",
+      title: "Session Start",
+      date: new Date(session.startDate),
+      description: `Start of session: ${session.name}`,
+      category: "milestone",
+    });
+
+    timelineEvents.push({
+      type: "session_end",
+      title: "Session End",
+      date: new Date(session.endDate),
+      description: `End of session: ${session.name}`,
+      category: "milestone",
+    });
+
+    // Add registration period
+    if (session.registrationPeriod) {
+      timelineEvents.push({
+        type: "registration_start",
+        title: "Registration Open",
+        date: new Date(session.registrationPeriod.start),
+        description: "Student registration period begins",
+        category: "registration",
+      });
+
+      timelineEvents.push({
+        type: "registration_end",
+        title: "Registration Close",
+        date: new Date(session.registrationPeriod.end),
+        description: "Student registration period ends",
+        category: "registration",
+      });
+    }
+
+    // Add team formation period
+    if (session.teamFormationPeriod) {
+      timelineEvents.push({
+        type: "team_formation_start",
+        title: "Team Formation Open",
+        date: new Date(session.teamFormationPeriod.start),
+        description: "Students can begin forming teams",
+        category: "team",
+      });
+
+      timelineEvents.push({
+        type: "team_formation_end",
+        title: "Team Formation Close",
+        date: new Date(session.teamFormationPeriod.end),
+        description: "Deadline for team formation",
+        category: "team",
+      });
+    }
+
+    // Add all deadlines
+    if (session.deadlines && session.deadlines.length > 0) {
+      session.deadlines.forEach((deadline) => {
+        timelineEvents.push({
+          type: `deadline_${deadline.type}`,
+          title: deadline.title,
+          date: new Date(deadline.dueDate),
+          description: deadline.description || `Deadline: ${deadline.title}`,
+          category: "deadline",
+          deadlineType: deadline.type,
+        });
+      });
+    }
+
+    // Get all teams created during this session
+    const teams = await Team.find({ session: sessionId })
+      .select("name creator createdAt members")
+      .populate("creator", "fullName")
+      .sort("createdAt")
+      .lean();
+
+    // Add team creation events
+    teams.forEach((team) => {
+      timelineEvents.push({
+        type: "team_created",
+        title: `Team Created: ${team.name}`,
+        date: new Date(team.createdAt),
+        description: `Team "${team.name}" created by ${
+          team.creator?.fullName || "Unknown"
+        }`,
+        category: "team",
+        teamId: team._id,
+        teamName: team.name,
+        memberCount: team.members?.length || 0,
+      });
+    });
+
+    // Get all projects created during this session
+    const projects = await Project.find({ session: sessionId })
+      .select("name team type createdAt")
+      .populate("team", "name")
+      .sort("createdAt")
+      .lean();
+
+    // Add project creation events
+    projects.forEach((project) => {
+      timelineEvents.push({
+        type: "project_created",
+        title: `Project Created: ${project.name}`,
+        date: new Date(project.createdAt),
+        description: `Project "${project.name}" created by team "${
+          project.team?.name || "Unknown"
+        }"`,
+        category: "project",
+        projectId: project._id,
+        projectName: project.name,
+        projectType: project.type,
+        teamId: project.team?._id,
+        teamName: project.team?.name,
+      });
+    });
+
+    // Sort all events by date
+    timelineEvents.sort((a, b) => a.date - b.date);
+
+    return {
+      success: true,
+      data: {
+        session: {
+          id: session._id,
+          name: session.name,
+          startDate: session.startDate,
+          endDate: session.endDate,
+          status: session.status,
+        },
+        timeline: timelineEvents,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get session timeline", {
+      error,
+      sessionId: context.params.sessionId,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Review supervisor marking activity for projects and submissions
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Marking activity review
+ */
+export const reviewSupervisorMarkingActivity = async (context) => {
+  try {
+    const { params } = context;
+    const supervisorId = params.id;
+
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
+    if (!supervisor) {
+      throw new NotFoundError("Supervisor not found");
+    }
+
+    // Get all projects where this supervisor has reviewed submissions
+    const projectsWithReviews = await Project.find({
+      "submissions.reviewedBy": supervisorId,
+    })
+      .sort({ updatedAt: -1 })
+      .populate("team", "name")
+      .lean();
+
+    // Extract and organize all review activity
+    const reviewActivities = [];
+    let totalSubmissionsReviewed = 0;
+    let totalMarksGiven = 0;
+    let totalFeedbackGiven = 0;
+    let summaryByType = {};
+
+    for (const project of projectsWithReviews) {
+      for (const submission of project.submissions) {
+        if (
+          submission.reviewedBy &&
+          submission.reviewedBy.toString() === supervisorId
+        ) {
+          // Track statistics
+          totalSubmissionsReviewed++;
+          if (submission.marks) totalMarksGiven++;
+          if (submission.feedback) totalFeedbackGiven++;
+
+          // Track by submission type
+          const type = submission.submissionType || "unknown";
+          summaryByType[type] = summaryByType[type] || {
+            count: 0,
+            withMarks: 0,
+            withFeedback: 0,
+            avgResponseTime: 0,
+            totalResponseTime: 0,
+          };
+
+          summaryByType[type].count++;
+          if (submission.marks) summaryByType[type].withMarks++;
+          if (submission.feedback) summaryByType[type].withFeedback++;
+
+          // Calculate response time if available
+          let responseTime = null;
+          if (submission.submittedAt && submission.reviewedAt) {
+            const submittedDate = new Date(submission.submittedAt);
+            const reviewedDate = new Date(submission.reviewedAt);
+            responseTime = Math.floor(
+              (reviewedDate - submittedDate) / (1000 * 60 * 60)
+            ); // hours
+
+            summaryByType[type].totalResponseTime += responseTime;
+            summaryByType[type].avgResponseTime =
+              summaryByType[type].totalResponseTime / summaryByType[type].count;
+          }
+
+          // Add to review activities
+          reviewActivities.push({
+            submissionId: submission._id,
+            projectId: project._id,
+            projectName: project.name,
+            teamName: project.team?.name || "Unknown",
+            submissionType: submission.submissionType,
+            submissionTitle: submission.title,
+            submittedAt: submission.submittedAt,
+            reviewedAt: submission.reviewedAt,
+            responseTime: responseTime, // in hours
+            hasMarks: !!submission.marks,
+            hasFeedback: !!submission.feedback,
+            feedbackLength: submission.feedback
+              ? submission.feedback.length
+              : 0,
+            marks: submission.marks ? submission.marks.total || 0 : null,
+          });
+        }
+      }
+    }
+
+    // Sort review activities by date
+    reviewActivities.sort(
+      (a, b) => new Date(b.reviewedAt) - new Date(a.reviewedAt)
+    );
+
+    // Calculate average response time across all reviews
+    const totalResponseTime = reviewActivities.reduce((total, activity) => {
+      return total + (activity.responseTime || 0);
+    }, 0);
+
+    const avgResponseTime =
+      totalSubmissionsReviewed > 0
+        ? totalResponseTime /
+          reviewActivities.filter((a) => a.responseTime !== null).length
+        : 0;
+
+    // Format summary by type
+    const typesSummary = Object.keys(summaryByType).map((type) => ({
+      type,
+      count: summaryByType[type].count,
+      withMarks: summaryByType[type].withMarks,
+      withFeedback: summaryByType[type].withFeedback,
+      marksRate: Math.round(
+        (summaryByType[type].withMarks / summaryByType[type].count) * 100
+      ),
+      feedbackRate: Math.round(
+        (summaryByType[type].withFeedback / summaryByType[type].count) * 100
+      ),
+      avgResponseTime:
+        Math.round(summaryByType[type].avgResponseTime * 10) / 10, // round to 1 decimal
+    }));
+
+    return {
+      success: true,
+      data: {
+        supervisor: {
+          id: supervisor._id,
+          name: supervisor.user.fullName,
+          email: supervisor.user.email,
+        },
+        summary: {
+          totalSubmissionsReviewed,
+          totalMarksGiven,
+          totalFeedbackGiven,
+          marksRate:
+            totalSubmissionsReviewed > 0
+              ? Math.round((totalMarksGiven / totalSubmissionsReviewed) * 100)
+              : 0,
+          feedbackRate:
+            totalSubmissionsReviewed > 0
+              ? Math.round(
+                  (totalFeedbackGiven / totalSubmissionsReviewed) * 100
+                )
+              : 0,
+          avgResponseTime: Math.round(avgResponseTime * 10) / 10, // round to 1 decimal
+        },
+        typesSummary,
+        reviewActivities,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to review supervisor marking activity", {
+      error,
+      supervisorId: context.params.id,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get system-wide analytics for admin dashboard
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} System analytics
+ */
+export const getSystemAnalytics = async (context) => {
+  try {
+    // Get counts of various entities
+    const userCounts = await User.aggregate([
+      {
+        $group: {
+          _id: "$role",
+          count: { $sum: 1 },
+          active: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "active"] }, 1, 0],
+            },
           },
-          departmentDistribution: departmentStats,
-          projectTypeStats: {
-            researchBased: projectTypeStats["research_based"] || 0,
-            projectBased: projectTypeStats["project_based"] || 0,
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "pending"] }, 1, 0],
+            },
           },
         },
-        supervisorStats: {
-          total: supervisors.length,
-          analytics: supervisorAnalytics,
-          pendingApprovals: pendingSupervisors,
+      },
+    ]);
+
+    // Format user counts into an object
+    const users = {};
+    userCounts.forEach((count) => {
+      users[count._id] = {
+        total: count.count,
+        active: count.active,
+        pending: count.pending,
+      };
+    });
+
+    // Get session statistics
+    const sessions = await Session.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
         },
-        projectStats: {
-          total: projects.length,
-          byType: projectTypeStats,
-          byStatus: projectStatusStats,
-          submissionTrend,
+      },
+    ]);
+
+    // Format session counts
+    const sessionCounts = {
+      total: 0,
+      active: 0,
+      completed: 0,
+      upcoming: 0,
+    };
+
+    sessions.forEach((session) => {
+      sessionCounts[session._id] = session.count;
+      sessionCounts.total += session.count;
+    });
+
+    // Get team statistics
+    const teams = await Team.countDocuments();
+    const teamsWithSupervisors = await Team.countDocuments({
+      "supervisors.0": { $exists: true },
+    });
+    const teamsWithoutSupervisors = teams - teamsWithSupervisors;
+
+    // Get project statistics
+    const projects = await Project.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
         },
-        teamStats,
-        recentActivities: recentActivities.map((activity) => ({
-          _id: activity._id,
-          message: activity.message,
-          type: activity.type,
-          createdAt: activity.createdAt,
-          user: activity.user
-            ? {
-                name: activity.user.fullName,
-                role: activity.user.role,
-              }
-            : null,
-        })),
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$count" },
+          statuses: { $push: { k: "$_id", v: "$count" } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          statuses: { $arrayToObject: "$statuses" },
+        },
+      },
+    ]);
+
+    const projectStats =
+      projects.length > 0 ? projects[0] : { total: 0, statuses: {} };
+
+    // Calculate active submission counts
+    const activeSubmissions = await Project.aggregate([
+      {
+        $match: {
+          "submissions.0": { $exists: true },
+        },
+      },
+      {
+        $project: {
+          submissionCount: { $size: "$submissions" },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$submissionCount" },
+        },
+      },
+    ]);
+
+    const submissionCount =
+      activeSubmissions.length > 0 ? activeSubmissions[0].total : 0;
+
+    // Get recent activity
+    const recentActivity = await Promise.all([
+      // Recent team formations (last 7 days)
+      Team.find({
+        createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      })
+        .populate("creator", "fullName")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+
+      // Recent project submissions (last 7 days)
+      Project.aggregate([
+        {
+          $unwind: "$submissions",
+        },
+        {
+          $match: {
+            "submissions.submittedAt": {
+              $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+        },
+        {
+          $sort: {
+            "submissions.submittedAt": -1,
+          },
+        },
+        {
+          $limit: 5,
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            team: 1,
+            submission: "$submissions",
+          },
+        },
+        {
+          $lookup: {
+            from: "teams",
+            localField: "team",
+            foreignField: "_id",
+            as: "teamDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$teamDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ]),
+    ]);
+
+    // Format recent team formations
+    const recentTeams = recentActivity[0].map((team) => ({
+      id: team._id,
+      name: team.name,
+      createdAt: team.createdAt,
+      createdBy: team.creator ? team.creator.fullName : "Unknown",
+      memberCount: team.members ? team.members.length : 0,
+    }));
+
+    // Format recent submissions
+    const recentSubmissions = recentActivity[1].map((item) => ({
+      id: item.submission._id,
+      projectId: item._id,
+      projectName: item.name,
+      teamId: item.team,
+      teamName: item.teamDetails ? item.teamDetails.name : "Unknown",
+      title: item.submission.title,
+      type: item.submission.submissionType,
+      submittedAt: item.submission.submittedAt,
+    }));
+
+    return {
+      success: true,
+      data: {
+        users,
+        sessions: sessionCounts,
+        teams: {
+          total: teams,
+          withSupervisor: teamsWithSupervisors,
+          withoutSupervisor: teamsWithoutSupervisors,
+        },
+        projects: projectStats,
+        submissions: {
+          total: submissionCount,
+        },
+        recentActivity: {
+          teams: recentTeams,
+          submissions: recentSubmissions,
+        },
       },
     };
   } catch (error) {
@@ -736,239 +1823,292 @@ export const getSystemAnalytics = async ({ query }) => {
   }
 };
 
-// Get all supervisors with assignment stats
-export const getSupervisors = async ({ query }) => {
+/**
+ * Get analytics for a specific session
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Session analytics
+ */
+export const getSessionAnalytics = async (context) => {
   try {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { params } = context;
+    const sessionId = params.sessionId;
 
-    const matchQuery = { role: "supervisor" };
-
-    // Add filters if provided
-    if (query.sessionId) {
-      // Filter by specific session
-      matchQuery["teams.session"] = query.sessionId;
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
     }
 
-    // Get supervisors
-    const supervisors = await User.aggregate([
-      { $match: matchQuery },
-      {
-        $lookup: {
-          from: "supervisors",
-          localField: "_id",
-          foreignField: "user",
-          as: "supervisorProfile",
-        },
-      },
-      { $unwind: "$supervisorProfile" },
-      {
-        $lookup: {
-          from: "teams",
-          localField: "supervisorProfile.teams",
-          foreignField: "_id",
-          as: "assignedTeams",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          fullName: 1,
-          email: 1,
-          department: 1,
-          profilePicture: 1,
-          specialization: "$supervisorProfile.specialization",
-          isApproved: 1,
-          status: 1,
-          assignedTeamsCount: { $size: "$assignedTeams" },
-          studentsCount: {
-            $reduce: {
-              input: "$assignedTeams",
-              initialValue: 0,
-              in: { $add: ["$$value", { $size: "$$this.members" }] },
-            },
-          },
-        },
-      },
-      { $sort: query.sort ? JSON.parse(query.sort) : { fullName: 1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ]);
+    // Get all teams in this session
+    const teams = await Team.find({ session: sessionId })
+      .populate({
+        path: "members.user",
+        select: "fullName email",
+      })
+      .lean();
 
-    // Get total count for pagination
-    const totalCount = await User.countDocuments({ role: "supervisor" });
+    // Get all projects in this session
+    const projects = await Project.find({ session: sessionId })
+      .populate("team", "name")
+      .lean();
 
-    return {
-      success: true,
-      data: {
-        supervisors,
-        pagination: {
-          total: totalCount,
-          page,
-          limit,
-          pages: Math.ceil(totalCount / limit),
-        },
+    // Student participation stats
+    const studentStats = {
+      total: 0,
+      withTeam: 0,
+      withoutTeam: 0,
+      teamDistribution: {}, // team size distribution
+    };
+
+    // Process teams for student stats
+    teams.forEach((team) => {
+      const teamSize = team.members?.length || 0;
+      studentStats.total += teamSize;
+      studentStats.withTeam += teamSize;
+
+      // Track team size distribution
+      studentStats.teamDistribution[teamSize] =
+        (studentStats.teamDistribution[teamSize] || 0) + 1;
+    });
+
+    // Project stats
+    const projectStats = {
+      total: projects.length,
+      byStatus: {},
+      byType: {},
+      submissionStats: {
+        totalSubmissions: 0,
+        byType: {},
+        reviewed: 0,
+        pending: 0,
       },
     };
-  } catch (error) {
-    logger.error("Failed to get supervisors", { error });
-    throw error;
-  }
-};
 
-// Get all students with pagination and filters
-export const getStudents = async ({ query }) => {
-  try {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const skip = (page - 1) * limit;
+    // Process projects for stats
+    projects.forEach((project) => {
+      // Status distribution
+      const status = project.status || "unknown";
+      projectStats.byStatus[status] = (projectStats.byStatus[status] || 0) + 1;
 
-    // Base match query
-    const matchQuery = { role: "student" };
+      // Type distribution
+      const type = project.type || "unknown";
+      projectStats.byType[type] = (projectStats.byType[type] || 0) + 1;
 
-    // Add filters if provided
-    if (query.department) {
-      matchQuery.department = query.department;
-    }
+      // Submission stats
+      if (project.submissions && project.submissions.length > 0) {
+        projectStats.submissionStats.totalSubmissions +=
+          project.submissions.length;
 
-    if (query.status) {
-      matchQuery.status = query.status;
-    }
+        project.submissions.forEach((submission) => {
+          // Track by submission type
+          const submissionType = submission.submissionType || "unknown";
+          projectStats.submissionStats.byType[submissionType] =
+            (projectStats.submissionStats.byType[submissionType] || 0) + 1;
 
-    if (query.hasTeam === "true") {
-      // Only get students who have a team
-      matchQuery["studentProfile.team"] = { $exists: true, $ne: null };
-    } else if (query.hasTeam === "false") {
-      // Only get students without a team
-      matchQuery["studentProfile.team"] = { $exists: false };
-    }
-
-    // Get students
-    const students = await User.aggregate([
-      { $match: matchQuery },
-      {
-        $lookup: {
-          from: "students",
-          localField: "_id",
-          foreignField: "user",
-          as: "studentProfile",
-        },
-      },
-      { $unwind: "$studentProfile" },
-      {
-        $lookup: {
-          from: "teams",
-          localField: "studentProfile.team",
-          foreignField: "_id",
-          as: "teamInfo",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          fullName: 1,
-          email: 1,
-          department: 1,
-          profilePicture: 1,
-          studentId: "$studentProfile.studentId",
-          semester: "$studentProfile.semester",
-          batch: "$studentProfile.batch",
-          status: 1,
-          teamId: { $arrayElemAt: ["$teamInfo._id", 0] },
-          teamName: { $arrayElemAt: ["$teamInfo.name", 0] },
-          isTeamLeader: "$studentProfile.isTeamLeader",
-          skills: "$studentProfile.skills",
-        },
-      },
-      { $sort: query.sort ? JSON.parse(query.sort) : { fullName: 1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ]);
-
-    // Get total count for pagination
-    const totalCount = await User.countDocuments({ role: "student" });
-
-    return {
-      success: true,
-      data: {
-        students,
-        pagination: {
-          total: totalCount,
-          page,
-          limit,
-          pages: Math.ceil(totalCount / limit),
-        },
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to get students", { error });
-    throw error;
-  }
-};
-
-// Get all projects with pagination and filters
-export const getProjects = async ({ query }) => {
-  try {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Base match query
-    const matchQuery = {};
-
-    // Add filters if provided
-    if (query.sessionId) {
-      matchQuery.session = query.sessionId;
-    }
-
-    if (query.type) {
-      matchQuery.type = query.type;
-    }
-
-    if (query.status) {
-      matchQuery.status = query.status;
-    }
-
-    if (query.supervisorId) {
-      // Get teams supervised by this supervisor
-      const supervisor = await Supervisor.findOne({ user: query.supervisorId });
-      if (supervisor) {
-        const teams = await Team.find({ supervisors: supervisor._id });
-        matchQuery.team = { $in: teams.map((team) => team._id) };
+          // Track reviewed vs pending
+          if (submission.reviewedBy) {
+            projectStats.submissionStats.reviewed++;
+          } else {
+            projectStats.submissionStats.pending++;
+          }
+        });
       }
+    });
+
+    // Supervisor engagement stats
+    const supervisorStats = {
+      totalAssigned: 0,
+      teamsWithSupervisor: 0,
+      teamsWithoutSupervisor: 0,
+      avgTeamsPerSupervisor: 0,
+    };
+
+    // Count teams with supervisors
+    const teamsWithSupervisor = teams.filter(
+      (team) => team.supervisors && team.supervisors.length > 0
+    );
+    supervisorStats.teamsWithSupervisor = teamsWithSupervisor.length;
+    supervisorStats.teamsWithoutSupervisor =
+      teams.length - teamsWithSupervisor.length;
+
+    // Count unique supervisors
+    const uniqueSupervisors = new Set();
+    teamsWithSupervisor.forEach((team) => {
+      team.supervisors.forEach((supervisor) => {
+        if (supervisor.supervisor) {
+          uniqueSupervisors.add(supervisor.supervisor.toString());
+        }
+      });
+    });
+
+    supervisorStats.totalAssigned = uniqueSupervisors.size;
+    supervisorStats.avgTeamsPerSupervisor =
+      uniqueSupervisors.size > 0
+        ? supervisorStats.teamsWithSupervisor / uniqueSupervisors.size
+        : 0;
+
+    // Calculate session progress
+    const now = new Date();
+    const startDate = new Date(session.startDate);
+    const endDate = new Date(session.endDate);
+    let progress = 0;
+
+    if (now < startDate) {
+      progress = 0;
+    } else if (now > endDate) {
+      progress = 100;
+    } else {
+      const totalDuration = endDate - startDate;
+      const elapsed = now - startDate;
+      progress = Math.round((elapsed / totalDuration) * 100);
     }
 
-    // Get projects
-    const projects = await Project.find(matchQuery)
+    // Get upcoming deadlines
+    const upcomingDeadlines = [];
+    if (session.deadlines && session.deadlines.length > 0) {
+      session.deadlines.forEach((deadline) => {
+        const deadlineDate = new Date(deadline.dueDate);
+        if (deadlineDate > now) {
+          upcomingDeadlines.push({
+            title: deadline.title,
+            dueDate: deadline.dueDate,
+            type: deadline.type,
+            daysRemaining: Math.ceil(
+              (deadlineDate - now) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      });
+    }
+
+    // Sort upcoming deadlines by date
+    upcomingDeadlines.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    return {
+      success: true,
+      data: {
+        session: {
+          id: session._id,
+          name: session.name,
+          startDate: session.startDate,
+          endDate: session.endDate,
+          status: session.status,
+          progress: progress,
+        },
+        summary: {
+          teams: teams.length,
+          students: studentStats.total,
+          projects: projectStats.total,
+          submissions: projectStats.submissionStats.totalSubmissions,
+          supervisors: supervisorStats.totalAssigned,
+        },
+        teamStats: {
+          total: teams.length,
+          sizeDistribution: studentStats.teamDistribution,
+        },
+        projectStats,
+        supervisorStats,
+        upcomingDeadlines: upcomingDeadlines.slice(0, 5), // Return top 5 upcoming deadlines
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get session analytics", {
+      error,
+      sessionId: context.params.sessionId,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get all projects with optional filtering and pagination
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} List of projects
+ */
+export const getProjects = async (context) => {
+  try {
+    const { query } = context;
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build filter
+    const filter = {};
+
+    // Add session filter if provided
+    if (query?.sessionId) {
+      filter.session = query.sessionId;
+    }
+
+    // Add status filter if provided
+    if (query?.status) {
+      filter.status = query.status;
+    }
+
+    // Add type filter if provided
+    if (query?.type) {
+      filter.type = query.type;
+    }
+
+    // Add search filter if provided
+    if (query?.search) {
+      filter.$or = [
+        { name: { $regex: query.search, $options: "i" } },
+        { description: { $regex: query.search, $options: "i" } },
+      ];
+    }
+
+    // Get projects with pagination
+    const projects = await Project.find(filter)
+      .populate("team", "name members")
+      .populate("session", "name")
       .populate({
-        path: "team",
-        select: "name members",
+        path: "supervisor",
         populate: {
-          path: "members",
-          select: "user",
-          populate: {
-            path: "user",
-            select: "fullName profilePicture",
-          },
+          path: "user",
+          select: "fullName email",
         },
       })
-      .populate({
-        path: "session",
-        select: "name startDate endDate",
-      })
-      .sort(query.sort ? JSON.parse(query.sort) : { createdAt: -1 })
+      .sort(query?.sort ? JSON.parse(query.sort) : { createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
     // Get total count for pagination
-    const totalCount = await Project.countDocuments(matchQuery);
+    const totalCount = await Project.countDocuments(filter);
+
+    // Process project data to include additional information
+    const enrichedProjects = projects.map((project) => {
+      // Calculate submission statistics
+      const submissionStats = {
+        total: project.submissions?.length || 0,
+        reviewed: project.submissions?.filter((s) => s.reviewedBy)?.length || 0,
+        pending: project.submissions?.filter((s) => !s.reviewedBy)?.length || 0,
+        latestSubmission: null,
+      };
+
+      // Get latest submission
+      if (submissionStats.total > 0) {
+        const sortedSubmissions = [...project.submissions].sort(
+          (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+        );
+        submissionStats.latestSubmission = sortedSubmissions[0];
+      }
+
+      return {
+        ...project,
+        teamName: project.team?.name || "No Team",
+        teamSize: project.team?.members?.length || 0,
+        sessionName: project.session?.name || "Unknown Session",
+        supervisorName: project.supervisor?.user?.fullName || "No Supervisor",
+        submissionStats,
+      };
+    });
 
     return {
       success: true,
       data: {
-        projects,
+        projects: enrichedProjects,
         pagination: {
           total: totalCount,
           page,
@@ -983,1734 +2123,1285 @@ export const getProjects = async ({ query }) => {
   }
 };
 
-// Get supervisor performance metrics
-export const getSupervisorPerformance = async ({ params }) => {
+/**
+ * Verify the supervisor's progress tracking setup and usage
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Verification results
+ */
+export const verifySupervisorProgressTracking = async (context) => {
   try {
-    const supervisor = await Supervisor.findById(params.id)
-      .populate("user", "fullName email department status")
-      .populate({
-        path: "assignedTeams",
-        select: "name members session status",
-        populate: {
-          path: "session",
-          select: "name startDate endDate status",
-        },
-      });
+    const { params } = context;
+    const supervisorId = params.id;
 
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
     if (!supervisor) {
       throw new NotFoundError("Supervisor not found");
     }
 
-    // Collect all the teams supervised by this supervisor
-    const teams = supervisor.assignedTeams || [];
+    // Get all teams this supervisor is assigned to
+    const supervisorTeams = await Team.find({
+      "supervisors.supervisor": supervisorId,
+    }).lean();
 
-    // Get all projects for these teams
-    const teamIds = teams.map((team) => team._id);
-    const projects = await Project.find({ team: { $in: teamIds } });
+    // Results object
+    const results = {
+      supervisor: {
+        id: supervisor._id,
+        name: supervisor.user.fullName,
+        email: supervisor.user.email,
+      },
+      teams: {
+        total: supervisorTeams.length,
+        withTracking: 0,
+        withoutTracking: 0,
+        withUpdates: 0,
+        details: [],
+      },
+      milestones: {
+        total: 0,
+        updated: 0,
+        notStarted: 0,
+        inProgress: 0,
+        completed: 0,
+        delayed: 0,
+      },
+      overview: {
+        isSetupCorrectly: false,
+        lastUpdated: null,
+        updateFrequencyDays: 0,
+        consistencyScore: 0,
+        percentComplete: 0,
+      },
+    };
 
-    // Collect all student IDs from the teams
-    const studentIds = new Set();
-    teams.forEach((team) => {
-      team.members.forEach((member) => {
-        studentIds.add(member.user.toString());
-      });
-    });
+    // Process all teams
+    for (const team of supervisorTeams) {
+      // Find this supervisor's entry in the team
+      const supervisorEntry = team.supervisors.find(
+        (sup) => sup.supervisor && sup.supervisor.toString() === supervisorId
+      );
 
-    // Get marking data for students
-    const marksData = supervisor.marksGiven || [];
+      const teamStatus = {
+        teamId: team._id,
+        teamName: team.name,
+        hasTracking: false,
+        hasUpdates: false,
+        milestonesCount: 0,
+        updatedMilestonesCount: 0,
+        lastUpdated: null,
+        milestones: [],
+      };
 
-    // Calculate statistics
-    const teamCount = teams.length;
-    const activeTeamCount = teams.filter((t) => t.status === "active").length;
-    const studentCount = studentIds.size;
-    const projectCount = projects.length;
+      if (supervisorEntry && supervisorEntry.progressTracking) {
+        teamStatus.hasTracking = true;
+        results.teams.withTracking++;
 
-    // Calculate marking metrics
-    const totalMarksAssigned = marksData.reduce(
-      (sum, entry) => sum + entry.marks.length,
-      0
-    );
-    const avgMarksPerStudent =
-      studentCount > 0 ? totalMarksAssigned / studentCount : 0;
+        const { milestones, lastUpdated } = supervisorEntry.progressTracking;
 
-    // Calculate average scoring
-    let totalScore = 0;
-    let scoreCount = 0;
+        if (milestones && milestones.length > 0) {
+          teamStatus.milestonesCount = milestones.length;
+          results.milestones.total += milestones.length;
 
-    marksData.forEach((entry) => {
-      entry.marks.forEach((mark) => {
-        totalScore += mark.score;
-        scoreCount++;
-      });
-    });
+          // Process each milestone
+          milestones.forEach((milestone) => {
+            const milestoneStatus = {
+              title: milestone.title,
+              status: milestone.status,
+              progress: milestone.progress,
+              lastUpdated: milestone.lastUpdated,
+            };
 
-    const avgScore = scoreCount > 0 ? totalScore / scoreCount : 0;
+            teamStatus.milestones.push(milestoneStatus);
 
-    // Calculate progress tracking metrics
-    const progressTrackingFrequency = supervisor.progressTracking
-      ? {
-          studentTracking: (
-            supervisor.progressTracking.trackedStudents || []
-          ).reduce((sum, ts) => sum + (ts.progressNotes?.length || 0), 0),
-          teamTracking: (supervisor.progressTracking.trackedTeams || []).reduce(
-            (sum, tt) => sum + (tt.progressNotes?.length || 0),
-            0
-          ),
+            // Track milestone status counts
+            if (milestone.status === "not_started") {
+              results.milestones.notStarted++;
+            } else if (milestone.status === "in_progress") {
+              results.milestones.inProgress++;
+            } else if (milestone.status === "completed") {
+              results.milestones.completed++;
+            } else if (milestone.status === "delayed") {
+              results.milestones.delayed++;
+            }
+
+            // Check if milestone has been updated (not at default values)
+            const isUpdated =
+              milestone.status !== "not_started" || milestone.progress > 0;
+
+            if (isUpdated) {
+              teamStatus.updatedMilestonesCount++;
+              results.milestones.updated++;
+            }
+          });
         }
-      : { studentTracking: 0, teamTracking: 0 };
 
-    // Calculate meeting frequency
-    const meetingCount = supervisor.scheduledMeetings?.length || 0;
-    const meetingsPerTeam = teamCount > 0 ? meetingCount / teamCount : 0;
+        // Check if tracking has been updated
+        if (teamStatus.updatedMilestonesCount > 0) {
+          teamStatus.hasUpdates = true;
+          results.teams.withUpdates++;
+          teamStatus.lastUpdated = lastUpdated;
 
-    // Get recent activity stats
-    const recentActivity = supervisor.recentActivity || [];
-    const activityByType = recentActivity.reduce((acc, activity) => {
-      acc[activity.type] = (acc[activity.type] || 0) + 1;
-      return acc;
-    }, {});
+          // Track latest update for overall summary
+          if (
+            !results.overview.lastUpdated ||
+            new Date(lastUpdated) > new Date(results.overview.lastUpdated)
+          ) {
+            results.overview.lastUpdated = lastUpdated;
+          }
+        }
+      } else {
+        results.teams.withoutTracking++;
+      }
+
+      results.teams.details.push(teamStatus);
+    }
+
+    // Calculate consistency score (0-100)
+    if (results.teams.total > 0) {
+      // Base setup score - percentage of teams with tracking
+      const setupScore = Math.round(
+        (results.teams.withTracking / results.teams.total) * 100
+      );
+
+      // Usage score - percentage of milestones that have been updated
+      const usageScore =
+        results.milestones.total > 0
+          ? Math.round(
+              (results.milestones.updated / results.milestones.total) * 100
+            )
+          : 0;
+
+      // Completion score - percentage of milestones marked as completed
+      const completionScore =
+        results.milestones.total > 0
+          ? Math.round(
+              (results.milestones.completed / results.milestones.total) * 100
+            )
+          : 0;
+
+      // Weighted average for final score
+      results.overview.consistencyScore = Math.round(
+        setupScore * 0.4 + usageScore * 0.4 + completionScore * 0.2
+      );
+
+      results.overview.percentComplete = completionScore;
+      results.overview.isSetupCorrectly = setupScore >= 80; // 80% of teams have tracking set up
+    }
+
+    // Calculate update frequency if there have been updates
+    if (results.overview.lastUpdated) {
+      const now = new Date();
+      const lastUpdate = new Date(results.overview.lastUpdated);
+      const daysSinceLastUpdate = Math.round(
+        (now - lastUpdate) / (1000 * 60 * 60 * 24)
+      );
+
+      results.overview.updateFrequencyDays = daysSinceLastUpdate;
+    }
 
     return {
       success: true,
-      data: {
-        supervisor: {
-          _id: supervisor._id,
-          user: supervisor.user,
-          specialization: supervisor.specialization,
-          supervisorId: supervisor.supervisorId,
-        },
-        performance: {
-          teamManagement: {
-            totalTeams: teamCount,
-            activeTeams: activeTeamCount,
-            totalStudents: studentCount,
-            studentsPerTeam: teamCount > 0 ? studentCount / teamCount : 0,
-          },
-          assessmentMetrics: {
-            totalMarksAssigned,
-            avgMarksPerStudent,
-            avgScore,
-            assessmentDistribution: marksData.reduce((acc, entry) => {
-              entry.marks.forEach((mark) => {
-                acc[mark.type] = (acc[mark.type] || 0) + 1;
-              });
-              return acc;
-            }, {}),
-          },
-          progressTracking: {
-            studentProgressUpdates: progressTrackingFrequency.studentTracking,
-            teamProgressUpdates: progressTrackingFrequency.teamTracking,
-            updatesPerTeam:
-              teamCount > 0
-                ? (progressTrackingFrequency.studentTracking +
-                    progressTrackingFrequency.teamTracking) /
-                  teamCount
-                : 0,
-          },
-          engagement: {
-            totalMeetings: meetingCount,
-            meetingsPerTeam,
-            activityBreakdown: activityByType,
-            mostFrequentActivity:
-              Object.entries(activityByType).sort(
-                (a, b) => b[1] - a[1]
-              )[0]?.[0] || "none",
-          },
-        },
-      },
+      data: results,
     };
   } catch (error) {
-    logger.error("Failed to get supervisor performance", {
+    logger.error("Failed to verify supervisor progress tracking", {
       error,
-      supervisorId: params.id,
+      supervisorId: context.params.id,
     });
     throw error;
   }
 };
 
-// Supervise a supervisor - update their configuration
-export const updateSupervisorConfiguration = async ({ params, body }) => {
+/**
+ * Get supervisor activity log
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Supervisor activity log
+ */
+export const getSupervisorActivity = async (context) => {
   try {
-    const supervisor = await Supervisor.findById(params.id);
+    const { params, query } = context;
+    const supervisorId = params.id;
+    const limit = parseInt(query?.limit) || 50;
 
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
     if (!supervisor) {
       throw new NotFoundError("Supervisor not found");
     }
 
-    // Update configuration fields as provided
-    if (body.maxTeams !== undefined) {
-      supervisor.maxTeams = body.maxTeams;
+    // Get project submissions reviewed by this supervisor
+    const projects = await Project.find({
+      "submissions.reviewedBy": supervisorId,
+    })
+      .select("name submissions")
+      .sort({ "submissions.reviewedAt": -1 })
+      .limit(limit)
+      .lean();
+
+    // Extract submission reviews
+    const reviews = [];
+    for (const project of projects) {
+      if (project.submissions) {
+        for (const submission of project.submissions) {
+          if (
+            submission.reviewedBy &&
+            submission.reviewedBy.toString() === supervisorId
+          ) {
+            reviews.push({
+              type: "submission_review",
+              timestamp: submission.reviewedAt,
+              project: {
+                id: project._id,
+                name: project.name,
+              },
+              submission: {
+                title: submission.title,
+                type: submission.submissionType,
+              },
+              details: {
+                hasMarks: !!submission.marks,
+                hasFeedback: !!submission.feedback,
+              },
+            });
+          }
+        }
+      }
     }
 
-    if (body.specialization) {
-      supervisor.specialization = body.specialization;
+    // Sort reviews by timestamp (most recent first)
+    reviews.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Take only the requested number
+    const limitedReviews = reviews.slice(0, limit);
+
+    return {
+      success: true,
+      data: {
+        supervisor: {
+          id: supervisor._id,
+          name: supervisor.user.fullName,
+          email: supervisor.user.email,
+        },
+        activity: limitedReviews,
+        summary: {
+          reviewsCount: reviews.length,
+        },
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get supervisor activity", {
+      error,
+      supervisorId: context.params.id,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Update a timeline task for a session
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Updated timeline task
+ */
+export const updateTimelineTask = async (context) => {
+  try {
+    const { params, body } = context;
+    const { sessionId, taskId } = params;
+    const { status, notes, completedDate } = body;
+
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
     }
 
-    if (body.teamAssignmentPreference) {
-      supervisor.preferences = {
-        ...(supervisor.preferences || {}),
-        teamAssignment: body.teamAssignmentPreference,
-      };
+    // Find the timeline task
+    const timeline = await SessionTimeline.findOne({
+      session: sessionId,
+      "tasks._id": taskId,
+    });
+
+    if (!timeline) {
+      throw new NotFoundError("Timeline or task not found");
     }
 
-    if (body.projectTypePreference) {
-      supervisor.preferences = {
-        ...(supervisor.preferences || {}),
-        projectType: body.projectTypePreference,
-      };
+    // Find and update the specific task
+    const taskIndex = timeline.tasks.findIndex(
+      (task) => task._id.toString() === taskId
+    );
+
+    if (taskIndex === -1) {
+      throw new NotFoundError("Task not found in timeline");
     }
 
+    // Update task fields
+    if (status) {
+      timeline.tasks[taskIndex].status = status;
+
+      // If marked as completed, set completedDate
+      if (status === "completed" && !timeline.tasks[taskIndex].completedDate) {
+        timeline.tasks[taskIndex].completedDate = completedDate || new Date();
+      }
+    }
+
+    if (notes) {
+      timeline.tasks[taskIndex].notes = notes;
+    }
+
+    if (
+      completedDate &&
+      (status === "completed" ||
+        timeline.tasks[taskIndex].status === "completed")
+    ) {
+      timeline.tasks[taskIndex].completedDate = new Date(completedDate);
+    }
+
+    // Update last modified date
+    timeline.tasks[taskIndex].lastModified = new Date();
+    timeline.lastModified = new Date();
+
+    // Save the updated timeline
+    await timeline.save();
+
+    // Log the update
+    logger.info(`Updated timeline task for session ${sessionId}`, {
+      taskId,
+      sessionId,
+      updatedFields: { status, notes, completedDate },
+    });
+
+    return {
+      success: true,
+      message: "Timeline task updated successfully",
+      data: timeline.tasks[taskIndex],
+    };
+  } catch (error) {
+    logger.error("Failed to update timeline task", {
+      error,
+      sessionId: context.params.sessionId,
+      taskId: context.params.taskId,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Create a timeline for a session with default tasks
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Created session timeline
+ */
+export const createSessionTimeline = async (context) => {
+  try {
+    const { params, body } = context;
+    const { sessionId } = params;
+    const { tasks } = body;
+
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    // Check if a timeline already exists for this session
+    const existingTimeline = await SessionTimeline.findOne({
+      session: sessionId,
+    });
+    if (existingTimeline) {
+      throw new ValidationError("Timeline already exists for this session");
+    }
+
+    // Create default tasks if not provided
+    let timelineTasks = tasks || [];
+
+    if (!timelineTasks.length) {
+      // Create default tasks based on session deadlines
+      if (session.deadlines && session.deadlines.length > 0) {
+        // Map session deadlines to timeline tasks
+        timelineTasks = session.deadlines.map((deadline) => ({
+          title: deadline.title,
+          description: deadline.description || `Complete ${deadline.title}`,
+          dueDate: deadline.dueDate,
+          category: "deadline",
+          status: "pending",
+          priority: deadline.type === "final_submission" ? "high" : "medium",
+          relatedDeadline: deadline._id,
+        }));
+      }
+
+      // Add default administrative tasks
+      const startDate = new Date(session.startDate);
+      const endDate = new Date(session.endDate);
+
+      // Add supervisor assignment task (2 weeks after start)
+      const supervisorAssignmentDate = new Date(startDate);
+      supervisorAssignmentDate.setDate(startDate.getDate() + 14);
+
+      timelineTasks.push({
+        title: "Assign Supervisors to Teams",
+        description:
+          "Ensure all teams have been assigned appropriate supervisors",
+        dueDate: supervisorAssignmentDate,
+        category: "administrative",
+        status: "pending",
+        priority: "high",
+      });
+
+      // Add mid-term progress check (halfway through the session)
+      const midPoint = new Date(
+        startDate.getTime() + (endDate.getTime() - startDate.getTime()) / 2
+      );
+
+      timelineTasks.push({
+        title: "Mid-term Progress Check",
+        description: "Evaluate progress of all teams and provide feedback",
+        dueDate: midPoint,
+        category: "review",
+        status: "pending",
+        priority: "medium",
+      });
+
+      // Add final evaluation task (1 week before end)
+      const finalEvalDate = new Date(endDate);
+      finalEvalDate.setDate(endDate.getDate() - 7);
+
+      timelineTasks.push({
+        title: "Final Evaluation",
+        description: "Complete final evaluation of all projects",
+        dueDate: finalEvalDate,
+        category: "review",
+        status: "pending",
+        priority: "high",
+      });
+    }
+
+    // Create the timeline
+    const timeline = await SessionTimeline.create({
+      session: sessionId,
+      name: `Timeline for ${session.name}`,
+      description: `Administrative timeline and tasks for the ${session.name} session`,
+      tasks: timelineTasks,
+      createdAt: new Date(),
+      lastModified: new Date(),
+    });
+
+    logger.info(`Created timeline for session ${sessionId}`, {
+      sessionId,
+      timelineId: timeline._id,
+      tasksCount: timelineTasks.length,
+    });
+
+    return {
+      success: true,
+      message: "Session timeline created successfully",
+      data: timeline,
+    };
+  } catch (error) {
+    logger.error("Failed to create session timeline", {
+      error,
+      sessionId: context.params.sessionId,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get supervisor performance metrics
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Supervisor performance metrics
+ */
+export const getSupervisorPerformance = async (context) => {
+  try {
+    const { params, query } = context;
+    const supervisorId = params.id;
+
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
+    if (!supervisor) {
+      throw new NotFoundError("Supervisor not found");
+    }
+
+    // Get time range filter
+    const timeRange = query.timeRange || "all";
+    let startDate, endDate;
+
+    if (timeRange === "week") {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      endDate = new Date();
+    } else if (timeRange === "month") {
+      startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 1);
+      endDate = new Date();
+    } else if (timeRange === "custom" && query.fromDate && query.toDate) {
+      startDate = new Date(query.fromDate);
+      endDate = new Date(query.toDate);
+    } else {
+      // Default to all time
+      startDate = new Date(0); // beginning of time
+      endDate = new Date();
+    }
+
+    // Get all teams this supervisor is assigned to
+    const teams = await Team.find({
+      "supervisors.supervisor": supervisorId,
+    })
+      .populate("members.user", "fullName email")
+      .populate("session")
+      .lean();
+
+    // Get all projects where this supervisor has reviewed submissions
+    const projects = await Project.find({
+      "submissions.reviewedBy": supervisorId,
+    })
+      .populate("team", "name")
+      .lean();
+
+    // Calculate performance metrics
+
+    // 1. Team supervision metrics
+    const teamMetrics = {
+      totalTeams: teams.length,
+      activeTeams: teams.filter((team) => team.status === "active").length,
+      totalStudents: teams.reduce(
+        (total, team) => total + (team.members?.length || 0),
+        0
+      ),
+      teamsWithProgressTracking: 0,
+      progressTrackingUsageRate: 0,
+      averageProgressCompletion: 0,
+    };
+
+    // Calculate progress tracking metrics
+    let totalMilestones = 0;
+    let completedMilestones = 0;
+    let teamsWithProgressTracking = 0;
+
+    teams.forEach((team) => {
+      const supervisorEntry = team.supervisors?.find(
+        (s) => s.supervisor && s.supervisor.toString() === supervisorId
+      );
+
+      if (supervisorEntry?.progressTracking?.milestones?.length > 0) {
+        teamsWithProgressTracking++;
+
+        supervisorEntry.progressTracking.milestones.forEach((milestone) => {
+          totalMilestones++;
+          if (milestone.status === "completed") {
+            completedMilestones++;
+          }
+        });
+      }
+    });
+
+    teamMetrics.teamsWithProgressTracking = teamsWithProgressTracking;
+    teamMetrics.progressTrackingUsageRate =
+      teams.length > 0
+        ? Math.round((teamsWithProgressTracking / teams.length) * 100)
+        : 0;
+    teamMetrics.averageProgressCompletion =
+      totalMilestones > 0
+        ? Math.round((completedMilestones / totalMilestones) * 100)
+        : 0;
+
+    // 2. Project review metrics
+    const reviewMetrics = {
+      totalSubmissionsReviewed: 0,
+      submissionsWithFeedback: 0,
+      submissionsWithMarks: 0,
+      averageResponseTime: 0, // hours
+      feedbackQuality: 0, // scale of 0-100
+    };
+
+    // Process all submissions
+    let totalResponseTime = 0;
+    let responseTimes = 0;
+    let totalFeedbackLength = 0;
+
+    projects.forEach((project) => {
+      if (project.submissions) {
+        project.submissions.forEach((submission) => {
+          if (
+            submission.reviewedBy &&
+            submission.reviewedBy.toString() === supervisorId &&
+            submission.reviewedAt
+          ) {
+            // Check if within time range
+            const reviewDate = new Date(submission.reviewedAt);
+            if (reviewDate >= startDate && reviewDate <= endDate) {
+              reviewMetrics.totalSubmissionsReviewed++;
+
+              if (submission.feedback) {
+                reviewMetrics.submissionsWithFeedback++;
+                totalFeedbackLength += submission.feedback.length || 0;
+              }
+
+              if (submission.marks) {
+                reviewMetrics.submissionsWithMarks++;
+              }
+
+              // Calculate response time if available
+              if (submission.submittedAt) {
+                const submittedDate = new Date(submission.submittedAt);
+                const responseTimeHours = Math.round(
+                  (reviewDate - submittedDate) / (1000 * 60 * 60)
+                );
+
+                totalResponseTime += responseTimeHours;
+                responseTimes++;
+              }
+            }
+          }
+        });
+      }
+    });
+
+    // Calculate average values
+    reviewMetrics.averageResponseTime =
+      responseTimes > 0 ? Math.round(totalResponseTime / responseTimes) : 0;
+
+    const avgFeedbackLength =
+      reviewMetrics.submissionsWithFeedback > 0
+        ? totalFeedbackLength / reviewMetrics.submissionsWithFeedback
+        : 0;
+
+    // Calculate feedback quality based on length and existence
+    const feedbackRate =
+      reviewMetrics.totalSubmissionsReviewed > 0
+        ? (reviewMetrics.submissionsWithFeedback /
+            reviewMetrics.totalSubmissionsReviewed) *
+          100
+        : 0;
+
+    // Assume quality scales with length, capped at 100
+    const lengthScore = Math.min(100, avgFeedbackLength / 5);
+
+    reviewMetrics.feedbackQuality = Math.round(
+      feedbackRate * 0.6 + lengthScore * 0.4
+    );
+
+    // 3. Time management metrics
+    const timeManagementMetrics = {
+      averageMeetingsPerTeam: 0,
+      meetingAttendanceRate: 0,
+    };
+
+    // Get meetings within time range
+    const meetings = await Meeting.find({
+      supervisor: supervisorId,
+      scheduledAt: { $gte: startDate, $lte: endDate },
+    }).lean();
+
+    const meetingsPerTeam =
+      teams.length > 0 ? meetings.length / teams.length : 0;
+    timeManagementMetrics.averageMeetingsPerTeam = parseFloat(
+      meetingsPerTeam.toFixed(1)
+    );
+
+    // Calculate attendance rate
+    let totalExpectedAttendees = 0;
+    let totalActualAttendees = 0;
+
+    meetings.forEach((meeting) => {
+      if (meeting.status === "completed") {
+        // Each team member should attend
+        const expectedTeamSize = meeting.expectedAttendees?.length || 0;
+        const actualAttendees = meeting.attendees?.length || 0;
+
+        totalExpectedAttendees += expectedTeamSize;
+        totalActualAttendees += actualAttendees;
+      }
+    });
+
+    timeManagementMetrics.meetingAttendanceRate =
+      totalExpectedAttendees > 0
+        ? Math.round((totalActualAttendees / totalExpectedAttendees) * 100)
+        : 0;
+
+    // 4. Calculate overall performance score (0-100)
+    const overallPerformance = Math.round(
+      teamMetrics.progressTrackingUsageRate * 0.25 +
+        reviewMetrics.feedbackQuality * 0.35 +
+        timeManagementMetrics.meetingAttendanceRate * 0.15 +
+        teamMetrics.averageProgressCompletion * 0.25
+    );
+
+    return {
+      success: true,
+      data: {
+        supervisor: {
+          id: supervisor._id,
+          name: supervisor.user.fullName,
+          email: supervisor.user.email,
+        },
+        timeRange: {
+          start: startDate,
+          end: endDate,
+          label: timeRange,
+        },
+        teamMetrics,
+        reviewMetrics,
+        timeManagementMetrics,
+        overallPerformance,
+        performanceLevel: getPerformanceLevel(overallPerformance),
+        recommendations: generateRecommendations(
+          teamMetrics,
+          reviewMetrics,
+          timeManagementMetrics
+        ),
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to get supervisor performance", {
+      error,
+      supervisorId: context.params.id,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get performance level based on score
+ * @param {Number} score - Performance score (0-100)
+ * @returns {String} Performance level
+ */
+const getPerformanceLevel = (score) => {
+  if (score >= 90) return "outstanding";
+  if (score >= 80) return "excellent";
+  if (score >= 70) return "good";
+  if (score >= 60) return "satisfactory";
+  if (score >= 50) return "needs_improvement";
+  return "concerning";
+};
+
+/**
+ * Generate recommendations based on metrics
+ * @param {Object} teamMetrics - Team supervision metrics
+ * @param {Object} reviewMetrics - Project review metrics
+ * @param {Object} timeManagementMetrics - Time management metrics
+ * @returns {Array} List of recommendations
+ */
+const generateRecommendations = (
+  teamMetrics,
+  reviewMetrics,
+  timeManagementMetrics
+) => {
+  const recommendations = [];
+
+  // Team supervision recommendations
+  if (teamMetrics.progressTrackingUsageRate < 70) {
+    recommendations.push({
+      area: "team_supervision",
+      priority: "high",
+      message: "Increase usage of progress tracking for teams",
+    });
+  }
+
+  if (teamMetrics.averageProgressCompletion < 50) {
+    recommendations.push({
+      area: "team_supervision",
+      priority: "medium",
+      message: "Work with teams to make more progress on milestones",
+    });
+  }
+
+  // Review metrics recommendations
+  if (
+    reviewMetrics.submissionsWithFeedback /
+      reviewMetrics.totalSubmissionsReviewed <
+    0.8
+  ) {
+    recommendations.push({
+      area: "project_review",
+      priority: "high",
+      message: "Provide feedback on more submissions",
+    });
+  }
+
+  if (reviewMetrics.averageResponseTime > 48) {
+    recommendations.push({
+      area: "project_review",
+      priority: "medium",
+      message: "Reduce response time on project submissions",
+    });
+  }
+
+  if (reviewMetrics.feedbackQuality < 70) {
+    recommendations.push({
+      area: "project_review",
+      priority: "high",
+      message: "Improve quality and detail of feedback provided",
+    });
+  }
+
+  // Time management recommendations
+  if (timeManagementMetrics.averageMeetingsPerTeam < 2) {
+    recommendations.push({
+      area: "time_management",
+      priority: "medium",
+      message: "Schedule more regular meetings with each team",
+    });
+  }
+
+  if (timeManagementMetrics.meetingAttendanceRate < 80) {
+    recommendations.push({
+      area: "time_management",
+      priority: "low",
+      message: "Improve student attendance at scheduled meetings",
+    });
+  }
+
+  return recommendations;
+};
+
+/**
+ * Assign a supervisor to a team
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Assignment result
+ */
+export const assignSupervisorToTeam = async (context) => {
+  try {
+    const { params, body } = context;
+    const { teamId } = params;
+    const { supervisorId, role = "primary" } = body;
+
+    // Find the team
+    const team = await Team.findById(teamId)
+      .populate("members.user", "fullName email")
+      .populate({
+        path: "supervisors.supervisor",
+        populate: {
+          path: "user",
+          select: "fullName email",
+        },
+      });
+
+    if (!team) {
+      throw new NotFoundError("Team not found");
+    }
+
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
+    if (!supervisor) {
+      throw new NotFoundError("Supervisor not found");
+    }
+
+    // Check if supervisor is already assigned to this team
+    const existingSupervisor = team.supervisors.find(
+      (s) => s.supervisor._id.toString() === supervisorId
+    );
+
+    if (existingSupervisor) {
+      // Just update the role if it's different
+      if (existingSupervisor.role !== role) {
+        existingSupervisor.role = role;
+        await team.save();
+
+        logger.info(`Updated supervisor role for team ${teamId}`, {
+          teamId,
+          supervisorId,
+          role,
+        });
+
+        return {
+          success: true,
+          message: `Supervisor role updated to ${role}`,
+          data: {
+            team: {
+              id: team._id,
+              name: team.name,
+            },
+            supervisor: {
+              id: supervisor._id,
+              name: supervisor.user.fullName,
+              email: supervisor.user.email,
+            },
+            role,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          message:
+            "Supervisor is already assigned to this team with the same role",
+          data: {
+            team: {
+              id: team._id,
+              name: team.name,
+            },
+            supervisor: {
+              id: supervisor._id,
+              name: supervisor.user.fullName,
+              email: supervisor.user.email,
+            },
+            role,
+          },
+        };
+      }
+    }
+
+    // Check if there's a supervisor with the same role already
+    if (role === "primary") {
+      const existingPrimary = team.supervisors.find(
+        (s) => s.role === "primary"
+      );
+      if (existingPrimary) {
+        throw new ValidationError(
+          "Team already has a primary supervisor. Please change their role first."
+        );
+      }
+    }
+
+    // Check if supervisor has reached their maximum team limit
+    const supervisorTeamsCount = await Team.countDocuments({
+      "supervisors.supervisor": supervisorId,
+    });
+
+    // Default max teams is 5, but can be overridden in supervisor settings
+    const maxTeams = supervisor.settings?.maxTeams || 5;
+
+    if (supervisorTeamsCount >= maxTeams) {
+      throw new ValidationError(
+        `Supervisor has reached their maximum team limit (${maxTeams})`
+      );
+    }
+
+    // Assign supervisor to the team
+    team.supervisors.push({
+      supervisor: supervisorId,
+      role,
+      assignedAt: new Date(),
+      progressTracking: {
+        lastUpdated: new Date(),
+        milestones: [
+          {
+            title: "Project Planning",
+            description: "Initial project planning and scope definition",
+            status: "not_started",
+            progress: 0,
+            lastUpdated: new Date(),
+          },
+          {
+            title: "Research Phase",
+            description: "Literature review and methodology research",
+            status: "not_started",
+            progress: 0,
+            lastUpdated: new Date(),
+          },
+          {
+            title: "Implementation",
+            description: "Development and implementation of the solution",
+            status: "not_started",
+            progress: 0,
+            lastUpdated: new Date(),
+          },
+          {
+            title: "Testing & Validation",
+            description: "Testing and validation of the implemented solution",
+            status: "not_started",
+            progress: 0,
+            lastUpdated: new Date(),
+          },
+          {
+            title: "Documentation",
+            description: "Project documentation and final report preparation",
+            status: "not_started",
+            progress: 0,
+            lastUpdated: new Date(),
+          },
+        ],
+      },
+    });
+
+    await team.save();
+
+    // Update supervisor's teams list
+    if (!supervisor.teams.includes(teamId)) {
+      supervisor.teams.push(teamId);
+      await supervisor.save();
+    }
+
+    // Notify team members
+    const teamMembers = team.members.map((member) => member.user._id);
+
+    // Create notification for team members
+    const notifications = teamMembers.map((memberId) => ({
+      user: memberId,
+      title: "Supervisor Assigned",
+      message: `${supervisor.user.fullName} has been assigned as your ${role} supervisor`,
+      type: "supervisor_assignment",
+      meta: {
+        teamId: team._id,
+        teamName: team.name,
+        supervisorId: supervisor._id,
+        supervisorName: supervisor.user.fullName,
+      },
+    }));
+
+    await Notification.insertMany(notifications);
+
+    // Create notification for supervisor
+    await Notification.create({
+      user: supervisor.user._id,
+      title: "Team Assignment",
+      message: `You have been assigned as ${role} supervisor to team "${team.name}"`,
+      type: "team_assignment",
+      meta: {
+        teamId: team._id,
+        teamName: team.name,
+      },
+    });
+
+    // Log the assignment
+    logger.info(`Assigned supervisor to team ${teamId}`, {
+      teamId,
+      supervisorId,
+      role,
+    });
+
+    return {
+      success: true,
+      message: `Supervisor assigned to team as ${role}`,
+      data: {
+        team: {
+          id: team._id,
+          name: team.name,
+          members: team.members.map((m) => ({
+            id: m.user._id,
+            name: m.user.fullName,
+            email: m.user.email,
+          })),
+        },
+        supervisor: {
+          id: supervisor._id,
+          name: supervisor.user.fullName,
+          email: supervisor.user.email,
+        },
+        role,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to assign supervisor to team", {
+      error,
+      teamId: context.params.teamId,
+      supervisorId: context.body.supervisorId,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Update supervisor configuration settings
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Update result
+ */
+export const updateSupervisorConfiguration = async (context) => {
+  try {
+    const { params, body } = context;
+    const supervisorId = params.id;
+    const {
+      maxTeams,
+      specialization,
+      teamAssignmentPreference,
+      projectTypePreference,
+      adminId,
+    } = body;
+
+    // Find the supervisor
+    const supervisor = await Supervisor.findById(supervisorId).populate(
+      "user",
+      "fullName email"
+    );
+    if (!supervisor) {
+      throw new NotFoundError("Supervisor not found");
+    }
+
+    // Initialize settings object if it doesn't exist
+    if (!supervisor.settings) {
+      supervisor.settings = {};
+    }
+
+    // Update settings with provided values
+    const updates = {};
+
+    if (maxTeams !== undefined) {
+      // Ensure max teams is a valid number between 1 and 10
+      const maxTeamsValue = parseInt(maxTeams);
+      if (isNaN(maxTeamsValue) || maxTeamsValue < 1 || maxTeamsValue > 10) {
+        throw new ValidationError("Max teams must be between 1 and 10");
+      }
+      supervisor.settings.maxTeams = maxTeamsValue;
+      updates.maxTeams = maxTeamsValue;
+    }
+
+    if (specialization !== undefined) {
+      supervisor.settings.specialization = specialization;
+      updates.specialization = specialization;
+    }
+
+    if (teamAssignmentPreference !== undefined) {
+      if (!["research", "project", "any"].includes(teamAssignmentPreference)) {
+        throw new ValidationError(
+          "Team assignment preference must be one of: research, project, any"
+        );
+      }
+      supervisor.settings.teamAssignmentPreference = teamAssignmentPreference;
+      updates.teamAssignmentPreference = teamAssignmentPreference;
+    }
+
+    if (projectTypePreference !== undefined) {
+      if (
+        !["software", "hardware", "research", "any"].includes(
+          projectTypePreference
+        )
+      ) {
+        throw new ValidationError(
+          "Project type preference must be one of: software, hardware, research, any"
+        );
+      }
+      supervisor.settings.projectTypePreference = projectTypePreference;
+      updates.projectTypePreference = projectTypePreference;
+    }
+
+    // Save the updated supervisor
     await supervisor.save();
 
-    logger.info("Supervisor configuration updated", {
-      supervisorId: supervisor._id,
-      updatedBy: body.adminId,
+    // Create notification for supervisor
+    await Notification.create({
+      user: supervisor.user._id,
+      title: "Configuration Updated",
+      message:
+        "Your supervisor configuration settings have been updated by an administrator",
+      type: "admin_action",
+      meta: {
+        adminId,
+        action: "update_configuration",
+        updates,
+      },
+    });
+
+    // Log the update
+    logger.info(`Updated supervisor configuration for ${supervisorId}`, {
+      supervisorId,
+      adminId,
+      updates,
     });
 
     return {
       success: true,
       message: "Supervisor configuration updated successfully",
       data: {
-        supervisorId: supervisor._id,
-        updatedFields: Object.keys(body).filter((k) => k !== "adminId"),
+        settings: supervisor.settings,
       },
     };
   } catch (error) {
-    logger.error("Failed to update supervisor configuration", {
+    logger.error(`Error updating supervisor configuration: ${error.message}`, {
       error,
-      supervisorId: params.id,
+      supervisorId,
+      adminId,
     });
-    throw error;
-  }
-};
-
-// Get supervisor activity log
-export const getSupervisorActivity = async ({ params, query }) => {
-  try {
-    const supervisor = await Supervisor.findById(params.id).populate(
-      "user",
-      "fullName email"
+    throw new Error(
+      `Failed to update supervisor configuration: ${error.message}`
     );
-
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor not found");
-    }
-
-    const limit = parseInt(query.limit) || 50;
-
-    // Get recent activity
-    const recentActivity = (supervisor.recentActivity || [])
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, limit);
-
-    // Get related entity details where needed
-    const activityWithDetails = [];
-
-    for (const activity of recentActivity) {
-      let entityDetails = null;
-
-      if (activity.relatedTo && activity.relatedModel) {
-        try {
-          switch (activity.relatedModel) {
-            case "Student":
-              const student = await Student.findById(
-                activity.relatedTo
-              ).populate("user", "fullName");
-              if (student) {
-                entityDetails = {
-                  name: student.user.fullName,
-                  id: student._id,
-                };
-              }
-              break;
-            case "Team":
-              const team = await Team.findById(activity.relatedTo);
-              if (team) {
-                entityDetails = {
-                  name: team.name,
-                  id: team._id,
-                };
-              }
-              break;
-            case "Project":
-              const project = await Project.findById(activity.relatedTo);
-              if (project) {
-                entityDetails = {
-                  name: project.title,
-                  id: project._id,
-                };
-              }
-              break;
-          }
-        } catch (err) {
-          logger.warn("Failed to get entity details for activity", {
-            error: err,
-            activityId: activity._id,
-          });
-        }
-      }
-
-      activityWithDetails.push({
-        ...activity.toObject(),
-        entityDetails,
-      });
-    }
-
-    return {
-      success: true,
-      data: {
-        supervisor: {
-          _id: supervisor._id,
-          name: supervisor.user.fullName,
-          email: supervisor.user.email,
-        },
-        activities: activityWithDetails,
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to get supervisor activity", {
-      error,
-      supervisorId: params.id,
-    });
-    throw error;
   }
 };
 
-// Verify progress tracking done by a supervisor
-export const verifySupervisorProgressTracking = async ({ params }) => {
+/**
+ * Create an administrative task for a session
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Created task
+ */
+export const createAdminTask = async (context) => {
   try {
-    const supervisor = await Supervisor.findById(params.id).populate(
-      "user",
-      "fullName"
-    );
-
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor not found");
-    }
-
-    // Get all progress tracking data
-    const studentProgressTracking =
-      supervisor.progressTracking?.trackedStudents || [];
-    const teamProgressTracking =
-      supervisor.progressTracking?.trackedTeams || [];
-
-    // Get all teams supervised by this supervisor
-    const teams = await Team.find({
-      "supervisors.supervisor": supervisor._id,
-      "supervisors.status": "active",
-    }).populate({
-      path: "members.user",
-      select: "fullName",
-    });
-
-    // Create a map of studentId -> studentName for easier lookup
-    const studentMap = {};
-    teams.forEach((team) => {
-      team.members.forEach((member) => {
-        if (member.status === "active") {
-          studentMap[member.user._id.toString()] = {
-            name: member.user.fullName,
-            team: {
-              id: team._id,
-              name: team.name,
-            },
-          };
-        }
-      });
-    });
-
-    // Create a map of teamId -> teamName for easier lookup
-    const teamMap = {};
-    teams.forEach((team) => {
-      teamMap[team._id.toString()] = {
-        name: team.name,
-        memberCount: team.members.filter((m) => m.status === "active").length,
-      };
-    });
-
-    // Analyze student progress tracking
-    const studentTracking = studentProgressTracking.map((tracked) => {
-      const studentId = tracked.student.toString();
-      const student = studentMap[studentId];
-
-      return {
-        studentId,
-        studentName: student?.name || "Unknown Student",
-        team: student?.team || null,
-        lastUpdated: tracked.lastUpdated,
-        trackingCount: tracked.progressNotes?.length || 0,
-        latestStatus:
-          tracked.progressNotes?.length > 0
-            ? tracked.progressNotes[tracked.progressNotes.length - 1].status
-            : null,
-        latestProgress:
-          tracked.progressNotes?.length > 0
-            ? tracked.progressNotes[tracked.progressNotes.length - 1]
-                .progressPercentage
-            : null,
-      };
-    });
-
-    // Analyze team progress tracking
-    const teamTracking = teamProgressTracking.map((tracked) => {
-      const teamId = tracked.team.toString();
-      const team = teamMap[teamId];
-
-      return {
-        teamId,
-        teamName: team?.name || "Unknown Team",
-        memberCount: team?.memberCount || 0,
-        lastUpdated: tracked.lastUpdated,
-        trackingCount: tracked.progressNotes?.length || 0,
-        latestDynamics:
-          tracked.progressNotes?.length > 0
-            ? tracked.progressNotes[tracked.progressNotes.length - 1]
-                .teamDynamics
-            : null,
-        latestProgress:
-          tracked.progressNotes?.length > 0
-            ? tracked.progressNotes[tracked.progressNotes.length - 1]
-                .overallProgress
-            : null,
-      };
-    });
-
-    // Identify students without tracking
-    const studentsWithoutTracking = Object.entries(studentMap)
-      .filter(
-        ([studentId]) =>
-          !studentProgressTracking.some(
-            (t) => t.student.toString() === studentId
-          )
-      )
-      .map(([studentId, data]) => ({
-        studentId,
-        studentName: data.name,
-        team: data.team,
-      }));
-
-    // Identify teams without tracking
-    const teamsWithoutTracking = Object.entries(teamMap)
-      .filter(
-        ([teamId]) =>
-          !teamProgressTracking.some((t) => t.team.toString() === teamId)
-      )
-      .map(([teamId, data]) => ({
-        teamId,
-        teamName: data.name,
-        memberCount: data.memberCount,
-      }));
-
-    return {
-      success: true,
-      data: {
-        supervisor: {
-          _id: supervisor._id,
-          name: supervisor.user.fullName,
-        },
-        trackingMetrics: {
-          studentTracking: {
-            tracked: studentTracking.length,
-            total: Object.keys(studentMap).length,
-            trackingPercentage:
-              Object.keys(studentMap).length > 0
-                ? (studentTracking.length / Object.keys(studentMap).length) *
-                  100
-                : 0,
-          },
-          teamTracking: {
-            tracked: teamTracking.length,
-            total: Object.keys(teamMap).length,
-            trackingPercentage:
-              Object.keys(teamMap).length > 0
-                ? (teamTracking.length / Object.keys(teamMap).length) * 100
-                : 0,
-          },
-        },
-        studentTrackingDetails: studentTracking,
-        teamTrackingDetails: teamTracking,
-        gaps: {
-          studentsWithoutTracking,
-          teamsWithoutTracking,
-        },
-        recommendations: [
-          ...(studentsWithoutTracking.length > 0
-            ? ["Set up progress tracking for students without monitoring"]
-            : []),
-          ...(teamsWithoutTracking.length > 0
-            ? ["Set up progress tracking for teams without monitoring"]
-            : []),
-          studentTracking.filter(
-            (st) =>
-              !st.lastUpdated ||
-              new Date(st.lastUpdated) <
-                new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-          ).length > 0
-            ? ["Update progress for students not updated in the last two weeks"]
-            : [],
-          teamTracking.filter(
-            (tt) =>
-              !tt.lastUpdated ||
-              new Date(tt.lastUpdated) <
-                new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-          ).length > 0
-            ? ["Update progress for teams not updated in the last two weeks"]
-            : [],
-        ],
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to verify supervisor progress tracking", {
-      error,
-      supervisorId: params.id,
-    });
-    throw error;
-  }
-};
-
-// Review supervisor marking activity
-export const reviewSupervisorMarkingActivity = async ({ params }) => {
-  try {
-    const supervisor = await Supervisor.findById(params.id).populate(
-      "user",
-      "fullName"
-    );
-
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor not found");
-    }
-
-    // Get marking data
-    const markingData = supervisor.marksGiven || [];
-
-    // Get supervised students with teams
-    const teams = await Team.find({
-      "supervisors.supervisor": supervisor._id,
-      "supervisors.status": "active",
-    }).populate({
-      path: "members.user",
-      select: "fullName",
-    });
-
-    // Create a map of studentId -> studentName and team for easier lookup
-    const studentMap = {};
-    teams.forEach((team) => {
-      team.members.forEach((member) => {
-        if (member.status === "active") {
-          studentMap[member.user._id.toString()] = {
-            name: member.user.fullName,
-            team: {
-              id: team._id,
-              name: team.name,
-            },
-          };
-        }
-      });
-    });
-
-    // Analyze marking activity
-    const markingAnalysis = markingData.map((marking) => {
-      const studentId = marking.student.toString();
-      const student = studentMap[studentId];
-
-      return {
-        studentId,
-        studentName: student?.name || "Unknown Student",
-        team: student?.team || null,
-        markCount: marking.marks?.length || 0,
-        markingTypes: marking.marks?.map((m) => m.type) || [],
-        averageScore:
-          marking.marks?.length > 0
-            ? marking.marks.reduce((sum, m) => sum + m.score, 0) /
-              marking.marks.length
-            : null,
-        lastMarkedDate:
-          marking.marks?.length > 0
-            ? marking.marks[marking.marks.length - 1].date
-            : null,
-        hasFeedback:
-          marking.marks?.some((m) => m.feedback?.length > 0) || false,
-      };
-    });
-
-    // Identify students without marking
-    const studentsWithoutMarking = Object.entries(studentMap)
-      .filter(
-        ([studentId]) =>
-          !markingData.some((m) => m.student.toString() === studentId)
-      )
-      .map(([studentId, data]) => ({
-        studentId,
-        studentName: data.name,
-        team: data.team,
-      }));
-
-    // Calculate statistics
-    const totalMarks = markingData.reduce(
-      (sum, m) => sum + (m.marks?.length || 0),
-      0
-    );
-    const studentsWithMarks = markingData.length;
-    const totalStudents = Object.keys(studentMap).length;
-
-    // Generate quality metrics
-    const marksWithFeedback = markingData.reduce((sum, m) => {
-      return (
-        sum +
-        (m.marks?.filter((mark) => mark.feedback?.length > 0)?.length || 0)
-      );
-    }, 0);
-
-    const marksWithBreakdown = markingData.reduce((sum, m) => {
-      return (
-        sum +
-        (m.marks?.filter(
-          (mark) => mark.breakdown && Object.keys(mark.breakdown).length > 0
-        )?.length || 0)
-      );
-    }, 0);
-
-    return {
-      success: true,
-      data: {
-        supervisor: {
-          _id: supervisor._id,
-          name: supervisor.user.fullName,
-        },
-        markingMetrics: {
-          totalMarks,
-          studentsWithMarks,
-          totalStudents,
-          markingCoverage:
-            totalStudents > 0 ? (studentsWithMarks / totalStudents) * 100 : 0,
-          marksPerStudent:
-            studentsWithMarks > 0 ? totalMarks / studentsWithMarks : 0,
-          qualityMetrics: {
-            percentWithFeedback:
-              totalMarks > 0 ? (marksWithFeedback / totalMarks) * 100 : 0,
-            percentWithBreakdown:
-              totalMarks > 0 ? (marksWithBreakdown / totalMarks) * 100 : 0,
-          },
-        },
-        markingDetails: markingAnalysis,
-        gaps: {
-          studentsWithoutMarking,
-          incompleteCategories: markingAnalysis
-            .filter((m) => !m.markingTypes.includes("overall"))
-            .map((m) => ({
-              studentId: m.studentId,
-              studentName: m.studentName,
-              team: m.team,
-              missingCategories: [
-                "proposal",
-                "progress",
-                "final",
-                "presentation",
-                "overall",
-              ].filter((t) => !m.markingTypes.includes(t)),
-            })),
-        },
-        recommendations: [
-          ...(studentsWithoutMarking.length > 0
-            ? ["Provide marks for students without any assessments"]
-            : []),
-          marksWithFeedback / totalMarks < 0.8
-            ? ["Increase the amount of written feedback provided with marks"]
-            : [],
-          markingAnalysis.filter((m) => !m.markingTypes.includes("overall"))
-            .length > 0
-            ? ["Ensure all students have an overall assessment"]
-            : [],
-        ],
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to review supervisor marking activity", {
-      error,
-      supervisorId: params.id,
-    });
-    throw error;
-  }
-};
-
-// Fix missing or incomplete supervisor functionality
-export const fixSupervisorFunctionality = async ({ params, body }) => {
-  try {
-    const supervisor = await Supervisor.findById(params.id).populate(
-      "user",
-      "fullName email"
-    );
-
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor not found");
-    }
-
-    const { action } = body;
-
-    switch (action) {
-      case "initialize_progress_tracking": {
-        // Set up progress tracking for all students and teams
-        const teams = await Team.find({
-          "supervisors.supervisor": supervisor._id,
-          "supervisors.status": "active",
-        }).populate({
-          path: "members.user",
-          select: "fullName",
-        });
-
-        // Initialize progress tracking
-        if (!supervisor.progressTracking) {
-          supervisor.progressTracking = {
-            trackedStudents: [],
-            trackedTeams: [],
-          };
-        }
-
-        // Initialize team tracking
-        for (const team of teams) {
-          const existingTeamTracking =
-            supervisor.progressTracking.trackedTeams.find(
-              (tt) => tt.team.toString() === team._id.toString()
-            );
-
-          if (!existingTeamTracking) {
-            supervisor.progressTracking.trackedTeams.push({
-              team: team._id,
-              progressNotes: [
-                {
-                  note: "Initial progress tracking set up by admin",
-                  date: new Date(),
-                  overallProgress: 0,
-                  teamDynamics: "good",
-                  concerns: [],
-                  achievements: [],
-                },
-              ],
-              lastUpdated: new Date(),
-            });
-          }
-
-          // Initialize student tracking
-          for (const member of team.members) {
-            if (member.status === "active") {
-              const existingStudentTracking =
-                supervisor.progressTracking.trackedStudents.find(
-                  (ts) => ts.student.toString() === member.user._id.toString()
-                );
-
-              if (!existingStudentTracking) {
-                supervisor.progressTracking.trackedStudents.push({
-                  student: member.user._id,
-                  progressNotes: [
-                    {
-                      note: "Initial progress tracking set up by admin",
-                      date: new Date(),
-                      progressPercentage: 0,
-                      status: "on_track",
-                      milestones: [],
-                    },
-                  ],
-                  lastUpdated: new Date(),
-                });
-              }
-            }
-          }
-        }
-
-        await supervisor.save();
-
-        return {
-          success: true,
-          message: "Progress tracking initialized for all students and teams",
-          data: {
-            teamsTracked: supervisor.progressTracking.trackedTeams.length,
-            studentsTracked: supervisor.progressTracking.trackedStudents.length,
-          },
-        };
-      }
-
-      case "fix_missing_marks": {
-        // Identify and add placeholder marks for students without any
-        const teams = await Team.find({
-          "supervisors.supervisor": supervisor._id,
-          "supervisors.status": "active",
-        });
-
-        const studentIds = new Set();
-        teams.forEach((team) => {
-          team.members.forEach((member) => {
-            if (member.status === "active") {
-              studentIds.add(member.user.toString());
-            }
-          });
-        });
-
-        // Get all projects
-        const projects = await Project.find({
-          team: { $in: teams.map((t) => t._id) },
-        });
-        const projectMap = {};
-        projects.forEach((project) => {
-          projectMap[project.team.toString()] = project._id;
-        });
-
-        let fixedCount = 0;
-
-        // Check each student
-        for (const studentId of studentIds) {
-          const studentTeam = teams.find((team) =>
-            team.members.some((m) => m.user.toString() === studentId)
-          );
-
-          if (studentTeam && projectMap[studentTeam._id.toString()]) {
-            const projectId = projectMap[studentTeam._id.toString()];
-
-            // Check if student has marks
-            const hasMarks = supervisor.marksGiven.some(
-              (m) => m.student.toString() === studentId
-            );
-
-            if (!hasMarks) {
-              // Add placeholder mark
-              supervisor.marksGiven.push({
-                student: studentId,
-                project: projectId,
-                marks: [
-                  {
-                    type: "progress",
-                    score: 70, // Default placeholder score
-                    feedback:
-                      "Initial assessment created by admin. Please update with actual assessment.",
-                    date: new Date(),
-                  },
-                ],
-              });
-
-              fixedCount++;
-            }
-          }
-        }
-
-        await supervisor.save();
-
-        return {
-          success: true,
-          message: `Added placeholder marks for ${fixedCount} students without assessments`,
-          data: {
-            studentsFixed: fixedCount,
-          },
-        };
-      }
-
-      case "add_meeting_template": {
-        // Add template meetings for teams without scheduled meetings
-        const teams = await Team.find({
-          "supervisors.supervisor": supervisor._id,
-          "supervisors.status": "active",
-        }).select("_id name");
-
-        if (!supervisor.scheduledMeetings) {
-          supervisor.scheduledMeetings = [];
-        }
-
-        let addedCount = 0;
-
-        // For each team, check if there's a meeting
-        for (const team of teams) {
-          const hasTeamMeeting = supervisor.scheduledMeetings.some(
-            (m) =>
-              m.entityType === "Team" &&
-              m.entityId.toString() === team._id.toString()
-          );
-
-          if (!hasTeamMeeting) {
-            // Schedule a template weekly meeting
-            const nextWeek = new Date();
-            nextWeek.setDate(nextWeek.getDate() + 7);
-            nextWeek.setHours(10, 0, 0, 0); // 10 AM
-
-            supervisor.scheduledMeetings.push({
-              title: `Weekly Progress Meeting with ${team.name}`,
-              description: "Regular weekly progress review meeting",
-              withEntity: "team",
-              entityId: team._id,
-              entityType: "Team",
-              date: nextWeek,
-              duration: 60,
-              location: "Online",
-              meetingLink: "https://meet.google.com/",
-              agenda: [
-                "Progress review",
-                "Address challenges",
-                "Set goals for next week",
-              ],
-              isRecurring: true,
-              recurringPattern: {
-                frequency: "weekly",
-                endDate: new Date(
-                  nextWeek.getTime() + 60 * 24 * 60 * 60 * 1000
-                ), // 60 days
-              },
-              reminderSent: false,
-            });
-
-            addedCount++;
-          }
-        }
-
-        await supervisor.save();
-
-        return {
-          success: true,
-          message: `Added template meetings for ${addedCount} teams`,
-          data: {
-            teamsWithNewMeetings: addedCount,
-            totalScheduledMeetings: supervisor.scheduledMeetings.length,
-          },
-        };
-      }
-
-      default:
-        throw new ValidationError(`Unknown action: ${action}`);
-    }
-  } catch (error) {
-    logger.error("Failed to fix supervisor functionality", {
-      error,
-      supervisorId: params.id,
-      action: body.action,
-    });
-    throw error;
-  }
-};
-
-// Process supervisor approval
-export const processSupervisorApproval = async ({ params, body, user }) => {
-  try {
-    const supervisor = await Supervisor.findById(params.id).populate(
-      "user",
-      "fullName email department"
-    );
-
-    if (!supervisor) {
-      throw new NotFoundError("Supervisor profile not found");
-    }
-
-    // Validate admin privileges
-    const admin = await User.findById(user.id);
-    if (!admin || (admin.role !== "admin" && admin.role !== "superadmin")) {
-      throw new ForbiddenError("Only administrators can approve supervisors");
-    }
-
-    if (body.action === "approve") {
-      // Update supervisor status
-      await User.findByIdAndUpdate(supervisor.user._id, {
-        status: "active",
-        isApproved: true,
-      });
-
-      // Send approval notification
-      const notification = {
-        type: "account_approved",
-        message: "Your supervisor account has been approved",
-        details: {
-          approvedBy: admin.fullName,
-          department: supervisor.user.department,
-        },
-      };
-
-      if (!supervisor.notifications) {
-        supervisor.notifications = [];
-      }
-      supervisor.notifications.push(notification);
-
-      // Send approval email
-      await sendEmail({
-        to: supervisor.user.email,
-        subject: "Supervisor Account Approved",
-        template: "supervisorApproval",
-        context: {
-          name: supervisor.user.fullName,
-          loginUrl: `${process.env.CLIENT_URL}/login`,
-        },
-      });
-
-      await supervisor.save();
-
-      return {
-        success: true,
-        message: "Supervisor approved successfully",
-        data: {
-          supervisorId: supervisor._id,
-          email: supervisor.user.email,
-          approvedBy: admin.fullName,
-          approvedAt: new Date(),
-        },
-      };
-    } else if (body.action === "reject") {
-      // Send rejection notification
-      await sendEmail({
-        to: supervisor.user.email,
-        subject: "Supervisor Account Application Status",
-        template: "supervisorRejection",
-        context: {
-          name: supervisor.user.fullName,
-          reason: body.reason || "Does not meet current requirements",
-        },
-      });
-
-      // Delete supervisor account
-      await User.findByIdAndDelete(supervisor.user._id);
-      await Supervisor.findByIdAndDelete(supervisor._id);
-
-      return {
-        success: true,
-        message: "Supervisor application rejected",
-        data: {
-          email: supervisor.user.email,
-          rejectedBy: admin.fullName,
-          rejectedAt: new Date(),
-        },
-      };
-    }
-
-    throw new ValidationError("Invalid action specified");
-  } catch (error) {
-    logger.error("Failed to process supervisor approval", {
-      error,
-      supervisorId: params.id,
-    });
-    throw error;
-  }
-};
-
-// Get detailed admin analytics
-export const getDetailedAnalytics = async ({ query }) => {
-  try {
-    const session = query.sessionId
-      ? await Session.findById(query.sessionId)
-      : await Session.findOne({ status: "active" });
-
-    if (!session) {
-      throw new NotFoundError("No active or specified session found");
-    }
-
-    // Get all teams in session
-    const teams = await Team.find({ session: session._id })
-      .populate("members.user", "fullName department")
-      .populate("supervisors.supervisor");
-
-    // Get all projects in session
-    const projects = await Project.find({ session: session._id });
-
-    // Calculate analytics
-    const analytics = {
-      session: {
-        name: session.name,
-        startDate: session.startDate,
-        endDate: session.endDate,
-        progress: calculateSessionProgress(session),
-        status: session.status,
-      },
-      teams: {
-        total: teams.length,
-        withSupervisor: teams.filter((t) => t.supervisors.length > 0).length,
-        withoutSupervisor: teams.filter((t) => t.supervisors.length === 0)
-          .length,
-        sizeDistribution: {
-          size1: teams.filter((t) => t.members.length === 1).length,
-          size2: teams.filter((t) => t.members.length === 2).length,
-          size3: teams.filter((t) => t.members.length === 3).length,
-          size4: teams.filter((t) => t.members.length === 4).length,
-        },
-      },
-      projects: {
-        total: projects.length,
-        typeDistribution: projects.reduce((acc, p) => {
-          acc[p.type] = (acc[p.type] || 0) + 1;
-          return acc;
-        }, {}),
-        statusDistribution: projects.reduce((acc, p) => {
-          acc[p.status] = (acc[p.status] || 0) + 1;
-          return acc;
-        }, {}),
-      },
-      supervisors: {
-        total: await Supervisor.countDocuments(),
-        pending: await User.countDocuments({
-          role: "supervisor",
-          isApproved: false,
-        }),
-        active: await User.countDocuments({
-          role: "supervisor",
-          isApproved: true,
-          status: "active",
-        }),
-        workloadDistribution: await getWorkloadDistribution(),
-      },
-      deadlines: session.deadlines.map((d) => ({
-        ...d.toObject(),
-        isPast: new Date() > new Date(d.dueDate),
-        daysRemaining: Math.max(
-          0,
-          Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24))
-        ),
-      })),
-    };
-
-    return {
-      success: true,
-      data: analytics,
-    };
-  } catch (error) {
-    logger.error("Failed to get detailed analytics", { error });
-    throw error;
-  }
-};
-
-// Helper function to get supervisor workload distribution
-const getWorkloadDistribution = async () => {
-  const supervisors = await Supervisor.find()
-    .populate("user", "fullName department")
-    .populate("teams");
-
-  return supervisors.map((s) => ({
-    _id: s._id,
-    name: s.user.fullName,
-    department: s.user.department,
-    teamCount: s.teams.length,
-    studentCount: s.teams.reduce(
-      (acc, t) => acc + t.members.filter((m) => m.status === "active").length,
-      0
-    ),
-    projectTypes: s.teams.reduce((acc, t) => {
-      if (t.project) {
-        acc[t.project.type] = (acc[t.project.type] || 0) + 1;
-      }
-      return acc;
-    }, {}),
-  }));
-};
-
-// Enhanced: Create a timeline for sessions
-export const createSessionTimeline = async ({ params, body, user }) => {
-  try {
+    const { params, body } = context;
     const { sessionId } = params;
-    const session = await Session.findById(sessionId);
+    const { title, description, dueDate, category, priority, assignedTo } =
+      body;
 
-    if (!session) {
-      throw new NotFoundError("Session not found");
-    }
-
-    // Create timeline
-    const timeline = new Timeline({
-      session: sessionId,
-      name: body.name || `${session.name} Timeline`,
-      description: body.description || `Timeline for ${session.name}`,
-      startDate: body.startDate || session.startDate,
-      endDate: body.endDate || session.endDate,
-      createdBy: user._id,
-      scope: body.scope || "global",
-      targetDepartments: body.targetDepartments || [],
-      targetTeams: body.targetTeams || [],
-      targetUsers: body.targetUsers || [],
-    });
-
-    // Add timeline segments
-    if (body.segments && Array.isArray(body.segments)) {
-      timeline.segments = body.segments;
-    } else {
-      // Create default segments based on session
-      const sessionDuration = session.endDate - session.startDate;
-      const segmentDuration = Math.floor(sessionDuration / 3); // 3 default segments
-
-      // Setup phase
-      timeline.segments.push({
-        name: "Setup Phase",
-        description: "Initial setup and team formation",
-        startDate: new Date(session.startDate),
-        endDate: new Date(session.startDate.getTime() + segmentDuration),
-        color: "#3498db",
-        importance: 7,
-        tasks: [
-          {
-            title: "Team Formation",
-            description: "Form teams for the session",
-            startDate: new Date(session.startDate),
-            dueDate: new Date(
-              session.startDate.getTime() + segmentDuration / 3
-            ),
-            assignedTo: "students",
-            priority: "high",
-            createdBy: user._id,
-          },
-          {
-            title: "Supervisor Assignment",
-            description: "Assign supervisors to teams",
-            startDate: new Date(
-              session.startDate.getTime() + segmentDuration / 3
-            ),
-            dueDate: new Date(
-              session.startDate.getTime() + segmentDuration / 2
-            ),
-            assignedTo: "admins",
-            priority: "high",
-            createdBy: user._id,
-          },
-        ],
-      });
-
-      // Development phase
-      timeline.segments.push({
-        name: "Development Phase",
-        description: "Main project development period",
-        startDate: new Date(session.startDate.getTime() + segmentDuration),
-        endDate: new Date(session.startDate.getTime() + segmentDuration * 2),
-        color: "#2ecc71",
-        importance: 10,
-        tasks: [
-          {
-            title: "Progress Report",
-            description: "Submit progress report",
-            startDate: new Date(session.startDate.getTime() + segmentDuration),
-            dueDate: new Date(
-              session.startDate.getTime() +
-                segmentDuration +
-                segmentDuration / 2
-            ),
-            assignedTo: "students",
-            priority: "medium",
-            createdBy: user._id,
-          },
-        ],
-      });
-
-      // Final phase
-      timeline.segments.push({
-        name: "Final Phase",
-        description: "Project completion and evaluation",
-        startDate: new Date(session.startDate.getTime() + segmentDuration * 2),
-        endDate: new Date(session.endDate),
-        color: "#e74c3c",
-        importance: 9,
-        tasks: [
-          {
-            title: "Final Submission",
-            description: "Submit final project",
-            startDate: new Date(
-              session.startDate.getTime() + segmentDuration * 2
-            ),
-            dueDate: new Date(session.endDate.getTime() - segmentDuration / 4),
-            assignedTo: "students",
-            priority: "critical",
-            createdBy: user._id,
-          },
-          {
-            title: "Evaluation",
-            description: "Evaluate submitted projects",
-            startDate: new Date(
-              session.endDate.getTime() - segmentDuration / 4
-            ),
-            dueDate: new Date(session.endDate),
-            assignedTo: "supervisors",
-            priority: "high",
-            createdBy: user._id,
-          },
-        ],
-      });
-    }
-
-    await timeline.save();
-
-    return {
-      success: true,
-      message: "Timeline created successfully",
-      data: timeline,
-    };
-  } catch (error) {
-    logger.error("Failed to create session timeline", { error });
-    throw error;
-  }
-};
-
-// Enhanced: Get session timeline
-export const getSessionTimeline = async ({ params, query }) => {
-  try {
-    const { sessionId } = params;
-
-    const timeline = await Timeline.findOne({
-      session: sessionId,
-      scope: query.scope || "global",
-    })
-      .populate("createdBy", "fullName email")
-      .lean();
-
-    if (!timeline) {
-      return {
-        success: false,
-        message: "No timeline found for this session",
-      };
-    }
-
-    // Calculate the progress for the timeline on-the-fly
-    let totalProgress = 0;
-    let weightSum = 0;
-
-    for (const segment of timeline.segments) {
-      let segmentProgress = 0;
-
-      if (segment.tasks && segment.tasks.length > 0) {
-        let taskProgressSum = 0;
-        segment.tasks.forEach((task) => {
-          taskProgressSum += task.progress;
-        });
-        segmentProgress = Math.round(taskProgressSum / segment.tasks.length);
-      }
-
-      segment.progress = segmentProgress;
-      totalProgress += segmentProgress * segment.importance;
-      weightSum += segment.importance;
-    }
-
-    const overallProgress =
-      weightSum > 0 ? Math.round(totalProgress / weightSum) : 0;
-
-    return {
-      success: true,
-      data: {
-        ...timeline,
-        overallProgress,
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to get session timeline", { error });
-    throw error;
-  }
-};
-
-// Enhanced: Update timeline task
-export const updateTimelineTask = async ({ params, body }) => {
-  try {
-    const { timelineId, segmentId, taskId } = params;
-
-    const timeline = await Timeline.findById(timelineId);
-    if (!timeline) {
-      throw new NotFoundError("Timeline not found");
-    }
-
-    const segment = timeline.segments.id(segmentId);
-    if (!segment) {
-      throw new NotFoundError("Timeline segment not found");
-    }
-
-    const task = segment.tasks.id(taskId);
-    if (!task) {
-      throw new NotFoundError("Task not found");
-    }
-
-    // Update task fields
-    Object.keys(body).forEach((key) => {
-      if (key !== "_id" && key !== "createdAt" && key !== "updatedAt") {
-        task[key] = body[key];
-      }
-    });
-
-    task.lastUpdated = new Date();
-
-    // Recalculate progress after update
-    if (body.status === "completed") {
-      task.progress = 100;
-    }
-
-    await timeline.save();
-
-    // If task is updated, check if notifications need to be sent
-    if (
-      task.status === "delayed" ||
-      (body.priority === "critical" && task.status !== "completed")
-    ) {
-      // Create notifications for relevant users
-      const session = await Session.findById(timeline.session);
-
-      // Determine notification recipients based on assignedTo
-      let userIds = [];
-
-      if (task.targetUsers && task.targetUsers.length > 0) {
-        userIds = task.targetUsers;
-      } else if (task.targetTeams && task.targetTeams.length > 0) {
-        // Get all members from targeted teams
-        const teams = await Team.find({
-          _id: { $in: task.targetTeams },
-          session: timeline.session,
-        });
-
-        teams.forEach((team) => {
-          team.members.forEach((member) => {
-            userIds.push(member.user);
-          });
-        });
-      } else {
-        // Based on general assignedTo
-        const roleMap = {
-          students: "student",
-          supervisors: "supervisor",
-          admins: "admin",
-        };
-
-        if (task.assignedTo !== "all") {
-          const role = roleMap[task.assignedTo];
-          const users = await User.find({
-            role,
-            status: "active",
-          });
-          userIds = users.map((u) => u._id);
-        }
-      }
-
-      // Create notifications
-      const notifications = userIds.map((userId) => ({
-        title:
-          task.status === "delayed" ? "Task Delayed" : "Critical Task Update",
-        message: `Task "${task.title}" in ${segment.name} has been updated. Status: ${task.status}, Priority: ${task.priority}`,
-        type: "task_update",
-        user: userId,
-        isRead: false,
-        metadata: {
-          timelineId: timeline._id,
-          segmentId: segment._id,
-          taskId: task._id,
-          sessionId: timeline.session,
-        },
-      }));
-
-      if (notifications.length > 0) {
-        await Notification.insertMany(notifications);
-      }
-    }
-
-    return {
-      success: true,
-      message: "Task updated successfully",
-      data: task,
-    };
-  } catch (error) {
-    logger.error("Failed to update timeline task", { error });
-    throw error;
-  }
-};
-
-// Enhanced: Get session analytics
-export const getSessionAnalytics = async ({ params, query }) => {
-  try {
-    const { sessionId } = params;
-    const timeRange = query.timeRange || "month"; // week, month, semester
-    const groupBy = query.groupBy || "day"; // day, week, month
-
-    // Validate session exists
+    // Find the session
     const session = await Session.findById(sessionId);
     if (!session) {
       throw new NotFoundError("Session not found");
     }
 
-    // Get the most recent analytics data
-    const latestAnalytics = await AdminAnalytics.findOne({
-      session: sessionId,
-    }).sort({ date: -1 });
+    // Find session timeline or create one if it doesn't exist
+    let timeline = await SessionTimeline.findOne({ session: sessionId });
 
-    // Get aggregated metrics for trends
-    const startDate = new Date();
-    let endDate = new Date();
-
-    switch (timeRange) {
-      case "week":
-        startDate.setDate(startDate.getDate() - 7);
-        break;
-      case "month":
-        startDate.setMonth(startDate.getMonth() - 1);
-        break;
-      case "semester":
-        startDate.setTime(session.startDate.getTime());
-        break;
-      default:
-        startDate.setMonth(startDate.getMonth() - 1);
-    }
-
-    const analyticsData = await AdminAnalytics.getAggregatedMetrics(
-      sessionId,
-      startDate,
-      endDate,
-      groupBy
-    );
-
-    // Get performance metrics
-    const performanceMetrics = await AdminAnalytics.getPerformanceMetrics(
-      sessionId,
-      timeRange
-    );
-
-    // Get detailed data about supervision
-    const supervisorData = await Supervisor.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "userDetails",
-        },
-      },
-      { $unwind: "$userDetails" },
-      {
-        $lookup: {
-          from: "teams",
-          localField: "_id",
-          foreignField: "supervisors.supervisor",
-          as: "supervisedTeams",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: "$userDetails.fullName",
-          email: "$userDetails.email",
-          department: "$userDetails.department",
-          teamsCount: { $size: "$supervisedTeams" },
-          studentsCount: { $size: "$students" },
-          responseRate: { $ifNull: ["$metrics.responseRate", 0] },
-          avgResponseTime: { $ifNull: ["$metrics.avgResponseTime", 0] },
-        },
-      },
-      { $sort: { teamsCount: -1 } },
-    ]);
-
-    // Get student progress statistics
-    const studentProgress = await Team.aggregate([
-      { $match: { session: mongoose.Types.ObjectId(sessionId) } },
-      {
-        $lookup: {
-          from: "projects",
-          localField: "project",
-          foreignField: "_id",
-          as: "projectDetails",
-        },
-      },
-      {
-        $unwind: { path: "$projectDetails", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          avgProgress: { $avg: { $ifNull: ["$projectDetails.progress", 0] } },
-        },
-      },
-    ]);
-
-    // Get teams without supervisors
-    const teamsWithoutSupervisor = await Team.countDocuments({
-      session: sessionId,
-      "supervisors.0": { $exists: false },
-    });
-
-    return {
-      success: true,
-      data: {
-        overview: latestAnalytics
-          ? {
-              students: latestAnalytics.studentMetrics.totalRegistered,
-              supervisors: latestAnalytics.supervisorMetrics.totalActive,
-              teams: latestAnalytics.teamMetrics.totalActive,
-              averageProgress: latestAnalytics.studentMetrics.averageProgress,
-              atRiskTeams: latestAnalytics.teamMetrics.atRiskPercentage,
-            }
-          : null,
-        trends: analyticsData,
-        performance: performanceMetrics,
-        supervision: {
-          supervisors: supervisorData,
-          teamsWithoutSupervisor,
-          pendingSupervisors: await User.countDocuments({
-            role: "supervisor",
-            isApproved: false,
-          }),
-        },
-        teamProgress: studentProgress,
-        timeline: {
-          deadlines: await Timeline.findOne({ session: sessionId }).then(
-            (timeline) => (timeline ? timeline.getUpcomingTasks(30) : [])
-          ),
-        },
-      },
-    };
-  } catch (error) {
-    logger.error("Failed to get session analytics", { error });
-    throw error;
-  }
-};
-
-// Enhanced: Create administrative task
-export const createAdminTask = async ({ body, user }) => {
-  try {
-    const {
-      sessionId,
-      title,
-      description,
-      startDate,
-      dueDate,
-      assignedTo,
-      targetUsers,
-      targetTeams,
-      priority,
-    } = body;
-
-    // Validate session exists
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      throw new NotFoundError("Session not found");
-    }
-
-    // Find or create timeline
-    let timeline = await Timeline.findOne({ session: sessionId });
     if (!timeline) {
-      // Create a new timeline
-      timeline = new Timeline({
+      timeline = new SessionTimeline({
         session: sessionId,
-        name: `${session.name} Timeline`,
-        description: `Administrative timeline for ${session.name}`,
-        startDate: session.startDate,
-        endDate: session.endDate,
-        createdBy: user._id,
-        segments: [
-          {
-            name: "Administrative Tasks",
-            description: "Tasks created by administrators",
-            startDate: session.startDate,
-            endDate: session.endDate,
-            color: "#3498db",
-          },
-        ],
+        name: `Timeline for ${session.name}`,
+        description: `Administrative timeline for the ${session.name} session`,
+        tasks: [],
+        createdBy: context.jwt.payload.sub,
       });
     }
 
-    // Find the appropriate segment or use the first one
-    let segment;
-    const now = new Date();
-
-    for (const seg of timeline.segments) {
-      if (now >= seg.startDate && now <= seg.endDate) {
-        segment = seg;
-        break;
-      }
-    }
-
-    // If no suitable segment found, use the first one
-    if (!segment && timeline.segments.length > 0) {
-      segment = timeline.segments[0];
-    }
-
-    // If still no segment, create one
-    if (!segment) {
-      segment = {
-        name: "Administrative Tasks",
-        description: "Tasks created by administrators",
-        startDate: session.startDate,
-        endDate: session.endDate,
-        color: "#3498db",
-        tasks: [],
-      };
-      timeline.segments.push(segment);
-    }
-
-    // Create new task
+    // Create the new task
     const newTask = {
       title,
       description,
-      startDate: new Date(startDate),
       dueDate: new Date(dueDate),
-      assignedTo,
-      targetUsers: targetUsers || [],
-      targetTeams: targetTeams || [],
-      priority: priority || "medium",
+      category: category || "administrative",
       status: "pending",
-      createdBy: user._id,
+      priority: priority || "medium",
+      assignedTo: assignedTo || [],
+      createdAt: new Date(),
     };
 
-    segment.tasks.push(newTask);
+    // Add task to timeline
+    timeline.tasks.push(newTask);
+
+    // Save the timeline
     await timeline.save();
 
-    // Create notifications for task assignees
-    await createTaskNotifications(newTask, timeline, segment);
+    // Get the newly added task (last item in the array)
+    const createdTask = timeline.tasks[timeline.tasks.length - 1];
+
+    // If there are assigned users, create notifications
+    if (assignedTo && assignedTo.length > 0) {
+      const notifications = assignedTo.map((userId) => ({
+        user: userId,
+        title: "New Administrative Task",
+        message: `You have been assigned a new task: ${title}`,
+        type: "task_assignment",
+        meta: {
+          taskId: createdTask._id,
+          sessionId,
+          dueDate,
+        },
+      }));
+
+      await Notification.insertMany(notifications);
+    }
+
+    logger.info(`Created admin task for session ${sessionId}`, {
+      taskId: createdTask._id,
+      sessionId,
+      title,
+    });
 
     return {
       success: true,
-      message: "Task created successfully",
-      data: newTask,
+      message: "Administrative task created successfully",
+      data: createdTask,
     };
   } catch (error) {
-    logger.error("Failed to create admin task", { error });
+    logger.error("Failed to create admin task", {
+      error,
+      sessionId: context.params.sessionId,
+    });
     throw error;
-  }
-};
-
-// Helper function for task notifications
-const createTaskNotifications = async (task, timeline, segment) => {
-  // Determine notification recipients
-  let userIds = [];
-
-  if (task.targetUsers && task.targetUsers.length > 0) {
-    userIds = task.targetUsers;
-  } else if (task.targetTeams && task.targetTeams.length > 0) {
-    // Get all members from targeted teams
-    const teams = await Team.find({
-      _id: { $in: task.targetTeams },
-      session: timeline.session,
-    });
-
-    teams.forEach((team) => {
-      team.members.forEach((member) => {
-        userIds.push(member.user);
-      });
-    });
-  } else {
-    // Based on general assignedTo
-    const roleMap = {
-      students: "student",
-      supervisors: "supervisor",
-      admins: "admin",
-    };
-
-    if (task.assignedTo !== "all") {
-      const role = roleMap[task.assignedTo];
-      const users = await User.find({
-        role,
-        status: "active",
-      });
-      userIds = users.map((u) => u._id);
-    } else {
-      // If 'all', get active users
-      const users = await User.find({ status: "active" });
-      userIds = users.map((u) => u._id);
-    }
-  }
-
-  // Create notifications
-  const notifications = userIds.map((userId) => ({
-    title: "New Task Assigned",
-    message: `New task "${
-      task.title
-    }" has been assigned to you. Due: ${new Date(
-      task.dueDate
-    ).toLocaleDateString()}`,
-    type: "task_assignment",
-    user: userId,
-    isRead: false,
-    metadata: {
-      timelineId: timeline._id,
-      segmentId: segment._id,
-      taskId: task._id,
-      sessionId: timeline.session,
-    },
-  }));
-
-  if (notifications.length > 0) {
-    await Notification.insertMany(notifications);
   }
 };

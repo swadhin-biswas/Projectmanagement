@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { api } from '../../lib/api';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getStudentMessages, markMessageAsRead } from "../../api/student";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 const MessagesPanel = () => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     fetchMessages();
@@ -15,82 +21,110 @@ const MessagesPanel = () => {
 
   const fetchMessages = async () => {
     try {
-      const response = await api.get('/student/messages');
-      setMessages(response.data);
+      setIsLoading(true);
+      const data = await getStudentMessages();
+      setMessages(data || []);
     } catch (error) {
-      toast.error('Failed to fetch messages');
+      console.error("Error fetching messages:", error);
+      toast.error("Failed to fetch messages");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleMarkAsRead = async (messageId) => {
     try {
-      await api.post('/student/messages', {
-        content: newMessage,
-        recipientRole: 'supervisor'
-      });
-      toast.success('Message sent successfully');
-      setNewMessage('');
-      fetchMessages();
+      const response = await markMessageAsRead(messageId);
+      if (response.success) {
+        // Update the messages list locally
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === messageId ? { ...msg, isRead: true } : msg
+          )
+        );
+        toast.success("Message marked as read");
+      }
     } catch (error) {
-      toast.error('Failed to send message');
+      console.error("Error marking message as read:", error);
+      toast.error("Failed to mark message as read");
     }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Messages</CardTitle>
+          <CardDescription>Your recent messages</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Messages</h2>
-
-      <Card className="p-6">
-        <div className="space-y-6">
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Messages</CardTitle>
+          <CardDescription>Your recent messages</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={fetchMessages}>
+          Refresh
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {messages.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            No messages found.
+          </div>
+        ) : (
+          <div className="space-y-4">
             {messages.map((message) => (
               <div
                 key={message._id}
-                className={`p-4 rounded-lg ${
-                  message.sender._id === message.recipient._id
-                    ? 'bg-blue-50 ml-auto'
-                    : 'bg-gray-50'
-                } max-w-[80%]`}
+                className={`border rounded-lg p-4 ${
+                  !message.isRead ? "bg-muted/50" : ""
+                }`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-medium">{message.sender.fullName}</p>
-                    <p className="text-sm text-gray-500">{message.sender.role}</p>
+                    <h3 className="font-medium">
+                      From: {message.from.fullName}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {message.from.role} · {formatDate(message.createdAt)}
+                    </p>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(message.createdAt).toLocaleString()}
-                  </span>
+                  <div>{!message.isRead && <Badge>New</Badge>}</div>
                 </div>
-                <p className="text-gray-700">{message.content}</p>
+                <p className="text-sm mt-2">{message.content}</p>
+                {!message.isRead && (
+                  <div className="mt-3 text-right">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleMarkAsRead(message._id)}
+                    >
+                      Mark as read
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 p-2 border rounded-md"
-              required
-            />
-            <Button type="submit">Send</Button>
-          </form>
-        </div>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

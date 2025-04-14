@@ -2,54 +2,33 @@ import { Elysia } from "elysia";
 import { Message } from "../models/Message.js";
 import { Notification } from "../models/Notification.js";
 import { Team } from "../models/Team.js";
+import { requireAuth } from "../utils/authUtils.js";
 import logger from "../utils/logger.js";
 
 // Create an Elysia router for messaging operations
 export const messageRoutes = new Elysia({ prefix: "/api/messages" })
-  .guard({
-    beforeHandle: [
-      // Auth middleware will be performed here
-      async ({ set, request, jwt, secret }) => {
-        try {
-          const authHeader = request.headers.get("authorization");
-          if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            set.status = 401;
-            return {
-              success: false,
-              error: "Unauthorized - No token provided",
-            };
-          }
-
-          const token = authHeader.split(" ")[1];
-          const decoded = jwt.verify(token, secret);
-
-          return { user: decoded };
-        } catch (error) {
-          set.status = 401;
-          return { success: false, error: "Unauthorized - Invalid token" };
-        }
-      },
-    ],
-  })
+  // Remove custom auth implementation - global authMiddleware will handle this
   // Get messages for a team
-  .get("/teams/:teamId", async ({ params, query, store }) => {
+  .get("/teams/:teamId", async (context) => {
     try {
-      const { teamId } = params;
-      const { limit = 50, before, after } = query;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { teamId } = context.params;
+      const { limit = 50, before, after } = context.query;
 
       // Verify team membership
       const team = await Team.findOne({
         _id: teamId,
-        "members.user": user._id,
+        "members.user": user.id,
         "members.status": "active",
       });
 
       if (!team) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Team not found or user is not a member",
-          status: 404,
         };
       }
 
@@ -75,16 +54,16 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       // Mark messages as read by this user
       const unreadMessages = messages.filter(
         (msg) =>
-          !msg.readBy.some((rb) => rb._id.toString() === user._id.toString())
+          !msg.readBy.some((rb) => rb._id.toString() === user.id.toString())
       );
 
       if (unreadMessages.length > 0) {
         await Message.updateMany(
           {
             _id: { $in: unreadMessages.map((msg) => msg._id) },
-            readBy: { $ne: user._id },
+            readBy: { $ne: user.id },
           },
-          { $addToSet: { readBy: user._id } }
+          { $addToSet: { readBy: user.id } }
         );
       }
 
@@ -99,43 +78,45 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       };
     } catch (error) {
       logger.error("Failed to fetch team messages:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to fetch team messages",
-        status: 500,
+        error: error.message || "Failed to fetch team messages",
       };
     }
   })
 
   // Send a message to a team
-  .post("/teams/:teamId", async ({ params, body, store }) => {
+  .post("/teams/:teamId", async (context) => {
     try {
-      const { teamId } = params;
-      const { content, attachments } = body;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { teamId } = context.params;
+      const { content, attachments } = context.body;
 
       // Verify team membership
       const team = await Team.findOne({
         _id: teamId,
-        "members.user": user._id,
+        "members.user": user.id,
         "members.status": "active",
       });
 
       if (!team) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Team not found or user is not a member",
-          status: 404,
         };
       }
 
       // Create message
       const message = new Message({
         team: teamId,
-        sender: user._id,
+        sender: user.id,
         content,
         attachments: attachments || [],
-        readBy: [user._id], // Sender has read the message
+        readBy: [user.id], // Sender has read the message
         createdAt: new Date(),
       });
 
@@ -149,7 +130,7 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
         .filter(
           (member) =>
             member.status === "active" &&
-            member.user.toString() !== user._id.toString()
+            member.user.toString() !== user.id.toString()
         )
         .map((member) => member.user);
 
@@ -159,7 +140,9 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
           user: memberId,
           type: "new_message",
           title: "New Team Message",
-          message: `${user.fullName} sent a message to ${team.name}`,
+          message: `${user.fullName || "A team member"} sent a message to ${
+            team.name
+          }`,
           link: `/teams/${teamId}/chat`,
           isRead: false,
           createdAt: new Date(),
@@ -193,32 +176,34 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       };
     } catch (error) {
       logger.error("Failed to send team message:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to send team message",
-        status: 500,
+        error: error.message || "Failed to send team message",
       };
     }
   })
 
   // Delete a message
-  .delete("/:messageId", async ({ params, store }) => {
+  .delete("/:messageId", async (context) => {
     try {
-      const { messageId } = params;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { messageId } = context.params;
 
       // Find message and verify ownership
       const message = await Message.findOne({
         _id: messageId,
-        sender: user._id,
+        sender: user.id,
         isDeleted: { $ne: true },
       });
 
       if (!message) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Message not found or you do not have permission to delete it",
-          status: 404,
         };
       }
 
@@ -243,33 +228,35 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       };
     } catch (error) {
       logger.error("Failed to delete message:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to delete message",
-        status: 500,
+        error: error.message || "Failed to delete message",
       };
     }
   })
 
   // Edit a message
-  .patch("/:messageId", async ({ params, body, store }) => {
+  .patch("/:messageId", async (context) => {
     try {
-      const { messageId } = params;
-      const { content } = body;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { messageId } = context.params;
+      const { content } = context.body;
 
       // Find message and verify ownership
       const message = await Message.findOne({
         _id: messageId,
-        sender: user._id,
+        sender: user.id,
         isDeleted: { $ne: true },
       });
 
       if (!message) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Message not found or you do not have permission to edit it",
-          status: 404,
         };
       }
 
@@ -291,35 +278,37 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       };
     } catch (error) {
       logger.error("Failed to edit message:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to edit message",
-        status: 500,
+        error: error.message || "Failed to edit message",
       };
     }
   })
 
   // React to a message
-  .post("/:messageId/reactions", async ({ params, body, store }) => {
+  .post("/:messageId/reactions", async (context) => {
     try {
-      const { messageId } = params;
-      const { reaction } = body;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { messageId } = context.params;
+      const { reaction } = context.body;
 
       const message = await Message.findById(messageId);
 
       if (!message) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Message not found",
-          status: 404,
         };
       }
 
       // Check if user already reacted with this emoji
       const existingReactionIndex = message.reactions.findIndex(
         (r) =>
-          r.user.toString() === user._id.toString() && r.reaction === reaction
+          r.user.toString() === user.id.toString() && r.reaction === reaction
       );
 
       if (existingReactionIndex !== -1) {
@@ -328,7 +317,7 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       } else {
         // Add new reaction
         message.reactions.push({
-          user: user._id,
+          user: user.id,
           reaction,
           createdAt: new Date(),
         });
@@ -350,10 +339,10 @@ export const messageRoutes = new Elysia({ prefix: "/api/messages" })
       };
     } catch (error) {
       logger.error("Failed to react to message:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to react to message",
-        status: 500,
+        error: error.message || "Failed to react to message",
       };
     }
   });

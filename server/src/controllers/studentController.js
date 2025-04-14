@@ -1,4 +1,5 @@
 // server/src/controllers/studentController.js
+import { Message } from "../models/Message.js";
 import { Notification } from "../models/Notification.js";
 import { Project } from "../models/Project.js";
 import { Session } from "../models/Session.js";
@@ -16,18 +17,93 @@ import logger from "../utils/logger.js";
 // Get student profile
 export const getStudentProfile = async ({ user }) => {
   try {
-    const student = await Student.findOne({ user: user.id }).populate(
+    // Find the student record or create it if it doesn't exist
+    let student = await Student.findOne({ user: user.id }).populate(
       "user",
       "fullName email department profilePicture status"
     );
+
+    // If student record doesn't exist but user is a student role, create the student record
+    if (!student && user.role === "student") {
+      // Get the user record
+      const userRecord = await User.findById(user.id);
+      if (!userRecord) {
+        throw new NotFoundError("User not found");
+      }
+
+      // Create a new student record with generated ID
+      const studentId = "STU" + Math.floor(100000 + Math.random() * 900000);
+      student = new Student({
+        user: user.id,
+        studentId,
+        profilePicture: userRecord.profilePicture,
+        academicYear:
+          new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      });
+
+      await student.save();
+
+      // Populate the user field after saving
+      student = await Student.findOne({ user: user.id }).populate(
+        "user",
+        "fullName email department profilePicture status"
+      );
+
+      logger.info("Created missing student record for user", {
+        userId: user.id,
+        studentId: student.studentId,
+      });
+    }
 
     if (!student) {
       throw new NotFoundError("Student profile not found");
     }
 
+    // Get the user record if for some reason population didn't work
+    if (!student.user) {
+      const userRecord = await User.findById(user.id);
+      if (userRecord) {
+        student.user = userRecord;
+      }
+    }
+
+    // Get current session
+    const currentSession = await Session.findOne({ status: "active" });
+
+    // Create properly structured response
     return {
       success: true,
-      data: student,
+      data: {
+        student: {
+          _id: student._id.toString(),
+          fullName: student.user?.fullName || user.email?.split("@")[0] || "",
+          email: student.user?.email || user.email || "",
+          department: student.user?.department || "",
+          studentId: student.studentId,
+          profilePicture:
+            student.profilePicture || student.user?.profilePicture || "",
+          team: student.team ? student.team.toString() : null,
+          isTeamLeader: student.isTeamLeader || false,
+          academicYear: student.academicYear || "",
+        },
+        currentSession: currentSession
+          ? {
+              _id: currentSession._id.toString(),
+              name: currentSession.name || "",
+              startDate: currentSession.startDate
+                ? currentSession.startDate.toISOString()
+                : null,
+              endDate: currentSession.endDate
+                ? currentSession.endDate.toISOString()
+                : null,
+              deadlines: (currentSession.deadlines || []).map((d) => ({
+                name: d.name,
+                date: d.date.toISOString(),
+                type: d.type,
+              })),
+            }
+          : null,
+      },
     };
   } catch (error) {
     logger.error("Failed to get student profile", { error, userId: user.id });
@@ -1307,6 +1383,210 @@ export const getResultDetail = async ({ params, user }) => {
       },
     };
   } catch (error) {
+    throw error;
+  }
+};
+
+// Get student deadlines
+export const getStudentDeadlines = async (userId) => {
+  try {
+    // Find the student record
+    const student = await Student.findOne({ user: userId });
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Get active session
+    const activeSession = await Session.findOne({ status: "active" });
+    if (!activeSession) {
+      return {
+        success: true,
+        deadlines: [],
+      };
+    }
+
+    // Get deadlines for student role
+    const currentDate = new Date();
+    const deadlines = activeSession.deadlines
+      .filter(
+        (deadline) =>
+          deadline.forRoles.includes("student") ||
+          deadline.forRoles.includes("all")
+      )
+      .map((deadline) => {
+        const dueDate = new Date(deadline.dueDate);
+        const isPassed = dueDate < currentDate;
+        const daysRemaining = isPassed
+          ? 0
+          : Math.ceil((dueDate - currentDate) / (1000 * 60 * 60 * 24));
+
+        return {
+          _id: deadline._id.toString(),
+          name: deadline.title,
+          date: dueDate.toISOString(),
+          type: deadline.type,
+          description: deadline.description || "",
+          isPassed,
+          daysRemaining,
+        };
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    return {
+      success: true,
+      deadlines,
+    };
+  } catch (error) {
+    logger.error("Failed to get student deadlines", { error, userId });
+    throw error;
+  }
+};
+
+// Submit a report
+export const submitReport = async (userId, data) => {
+  try {
+    const { title, content, attachmentUrl, deadlineId } = data;
+
+    // Find the student
+    const student = await Student.findOne({ user: userId });
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Get active session
+    const activeSession = await Session.findOne({ status: "active" });
+    if (!activeSession) {
+      throw new NotFoundError("No active academic session found");
+    }
+
+    // Validate deadline exists
+    const deadline = activeSession.deadlines.find(
+      (d) => d._id.toString() === deadlineId
+    );
+
+    if (!deadline) {
+      throw new NotFoundError("Deadline not found");
+    }
+
+    // Check if deadline has passed
+    const currentDate = new Date();
+    const dueDate = new Date(deadline.dueDate);
+    const isPassed = dueDate < currentDate;
+
+    // Check if late submissions are allowed
+    if (isPassed && !deadline.submissionOptions?.allowLateSubmission) {
+      throw new ValidationError(
+        "Deadline has passed and late submissions are not allowed"
+      );
+    }
+
+    // Create report submission
+    const submission = {
+      student: student._id,
+      title,
+      content,
+      attachmentUrl: attachmentUrl || null,
+      deadline: deadlineId,
+      submissionDate: new Date(),
+      isLate: isPassed,
+      status: "submitted",
+    };
+
+    // Add submission to session
+    activeSession.submissions.push(submission);
+    await activeSession.save();
+
+    logger.info("Report submitted successfully", {
+      studentId: student._id,
+      deadlineId,
+      submissionId: submission._id,
+    });
+
+    return {
+      success: true,
+      message: "Report submitted successfully",
+      data: {
+        submissionId: submission._id.toString(),
+        submissionDate: submission.submissionDate.toISOString(),
+        isLate: submission.isLate,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to submit report", { error, userId });
+    throw error;
+  }
+};
+
+// Get student messages
+export const getStudentMessages = async (userId) => {
+  try {
+    // Find the student
+    const student = await Student.findOne({ user: userId });
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Get messages for this student
+    const messages = await Message.find({
+      recipient: student._id,
+      recipientType: "student",
+    })
+      .populate("sender", "fullName role")
+      .sort({ createdAt: -1 });
+
+    return messages.map((message) => ({
+      _id: message._id.toString(),
+      from: {
+        _id: message.sender._id.toString(),
+        fullName: message.sender.fullName,
+        role: message.sender.role,
+      },
+      content: message.content,
+      createdAt: message.createdAt.toISOString(),
+      isRead: message.isRead,
+    }));
+  } catch (error) {
+    logger.error("Failed to get student messages", { error, userId });
+    throw error;
+  }
+};
+
+// Mark message as read
+export const markMessageAsRead = async (userId, messageId) => {
+  try {
+    // Find the student
+    const student = await Student.findOne({ user: userId });
+    if (!student) {
+      throw new NotFoundError("Student profile not found");
+    }
+
+    // Find and update the message
+    const message = await Message.findOne({
+      _id: messageId,
+      recipient: student._id,
+      recipientType: "student",
+    });
+
+    if (!message) {
+      throw new NotFoundError("Message not found");
+    }
+
+    if (!message.isRead) {
+      message.isRead = true;
+      message.readAt = new Date();
+      await message.save();
+    }
+
+    return {
+      success: true,
+      message: "Message marked as read",
+    };
+  } catch (error) {
+    logger.error("Failed to mark message as read", {
+      error,
+      userId,
+      messageId,
+    });
     throw error;
   }
 };

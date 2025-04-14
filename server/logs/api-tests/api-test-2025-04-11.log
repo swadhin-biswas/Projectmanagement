@@ -1,0 +1,92 @@
+{"level":"info","message":"🚀 Starting API tests","service":"api-testing","timestamp":"2025-04-11T14:17:20.677Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:3000/api/auth/login","service":"api-testing","timestamp":"2025-04-11T14:17:20.678Z"}
+{"level":"error","message":"❌ ERROR: POST /api/auth/login - 500","service":"api-testing","timestamp":"2025-04-11T14:17:20.687Z"}
+{"error":"Unable to connect. Is the computer able to access the url?","level":"error","message":"Error details:","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"error","message":"Authentication failed, proceeding without token","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/auth/profile: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/teams: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/teams/:teamId: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/projects: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/projects/:projectId: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/sessions: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/notifications: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/dashboard: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"warn","message":"Skipping GET /api/users: Auth required but no token available","service":"api-testing","timestamp":"2025-04-11T14:17:20.688Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:3000/health","service":"api-testing","timestamp":"2025-04-11T14:17:20.689Z"}
+{"level":"error","message":"❌ ERROR: GET /health - 500","service":"api-testing","timestamp":"2025-04-11T14:17:20.689Z"}
+{"error":"Unable to connect. Is the computer able to access the url?","level":"error","message":"Error details:","service":"api-testing","timestamp":"2025-04-11T14:17:20.689Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:3000/health/db","service":"api-testing","timestamp":"2025-04-11T14:17:20.689Z"}
+{"level":"error","message":"❌ ERROR: GET /health/db - 500","service":"api-testing","timestamp":"2025-04-11T14:17:20.690Z"}
+{"error":"Unable to connect. Is the computer able to access the url?","level":"error","message":"Error details:","service":"api-testing","timestamp":"2025-04-11T14:17:20.690Z"}
+{"level":"info","message":"📊 Test Summary: 0/12 tests passed","service":"api-testing","timestamp":"2025-04-11T14:17:20.690Z"}
+{"level":"info","message":"�� Starting API tests for private/protected endpoints","service":"api-testing","timestamp":"2025-04-11T14:22:35.259Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:3000/api/auth/login","service":"api-testing","timestamp":"2025-04-11T14:22:35.260Z"}
+{"level":"error","message":"❌ ERROR: POST /api/auth/login - 500","service":"api-testing","timestamp":"2025-04-11T14:22:35.269Z"}
+{"error":"Unable to connect. Is the computer able to access the url?","level":"error","message":"Error details:","service":"api-testing","timestamp":"2025-04-11T14:22:35.269Z"}
+{"level":"error","message":"Authentication failed, cannot proceed with protected endpoint testing","service":"api-testing","timestamp":"2025-04-11T14:22:35.269Z"}
+{"level":"info","message":"�� Starting API tests for private/protected endpoints","service":"api-testing","timestamp":"2025-04-11T14:24:12.103Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/auth/login","service":"api-testing","timestamp":"2025-04-11T14:24:12.104Z"}
+{"level":"info","message":"✅ SUCCESS: POST /api/auth/login - 200","service":"api-testing","timestamp":"2025-04-11T14:24:12.200Z"}
+{"level":"info","message":"Authentication successful, token obtained","service":"api-testing","timestamp":"2025-04-11T14:24:12.201Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/auth/profile","service":"api-testing","timestamp":"2025-04-11T14:24:12.201Z"}
+{"level":"info","message":"✅ SUCCESS: GET /api/auth/profile - 200","service":"api-testing","timestamp":"2025-04-11T14:24:12.205Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/teams","service":"api-testing","timestamp":"2025-04-11T14:24:12.205Z"}
+{"level":"error","message":"❌ ERROR: GET /api/teams - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.208Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.207Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/teams/:teamId","service":"api-testing","timestamp":"2025-04-11T14:24:12.208Z"}
+{"level":"error","message":"❌ ERROR: GET /api/teams/:teamId - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.209Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.209Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/teams","service":"api-testing","timestamp":"2025-04-11T14:24:12.209Z"}
+{"level":"error","message":"❌ ERROR: POST /api/teams - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.211Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.210Z"}
+{"level":"info","message":"📤 REQUEST: PUT http://localhost:30000/api/teams/:teamId","service":"api-testing","timestamp":"2025-04-11T14:24:12.211Z"}
+{"level":"error","message":"❌ ERROR: PUT /api/teams/:teamId - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.213Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.212Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/projects","service":"api-testing","timestamp":"2025-04-11T14:24:12.213Z"}
+{"level":"error","message":"❌ ERROR: GET /api/projects - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.214Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.214Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/projects/:projectId","service":"api-testing","timestamp":"2025-04-11T14:24:12.214Z"}
+{"level":"error","message":"❌ ERROR: GET /api/projects/:projectId - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.215Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.215Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/projects","service":"api-testing","timestamp":"2025-04-11T14:24:12.215Z"}
+{"level":"error","message":"❌ ERROR: POST /api/projects - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.217Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.216Z"}
+{"level":"info","message":"📤 REQUEST: PUT http://localhost:30000/api/projects/:projectId","service":"api-testing","timestamp":"2025-04-11T14:24:12.217Z"}
+{"level":"error","message":"❌ ERROR: PUT /api/projects/:projectId - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.219Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.218Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/sessions","service":"api-testing","timestamp":"2025-04-11T14:24:12.219Z"}
+{"level":"error","message":"❌ ERROR: GET /api/sessions - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.220Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.220Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/sessions","service":"api-testing","timestamp":"2025-04-11T14:24:12.220Z"}
+{"level":"error","message":"❌ ERROR: POST /api/sessions - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.221Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.221Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/notifications","service":"api-testing","timestamp":"2025-04-11T14:24:12.221Z"}
+{"level":"info","message":"✅ SUCCESS: GET /api/notifications - 200","service":"api-testing","timestamp":"2025-04-11T14:24:12.223Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/notifications/mark-read","service":"api-testing","timestamp":"2025-04-11T14:24:12.223Z"}
+{"level":"error","message":"❌ ERROR: POST /api/notifications/mark-read - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.224Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.224Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/dashboard","service":"api-testing","timestamp":"2025-04-11T14:24:12.224Z"}
+{"level":"error","message":"❌ ERROR: GET /api/dashboard - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.225Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.225Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/dashboard/stats","service":"api-testing","timestamp":"2025-04-11T14:24:12.225Z"}
+{"level":"error","message":"❌ ERROR: GET /api/dashboard/stats - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.226Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.226Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/users","service":"api-testing","timestamp":"2025-04-11T14:24:12.226Z"}
+{"level":"error","message":"❌ ERROR: GET /api/users - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.227Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.227Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/users/me","service":"api-testing","timestamp":"2025-04-11T14:24:12.227Z"}
+{"level":"error","message":"❌ ERROR: GET /api/users/me - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.229Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.229Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/reports","service":"api-testing","timestamp":"2025-04-11T14:24:12.229Z"}
+{"level":"error","message":"❌ ERROR: GET /api/reports - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.230Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.230Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/reports","service":"api-testing","timestamp":"2025-04-11T14:24:12.230Z"}
+{"level":"error","message":"❌ ERROR: POST /api/reports - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.231Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.231Z"}
+{"level":"info","message":"📤 REQUEST: GET http://localhost:30000/api/feedback","service":"api-testing","timestamp":"2025-04-11T14:24:12.231Z"}
+{"level":"error","message":"❌ ERROR: GET /api/feedback - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.232Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.232Z"}
+{"level":"info","message":"📤 REQUEST: POST http://localhost:30000/api/feedback","service":"api-testing","timestamp":"2025-04-11T14:24:12.233Z"}
+{"level":"error","message":"❌ ERROR: POST /api/feedback - 404","service":"api-testing","timestamp":"2025-04-11T14:24:12.233Z"}
+{"code":"NOT_FOUND","data":{"code":"NOT_FOUND","error":"Route not found","success":false},"error":"Route not found","level":"error","message":"Error details:","service":"api-testing","success":false,"timestamp":"2025-04-11T14:24:12.233Z"}
+{"level":"info","message":"📊 Test Summary: 2/21 tests passed","service":"api-testing","timestamp":"2025-04-11T14:24:12.235Z"}

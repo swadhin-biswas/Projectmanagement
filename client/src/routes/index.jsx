@@ -43,6 +43,10 @@ const StudentTeamManagement = lazy(() =>
 );
 const TeamChatPage = lazy(() => import("../pages/student/TeamChatPage"));
 const ResultsPage = lazy(() => import("../pages/student/Results"));
+const ProfilePage = lazy(() => import("../pages/student/Profile"));
+const MessagesPage = lazy(() => import("../pages/student/Messages"));
+const DeadlinesPage = lazy(() => import("../pages/student/Deadlines"));
+const ProjectsPage = lazy(() => import("../pages/student/Projects"));
 
 // Layouts
 const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
@@ -209,10 +213,13 @@ const AppRoutes = () => {
           <Route index element={<Navigate to="/student/dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="team" element={<TeamView />} />
-          <Route path="project" element={<ProjectSubmission />} />
+          <Route path="projects" element={<ProjectsPage />} />
           <Route path="team/management" element={<StudentTeamManagement />} />
           <Route path="team/chat" element={<TeamChatPage />} />
           <Route path="results" element={<ResultsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="deadlines" element={<DeadlinesPage />} />
         </Route>
 
         {/* Catch-all route */}

@@ -15,12 +15,14 @@
     "logs:errors": "cat logs/error-*.log | tail -n 100"
   },
   "dependencies": {
+    "@elysiajs/cookie": "^0.8.0",
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
     "@libsql/client": "^0.15.2",
     "@node-rs/argon2": "^2.0.2",
     "@supabase/supabase-js": "^2.49.4",
+    "axios": "^1.8.4",
     "chalk": "^4.1.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",

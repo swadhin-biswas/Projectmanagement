@@ -1,23 +1,20 @@
-import { jwt } from "@elysiajs/jwt";
 import { swagger } from "@elysiajs/swagger";
 import { config } from "dotenv";
 import { Elysia } from "elysia";
 import connectToDatabase from "./config/database.js";
 import { DatabaseError, ValidationError } from "./utils/errors.js";
 import logger, { logApiCall } from "./utils/logger.js";
+import { registerApiRedirects } from "./utils/routeHelpers.js";
 
 // Import middleware
+import { authMiddleware } from "./middleware/auth.js";
 import { elysiaCorsMiddleware } from "./middleware/cors.js";
 import staticFilesMiddleware from "./middleware/staticFiles.js";
+import routeProtection from "./utils/routeAuth.js";
 
-// Import routes
-import invitationRoutes from "./routes/invitationRoutes.js";
-import sessionRoutes from "./routes/sessionRoutes.js";
-import teamRoutes from "./routes/teamRoutes.js";
-// import studentTeamRoutes from "./routes/studentTeamRoutes.js";
-
-// Import additional routes
+// Import routes with explicit names
 import activityRoutes from "./routes/activityRoutes.js";
+
 import adminRoutes from "./routes/adminRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -25,10 +22,12 @@ import calendarRoutes from "./routes/calendarRoutes.js";
 import calendarServiceRoutes from "./routes/calendarServiceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import exportRoutes from "./routes/exportRoutes.js";
+import invitationRoutes from "./routes/invitationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import milestoneRoutes from "./routes/milestoneRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
@@ -133,11 +132,14 @@ app.use(
   })
 );
 
-// Apply CORS middleware - expecting it to return a function that takes app and applies cors
+// Apply CORS middleware
 app.use(elysiaCorsMiddleware());
 
 // Apply static files middleware
 app.use(staticFilesMiddleware());
+
+// Apply authentication middleware
+app.use(authMiddleware);
 
 // Add request logging middleware to log all API calls with timing and error details
 app.derive(({ request }) => {
@@ -181,6 +183,22 @@ app.on(
         data: {},
         timestamp: new Date().toISOString(),
       };
+    }
+
+    // Special case for the student profile endpoint
+    if (
+      requestPath === "/api/students/profile" &&
+      typeof response === "object" &&
+      response.success === true
+    ) {
+      logger.debug(
+        "Preserving original structure for student profile response"
+      );
+      // Add timestamp if it doesn't exist but otherwise preserve structure
+      if (!response.timestamp) {
+        response.timestamp = new Date().toISOString();
+      }
+      return response;
     }
 
     // Format response if needed, but preserve original fields
@@ -331,135 +349,113 @@ app.onError(({ code, error, set }) => {
   };
 });
 
-// JWT configuration - THIS is the instance we keep and modify
-const publicPaths = [
-  "/",
-  "/health",
-  "/health/db",
-  "/api/auth/register",
-  "/api/auth/login",
-  "/api/auth/reset-password",
-  "/api/auth/verify-email",
-  "/api/auth/test-login", // Added test login
-  "/swagger", // Keep swagger public
-  /\/swagger\/.*/, // Keep swagger UI public
-  "/api-docs",
-  "/api/health",
-];
-
-app.use(
-  jwt({
-    name: "jwt",
-    secret: process.env.JWT_SECRET || "fallback-secret",
-    exp: "7d",
-    exclude: publicPaths,
-    // --- Logging Hooks ---
-    async verify(context) {
-      // Log when verification is attempted
-      logger.debug("JWT verify hook triggered (exclude instance)", {
-        hasAuthHeader: !!context.request.headers.get("authorization"),
-        tokenSnippet: context.request.headers
-          .get("authorization")
-          ?.substring(7, 20), // First few chars after Bearer
-      });
-    },
-    error(context, error) {
-      logger.error("JWT Error hook triggered (exclude instance)", {
-        errorName: error?.name,
-        errorMessage: error?.message,
-        tokenSnippet: context.request.headers
-          .get("authorization")
-          ?.substring(7, 20),
-      });
-    },
-    // --- End Logging Hooks ---
-  })
-);
-
-// Add cookie parsing if not already present globally
-// .use(cookie()) // Assuming @elysiajs/cookie is installed and imported as 'cookie'
-app.derive(async ({ jwt, cookie, set }) => {
-  // Assuming cookie object is available
-  // Ensure cookie.auth exists and has a value before verifying
-  const token = cookie?.auth; // Adjust based on actual cookie name
-  if (!token) {
-    // No token found, user is not authenticated
-    return { user: null };
-  }
-  try {
-    const profile = await jwt.verify(token);
-    if (!profile) {
-      // Token is invalid or expired
-      set.status = 401; // Optional: Set status here if verification fails
-      // Clear the invalid cookie if possible (depends on cookie parser setup)
-      // set.headers['Set-Cookie'] = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax';
-      return { user: null };
-    }
-    return { user: profile }; // User profile attached to context
-  } catch (error) {
-    // Handle verification errors (e.g., invalid signature, expired token)
-    logger.warn("JWT verification failed:", error.message);
-    // set.status = 401; // Optional: Set status here if verification fails
-    // Clear the invalid cookie
-    // set.headers['Set-Cookie'] = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax';
-    return { user: null };
-  }
+// Log the imported route modules
+logger.info("Route modules loaded:", {
+  authRoutes: !!authRoutes,
+  studentRoutes: !!studentRoutes,
+  adminRoutes: !!adminRoutes,
+  supervisorRoutes: !!supervisorRoutes,
+  // Add other routes as needed
 });
 
-// API Routes Grouping
-app.group("/api", (group) =>
-  group
-    // Mount existing routes
-    .use(authRoutes)
-    .use(adminRoutes)
-    .use(dashboardRoutes)
-    .use(sessionRoutes)
-    .use(projectRoutes)
-    .use(studentRoutes)
-    .use(supervisorRoutes)
-    .use(activityRoutes)
-    .use(analyticsRoutes)
-    .use(calendarRoutes)
-    .use(calendarServiceRoutes)
-    .use(exportRoutes)
-    .use(invitationRoutes)
-    .use(messageRoutes)
-    .use(milestoneRoutes)
-    .use(notificationRoutes)
-    .use(uploadRoutes)
-    // Mount the new team routes
-    .use(teamRoutes) // Mounts routes defined in teamRoutes under /api/teams (due to its prefix)
+/**
+ * SECURITY: Apply route protection to ensure all API routes require authentication
+ * By using group middleware, we ensure all API endpoints require JWT authentication
+ * The only exceptions are the public paths defined in authMiddleware
+ */
+app.group("/api", (group) => {
+  // Apply authentication middleware to the entire API group
+  // This ensures all API routes require a valid JWT token by default
+  // The public paths defined in authMiddleware will be exceptions
+  group.derive(({ request }) => {
+    logger.debug(`API request to: ${request.url}`);
+    return {};
+  });
 
-    // Global guard for /api routes requiring authentication (applied AFTER JWT derive)
-    .onRequest(({ user, set, request }) => {
-      // List of paths that DO NOT require authentication
-      const publicPaths = [
-        "/api/auth/login",
-        "/api/auth/register",
-        "/api/docs", // Assuming API docs route doesn't need auth
-        "/api/swagger", // Swagger UI endpoint
-        // Add any other public API endpoints here
-      ];
+  return (
+    group
+      // Mount auth routes (some auth routes like login/register are public)
+      .use(authRoutes)
+      // Apply admin-only protection to admin routes
+      .group("/admin", (adminGroup) => {
+        routeProtection.adminOnly(adminGroup);
+        return adminGroup.use(adminRoutes);
+      })
+      // Apply supervisor-only protection to supervisor routes
+      .group("/supervisor", (supervisorGroup) => {
+        routeProtection.supervisorOnly(supervisorGroup);
+        return supervisorGroup.use(supervisorRoutes);
+      })
+      // Apply student-only protection to student routes
+      .group("/student", (studentGroup) => {
+        routeProtection.studentOnly(studentGroup);
+        return studentGroup.use(studentRoutes);
+      })
 
-      const requestPath = new URL(request.url).pathname;
+      .use(dashboardRoutes)
+      .use(sessionRoutes)
+      .use(projectRoutes)
+      .use(activityRoutes)
+      .use(analyticsRoutes)
+      .use(calendarRoutes)
+      .use(calendarServiceRoutes)
+      .use(exportRoutes)
+      .use(invitationRoutes)
+      .use(messageRoutes)
+      .use(milestoneRoutes)
+      .use(notificationRoutes)
+      .use(uploadRoutes)
+  );
+});
 
-      // Allow requests to public paths
-      if (publicPaths.some((path) => requestPath.startsWith(path))) {
-        return; // Do not enforce auth for public paths
-      }
+// Root endpoint for health check
+app.get("/", () => {
+  return {
+    success: true,
+    message: "Research Project Management API is running",
+    timestamp: new Date().toISOString(),
+  };
+});
 
-      // For all other /api paths, require a valid user from JWT
-      if (!user) {
-        set.status = 401;
-        // logger.warn(`Unauthorized access attempt to ${requestPath}`); // Optional logging
-        // Return an object matching the expected error format
-        return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" };
-      }
-    })
-);
+// Health check endpoint
+app.get("/health", () => {
+  return {
+    success: true,
+    status: "UP",
+    message: "Server is healthy",
+    timestamp: new Date().toISOString(),
+  };
+});
 
-// Root/Public Routes (if any, outside /api)
-// ...
+// Register root-level routes that redirect to API endpoints for backward compatibility
+registerApiRedirects(app, [
+  // Simple GET routes
+  "/notifications",
+  "/notifications/unread/count",
+  "/user/profile",
+  "/dashboard",
+  "/calendar",
+
+  // Team routes that should redirect to student team endpoints
+  "/teams",
+  "/teams/my-team",
+  { path: "/teams/:id", methods: ["GET", "PUT", "DELETE"] },
+  { path: "/teams/:id/invite", methods: ["POST"] },
+  { path: "/teams/:id/leave", methods: ["POST"] },
+  { path: "/teams/:id/remove-member", methods: ["POST"] },
+
+  // Student-specific team routes
+  "/api/student-teams",
+  "/api/student-teams/invitations",
+  { path: "/api/student-teams/:id/leave", methods: ["DELETE"] },
+
+  // Routes with multiple methods
+  { path: "/projects", methods: ["GET", "POST"] },
+  { path: "/sessions", methods: ["GET", "POST"] },
+  { path: "/messages", methods: ["GET", "POST"] },
+  { path: "/projects/:id", methods: ["GET", "PUT", "DELETE"] },
+  { path: "/users/:id", methods: ["GET", "PUT"] },
+]);
 
 // Handle 404 for undefined routes
 app.all("*", ({ set }) => {
@@ -472,17 +468,29 @@ app.all("*", ({ set }) => {
 });
 
 // Replace hardcoded port with configurable port
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 30000;
 const MAX_PORT_RETRIES = 10;
 
 // Function to check if a port is in use
 const isPortInUse = async (port) => {
-  try {
-    await app.listen(port);
-    return false;
-  } catch (error) {
-    return error.code === "EADDRINUSE";
-  }
+  return new Promise((resolve) => {
+    const server = require("net").createServer();
+
+    server.once("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        resolve(true); // Port is in use
+      } else {
+        resolve(false);
+      }
+    });
+
+    server.once("listening", () => {
+      server.close();
+      resolve(false); // Port is available
+    });
+
+    server.listen(port);
+  });
 };
 
 // Function to start server with error handling and port retry
@@ -500,9 +508,14 @@ const startServer = async (startPort, retryCount = 0) => {
 
     // Try to start the server
     const port = await findAvailablePort(startPort, retryCount);
-    await app.listen(port);
+    await app.listen({
+      port: port,
+      hostname: "0.0.0.0",
+    });
 
-    logger.info(`🚀 Server running on port ${port}`);
+    logger.info(
+      `🚀 Server running on port ${port} and accessible from all network interfaces`
+    );
     return true;
   } catch (error) {
     logger.error("Server startup error:", error);

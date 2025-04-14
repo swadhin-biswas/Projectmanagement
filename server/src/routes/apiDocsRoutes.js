@@ -127,37 +127,37 @@ export default function apiDocsRoutes(app) {
               ],
               students: [
                 {
-                  path: "/students/profile",
+                  path: "/student/profile",
                   method: "GET",
                   description: "Get student profile",
                 },
                 {
-                  path: "/students/deadlines",
+                  path: "/student/deadlines",
                   method: "GET",
                   description: "Get deadlines for student",
                 },
                 {
-                  path: "/students/submit-report",
+                  path: "/student/submit-report",
                   method: "POST",
                   description: "Submit a report",
                 },
                 {
-                  path: "/students/messages",
+                  path: "/student/messages",
                   method: "GET",
                   description: "Get student messages",
                 },
                 {
-                  path: "/students/messages/:messageId/read",
+                  path: "/student/messages/:messageId/read",
                   method: "PUT",
                   description: "Mark message as read",
                 },
                 {
-                  path: "/students/results",
+                  path: "/student/results",
                   method: "GET",
                   description: "Get all student results",
                 },
                 {
-                  path: "/students/results/:resultId",
+                  path: "/student/results/:resultId",
                   method: "GET",
                   description: "Get detailed result view",
                 },
@@ -429,37 +429,37 @@ export default function apiDocsRoutes(app) {
             ],
             students: [
               {
-                path: "/students/profile",
+                path: "/student/profile",
                 method: "GET",
                 description: "Get student profile",
               },
               {
-                path: "/students/deadlines",
+                path: "/student/deadlines",
                 method: "GET",
                 description: "Get deadlines for student",
               },
               {
-                path: "/students/submit-report",
+                path: "/student/submit-report",
                 method: "POST",
                 description: "Submit a report",
               },
               {
-                path: "/students/messages",
+                path: "/student/messages",
                 method: "GET",
                 description: "Get student messages",
               },
               {
-                path: "/students/messages/:messageId/read",
+                path: "/student/messages/:messageId/read",
                 method: "PUT",
                 description: "Mark message as read",
               },
               {
-                path: "/students/results",
+                path: "/student/results",
                 method: "GET",
                 description: "Get all student results",
               },
               {
-                path: "/students/results/:resultId",
+                path: "/student/results/:resultId",
                 method: "GET",
                 description: "Get detailed result view",
               },

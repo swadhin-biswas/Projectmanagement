@@ -9,53 +9,31 @@ import { Elysia } from "elysia";
 import { CalendarEvent } from "../models/CalendarEvent.js";
 import { Notification } from "../models/Notification.js";
 import { Project } from "../models/Project.js";
+import { requireAuth } from "../utils/authUtils.js";
 import logger from "../utils/logger.js";
 
 // Create an Elysia router for calendar operations
 export const calendarRoutes = new Elysia({ prefix: "/api/calendar" })
-  .guard({
-    beforeHandle: [
-      // Auth middleware will be performed here
-      async ({ set, request, jwt, secret }) => {
-        try {
-          const authHeader = request.headers.get("authorization");
-          if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            set.status = 401;
-            return {
-              success: false,
-              error: "Unauthorized - No token provided",
-            };
-          }
-
-          const token = authHeader.split(" ")[1];
-          const decoded = jwt.verify(token, secret);
-
-          return { user: decoded };
-        } catch (error) {
-          set.status = 401;
-          return { success: false, error: "Unauthorized - Invalid token" };
-        }
-      },
-    ],
-  })
-  // Get events for a project
-  .get("/projects/:id/events", async ({ params, query, store }) => {
+  // Remove custom auth implementation - global authMiddleware will handle this
+  .get("/projects/:id/events", async (context) => {
     try {
-      const { id } = params;
-      const { view, start, end } = query;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { id } = context.params;
+      const { view, start, end } = context.query;
 
       // Validate project access
       const project = await Project.findOne({
         _id: id,
-        $or: [{ owner: user._id }, { members: user._id }],
+        $or: [{ owner: user.id }, { members: user.id }],
       });
 
       if (!project) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Project not found or access denied",
-          status: 404,
         };
       }
 
@@ -104,37 +82,40 @@ export const calendarRoutes = new Elysia({ prefix: "/api/calendar" })
       };
     } catch (error) {
       logger.error("Failed to fetch calendar events:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to fetch calendar events",
-        status: 500,
+        error: error.message || "Failed to fetch calendar events",
       };
     }
   })
 
   // Create a new event
-  .post("/projects/:id/events", async ({ params, body, store }) => {
+  .post("/projects/:id/events", async (context) => {
     try {
-      const { id } = params;
-      const { user } = store;
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
+
+      const { id } = context.params;
+      const body = context.body;
 
       const eventData = {
         ...body,
         project: id,
-        createdBy: user._id,
+        createdBy: user.id,
       };
 
       // Validate project access
       const project = await Project.findOne({
         _id: id,
-        $or: [{ owner: user._id }, { members: user._id }],
+        $or: [{ owner: user.id }, { members: user.id }],
       });
 
       if (!project) {
+        context.set.status = 404;
         return {
           success: false,
           error: "Project not found or access denied",
-          status: 404,
         };
       }
 
@@ -147,129 +128,127 @@ export const calendarRoutes = new Elysia({ prefix: "/api/calendar" })
           .emit("calendar:event_added", event);
       }
 
+      context.set.status = 201;
       return {
         success: true,
         event,
-        status: 201,
       };
     } catch (error) {
       logger.error("Failed to create calendar event:", error);
+      context.set.status = error.status || 500;
       return {
         success: false,
-        error: "Failed to create calendar event",
-        status: 500,
+        error: error.message || "Failed to create calendar event",
       };
     }
   })
 
   // Update event attendance
-  .patch(
-    "/projects/:id/events/:eventId/attendance",
-    async ({ params, body, store }) => {
-      try {
-        const { id, eventId } = params;
-        const { status } = body;
-        const { user } = store;
+  .patch("/projects/:id/events/:eventId/attendance", async (context) => {
+    try {
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
 
-        const event = await CalendarEvent.findOne({
-          _id: eventId,
-          project: id,
-          "attendees.user": user._id,
-        });
+      const { id, eventId } = context.params;
+      const { status } = context.body;
 
-        if (!event) {
-          return {
-            success: false,
-            error: "Event not found or user not invited",
-            status: 404,
-          };
-        }
+      const event = await CalendarEvent.findOne({
+        _id: eventId,
+        project: id,
+        "attendees.user": user.id,
+      });
 
-        await event.updateAttendance(user._id, status);
-
-        return {
-          success: true,
-          event,
-        };
-      } catch (error) {
-        logger.error("Failed to update attendance:", error);
+      if (!event) {
+        context.set.status = 404;
         return {
           success: false,
-          error: "Failed to update attendance",
-          status: 500,
+          error: "Event not found or user not invited",
         };
       }
+
+      await event.updateAttendance(user.id, status);
+
+      return {
+        success: true,
+        event,
+      };
+    } catch (error) {
+      logger.error("Failed to update attendance:", error);
+      context.set.status = error.status || 500;
+      return {
+        success: false,
+        error: error.message || "Failed to update attendance",
+      };
     }
-  )
+  })
 
   // Invite members to an event
-  .post(
-    "/projects/:id/events/:eventId/invites",
-    async ({ params, body, store }) => {
-      try {
-        const { id, eventId } = params;
-        const { members } = body;
-        const { user } = store;
+  .post("/projects/:id/events/:eventId/invites", async (context) => {
+    try {
+      // Use the standard auth utility to ensure user is authenticated
+      const user = requireAuth(context);
 
-        const event = await CalendarEvent.findOne({
-          _id: eventId,
-          project: id,
-        });
+      const { id, eventId } = context.params;
+      const { members } = context.body;
 
-        if (!event) {
-          return {
-            success: false,
-            error: "Event not found",
-            status: 404,
-          };
-        }
+      const event = await CalendarEvent.findOne({
+        _id: eventId,
+        project: id,
+      });
 
-        // Add new attendees
-        const newAttendees = members.map((userId) => ({
-          user: userId,
-          status: "pending",
-        }));
-
-        event.attendees.push(...newAttendees);
-        await event.save();
-
-        // Create notifications for new attendees
-        const notifications = members.map((userId) => ({
-          user: userId,
-          type: "event_invitation",
-          title: "New Event Invitation",
-          message: `You've been invited to "${event.title}"`,
-          link: `/projects/${id}/calendar`,
-          metadata: {
-            eventId: event._id,
-            projectId: id,
-          },
-        }));
-
-        await Notification.insertMany(notifications);
-
-        // Send real-time notifications
-        if (global.io) {
-          notifications.forEach((notification) => {
-            global.io
-              .to(`user:${notification.user}`)
-              .emit("notification:new", notification);
-          });
-        }
-
-        return {
-          success: true,
-          event,
-        };
-      } catch (error) {
-        logger.error("Failed to invite members:", error);
+      if (!event) {
+        context.set.status = 404;
         return {
           success: false,
-          error: "Failed to invite members",
-          status: 500,
+          error: "Event not found",
         };
       }
+
+      // Add new attendees
+      const newAttendees = members.map((userId) => ({
+        user: userId,
+        status: "pending",
+      }));
+
+      event.attendees.push(...newAttendees);
+      await event.save();
+
+      // Create notifications for new attendees
+      const notifications = members.map((userId) => ({
+        user: userId,
+        type: "event_invitation",
+        title: "New Event Invitation",
+        message: `You've been invited to "${event.title}"`,
+        link: `/projects/${id}/calendar`,
+        metadata: {
+          eventId: event._id,
+          projectId: id,
+        },
+      }));
+
+      await Notification.insertMany(notifications);
+
+      // Send real-time notifications
+      if (global.io) {
+        notifications.forEach((notification) => {
+          global.io
+            .to(`user:${notification.user}`)
+            .emit("notification:new", notification);
+        });
+      }
+
+      return {
+        success: true,
+        event,
+      };
+    } catch (error) {
+      logger.error("Failed to invite members:", error);
+      context.set.status = error.status || 500;
+      return {
+        success: false,
+        error: error.message || "Failed to invite members",
+      };
     }
-  );
+  });
 
 export default calendarRoutes;

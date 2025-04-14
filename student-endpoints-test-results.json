@@ -1,0 +1,184 @@
+[
+  {
+    "endpoint": "Get student profile",
+    "path": "/api/students/profile",
+    "method": "GET",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Update student profile",
+    "path": "/api/students/profile",
+    "method": "PUT",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Get student team",
+    "path": "/api/students/team",
+    "method": "GET",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Create team",
+    "path": "/api/students/team/create",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Invite to team",
+    "path": "/api/students/team/invite",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Get team invitations",
+    "path": "/api/students/team/invitations",
+    "method": "GET",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Respond to invitation",
+    "path": "/api/students/team/respond-to-invitation",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Remove team member",
+    "path": "/api/students/team/remove-member",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Leave team",
+    "path": "/api/students/team/leave-team",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Get available students",
+    "path": "/api/students/team/available-students",
+    "method": "GET",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Create project",
+    "path": "/api/students/projects",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Submit project",
+    "path": "/api/students/projects/6xyz123/submit",
+    "method": "POST",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  },
+  {
+    "endpoint": "Get deadlines",
+    "path": "/api/students/deadlines",
+    "method": "GET",
+    "noToken": {
+      "status": 404,
+      "success": false
+    },
+    "withToken": {
+      "status": 404,
+      "success": false
+    },
+    "overallResult": "FAIL"
+  }
+]

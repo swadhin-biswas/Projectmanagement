@@ -1,8 +1,9 @@
+import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/api";
 import axios from "axios";
 
 // Cache keys - should match those in AuthContext
 const CACHE_KEYS = {
-  TOKEN: "token",
+  TOKEN: "auth_token",
   USER: "user",
   AUTH_DATA: "auth_data",
 };
@@ -17,7 +18,7 @@ const api = axios.create({
 
 // Function to sync token from localStorage to the axios instance headers
 const syncTokenFromStorage = () => {
-  const token = localStorage.getItem(CACHE_KEYS.TOKEN);
+  const token = getAuthToken();
   if (token) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   } else {
@@ -74,10 +75,7 @@ api.interceptors.response.use(
           error.response?.data?.error?.includes("unauthorized")
         ) {
           // Token expired or invalid
-          localStorage.removeItem(CACHE_KEYS.TOKEN);
-          localStorage.removeItem(CACHE_KEYS.USER);
-          localStorage.removeItem(CACHE_KEYS.AUTH_DATA);
-          delete api.defaults.headers.common["Authorization"];
+          clearAuthToken(); // Use centralized function instead of individual removals
 
           // Use location.replace to avoid adding to history stack
           window.location.replace("/login?session=expired");
@@ -94,7 +92,7 @@ const registerUser = async (userData) => {
     const response = await api.post("/api/auth/register", userData);
     if (response.data.success) {
       // Store auth data on successful registration
-      localStorage.setItem(CACHE_KEYS.TOKEN, response.data.token);
+      setAuthToken(response.data.token);
       localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(response.data.user));
       localStorage.setItem(CACHE_KEYS.AUTH_DATA, JSON.stringify(response.data));
 
@@ -127,7 +125,7 @@ const loginUser = async (credentials) => {
     const response = await api.post("/api/auth/login", credentials);
     if (response.data.success) {
       // Store auth data on successful login
-      localStorage.setItem(CACHE_KEYS.TOKEN, response.data.token);
+      setAuthToken(response.data.token);
       localStorage.setItem(CACHE_KEYS.USER, JSON.stringify(response.data.user));
       localStorage.setItem(CACHE_KEYS.AUTH_DATA, JSON.stringify(response.data));
 
@@ -153,10 +151,7 @@ const loginUser = async (credentials) => {
 };
 
 const logoutUser = () => {
-  localStorage.removeItem(CACHE_KEYS.TOKEN);
-  localStorage.removeItem(CACHE_KEYS.USER);
-  localStorage.removeItem(CACHE_KEYS.AUTH_DATA);
-  delete api.defaults.headers.common["Authorization"];
+  clearAuthToken();
   return { success: true };
 };
 

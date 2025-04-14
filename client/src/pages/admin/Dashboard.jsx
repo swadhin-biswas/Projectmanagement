@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import { sessionAPI } from "../../api/sessions";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -95,10 +96,28 @@ const AdminDashboard = () => {
   const { data: analyticsData, isLoading: loadingAnalytics } = useQuery({
     queryKey: ["admin-analytics", selectedSession],
     queryFn: async () => {
-      const response = await api.get("/api/dashboard/admin", {
-        params: selectedSession ? { sessionId: selectedSession } : {},
-      });
-      return response.data;
+      if (!selectedSession) {
+        const response = await api.get("/api/dashboard/admin");
+        return response.data;
+      } else {
+        const response = await sessionAPI.getSessionDetailedAnalytics(
+          selectedSession,
+          {
+            timeRange: "all",
+            groupBy: "day",
+          }
+        );
+        return response;
+      }
+    },
+  });
+
+  // Get sessions for dropdown
+  const { data: sessionsData } = useQuery({
+    queryKey: ["sessions"],
+    queryFn: async () => {
+      const response = await sessionAPI.getAllSessions();
+      return response.data.sessions;
     },
   });
 

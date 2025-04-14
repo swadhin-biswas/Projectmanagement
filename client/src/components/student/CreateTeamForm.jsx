@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -36,16 +36,16 @@ const CreateTeamForm = ({ onTeamCreated }) => {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      const response = await api.post("/api/teams", data);
+      const response = await TeamAPI.createTeam(data);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Team created successfully!");
         form.reset();
         if (onTeamCreated) {
-          onTeamCreated(response.data.data);
+          onTeamCreated(response.data);
         }
       } else {
-        toast.error(response.data.error || "Failed to create team");
+        toast.error(response.error || "Failed to create team");
       }
     } catch (error) {
       console.error("Error creating team:", error);

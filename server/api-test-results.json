@@ -2,40 +2,24 @@
   "passed": [
     {
       "method": "POST",
-      "path": "/api/auth/login",
-      "role": null,
-      "description": "Login as super admin",
-      "status": 200,
-      "expected": 200,
+      "path": "/api/auth/register",
+      "role": "superadmin",
+      "description": "Register student user",
+      "status": 201,
+      "expected": 201,
       "data": {
         "success": true,
-        "timestamp": "2025-04-07T20:22:24.868Z"
-      },
-      "success": true
-    },
-    {
-      "method": "POST",
-      "path": "/api/auth/login",
-      "role": null,
-      "description": "Login as admin",
-      "status": 200,
-      "expected": 200,
-      "data": {
-        "success": true,
-        "timestamp": "2025-04-07T20:22:24.869Z"
-      },
-      "success": true
-    },
-    {
-      "method": "POST",
-      "path": "/api/auth/login",
-      "role": null,
-      "description": "Login as supervisor",
-      "status": 200,
-      "expected": 200,
-      "data": {
-        "success": true,
-        "timestamp": "2025-04-07T20:22:24.869Z"
+        "message": "Registration successful.",
+        "token": "eyJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY3ZjkxMDRkMzY3ZDcxNDI1MDNhOTBmNCIsImVtYWlsIjoidGVzdC1zdHVkZW50LTE3NDQzNzU4ODUwNTJAcmVzZWFyY2guZWR1Iiwicm9sZSI6InN0dWRlbnQiLCJ0aW1lc3RhbXAiOjE3NDQzNzU4ODUzMjMsImlhdCI6MTc0NDM3NTg4NSwiZXhwIjoxNzQ0OTgwNjg1LCJpc3MiOiJyZXNlYXJjaC1tYW5hZ2VtZW50LWFwaSJ9.gf_l7qXQOguIlo7t0Kn3kbFedxOBkkZ2QYvL1aWbXPs",
+        "user": {
+          "_id": "67f9104d367d7142503a90f4",
+          "fullName": "Test Student",
+          "email": "test-student-1744375885052@research.edu",
+          "role": "student",
+          "department": "Computer Science",
+          "isApproved": true
+        },
+        "timestamp": "2025-04-11T12:51:25.324Z"
       },
       "success": true
     },
@@ -48,7 +32,32 @@
       "expected": 200,
       "data": {
         "success": true,
-        "timestamp": "2025-04-07T20:22:24.870Z"
+        "token": "eyJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY3ZjkxMDRkMzY3ZDcxNDI1MDNhOTBmNCIsImVtYWlsIjoidGVzdC1zdHVkZW50LTE3NDQzNzU4ODUwNTJAcmVzZWFyY2guZWR1Iiwicm9sZSI6InN0dWRlbnQiLCJ0aW1lc3RhbXAiOjE3NDQzNzU4ODUzOTQsImlhdCI6MTc0NDM3NTg4NSwiZXhwIjoxNzQ0OTgwNjg1LCJpc3MiOiJyZXNlYXJjaC1tYW5hZ2VtZW50LWFwaSJ9.r86sQ0MbSX3UYEy312eyCbpR_fYx2GCclZe7RBZs9Ko",
+        "user": {
+          "_id": "67f9104d367d7142503a90f4",
+          "fullName": "Test Student",
+          "email": "test-student-1744375885052@research.edu",
+          "role": "student",
+          "department": "Computer Science",
+          "isApproved": true
+        },
+        "expiresIn": "7d",
+        "error": null,
+        "timestamp": "2025-04-11T12:51:25.394Z"
+      },
+      "success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "role": "admin",
+      "description": "Get notifications",
+      "status": 200,
+      "expected": 200,
+      "data": {
+        "success": true,
+        "timestamp": "2025-04-11T12:51:25.404Z",
+        "data": {}
       },
       "success": true
     }
@@ -59,12 +68,18 @@
       "path": "/",
       "role": null,
       "description": "API root health check",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:24.855Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -73,12 +88,18 @@
       "path": "/health/db",
       "role": null,
       "description": "Database health check",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:24.856Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -87,12 +108,32 @@
       "path": "/api/setup/superadmin",
       "role": null,
       "description": "Create super admin account",
-      "status": 500,
+      "status": 404,
       "expected": 201,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:24.856Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as super admin",
+      "status": 401,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Invalid email or password",
+        "timestamp": "2025-04-11T12:51:24.918Z"
       },
       "success": false
     },
@@ -101,11 +142,26 @@
       "path": "/api/auth/register",
       "role": "superadmin",
       "description": "Register admin user",
-      "status": 200,
+      "status": 422,
       "expected": 201,
       "data": {
-        "success": true,
-        "timestamp": "2025-04-07T20:22:24.869Z"
+        "success": false,
+        "error": "{\n  \"type\": \"validation\",\n  \"on\": \"body\",\n  \"summary\": \"Property 'role' should be one of: 'string', 'string'\",\n  \"property\": \"/role\",\n  \"message\": \"Expected union value\",\n  \"expected\": {\n    \"type\": \"Could not create expected value\",\n    \"message\": \"String types with formats must specify a default value\",\n    \"error\": {\n      \"schema\": {\n        \"format\": \"email\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"found\": {\n    \"email\": \"test-admin-1744375884919@research.edu\",\n    \"password\": \"TestPassword123!\",\n    \"fullName\": \"Test Admin\",\n    \"role\": \"admin\",\n    \"department\": \"Computer Science\"\n  },\n  \"errors\": [\n    {\n      \"type\": 62,\n      \"schema\": {\n        \"anyOf\": [\n          {\n            \"const\": \"student\",\n            \"type\": \"string\"\n          },\n          {\n            \"const\": \"supervisor\",\n            \"type\": \"string\"\n          }\n        ]\n      },\n      \"path\": \"/role\",\n      \"value\": \"admin\",\n      \"message\": \"Expected union value\",\n      \"errors\": [\n        {\n          \"iterator\": {}\n        },\n        {\n          \"iterator\": {}\n        }\n      ],\n      \"summary\": \"Property 'role' should be one of: 'string', 'string'\"\n    }\n  ]\n}",
+        "code": "INTERNAL_ERROR"
+      },
+      "success": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as admin",
+      "status": 401,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "Invalid email or password",
+        "timestamp": "2025-04-11T12:51:24.977Z"
       },
       "success": false
     },
@@ -114,24 +170,40 @@
       "path": "/api/auth/register",
       "role": "superadmin",
       "description": "Register supervisor user",
-      "status": 200,
+      "status": 500,
       "expected": 201,
       "data": {
-        "success": true,
-        "timestamp": "2025-04-07T20:22:24.869Z"
+        "success": false,
+        "error": "Specialization is required for supervisors",
+        "timestamp": "2025-04-11T12:51:24.999Z"
       },
       "success": false
     },
     {
       "method": "POST",
-      "path": "/api/auth/register",
-      "role": "superadmin",
-      "description": "Register student user",
-      "status": 200,
-      "expected": 201,
+      "path": "/api/auth/login",
+      "role": null,
+      "description": "Login as supervisor",
+      "status": 401,
+      "expected": 200,
       "data": {
-        "success": true,
-        "timestamp": "2025-04-07T20:22:24.869Z"
+        "success": false,
+        "error": "Invalid email or password",
+        "timestamp": "2025-04-11T12:51:25.052Z"
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/profile",
+      "role": "student",
+      "description": "Get student profile",
+      "status": 500,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "error": "null is not an object (evaluating 'user.id')",
+        "code": "INTERNAL_ERROR"
       },
       "success": false
     },
@@ -140,12 +212,18 @@
       "path": "/api/admin/users",
       "role": "superadmin",
       "description": "Get all users as superadmin",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.400Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -154,12 +232,38 @@
       "path": "/api/admin/pending-supervisors",
       "role": "superadmin",
       "description": "Get pending supervisors",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.400Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/student",
+      "role": "student",
+      "description": "Get student dashboard",
+      "status": 404,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T12:51:25.401Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -168,12 +272,18 @@
       "path": "/api/analytics/admin/overview",
       "role": "admin",
       "description": "Get admin analytics overview",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.401Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -182,12 +292,18 @@
       "path": "/api/sessions",
       "role": "admin",
       "description": "Get all sessions",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.402Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -196,12 +312,18 @@
       "path": "/api/sessions",
       "role": "admin",
       "description": "Create new session",
-      "status": 500,
+      "status": 404,
       "expected": 201,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.402Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -210,12 +332,18 @@
       "path": "/api/teams",
       "role": "admin",
       "description": "Get all teams",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.402Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -224,12 +352,38 @@
       "path": "/api/projects",
       "role": "admin",
       "description": "Get all projects",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.403Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
+      },
+      "success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/students/deadlines",
+      "role": "student",
+      "description": "Get student deadlines",
+      "status": 404,
+      "expected": 200,
+      "data": {
+        "success": false,
+        "timestamp": "2025-04-11T12:51:25.403Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -238,26 +392,18 @@
       "path": "/api/calendar/events",
       "role": "admin",
       "description": "Get calendar events",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
-      },
-      "success": false
-    },
-    {
-      "method": "GET",
-      "path": "/api/notifications",
-      "role": "admin",
-      "description": "Get notifications",
-      "status": 500,
-      "expected": 200,
-      "data": {
-        "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.404Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     },
@@ -266,22 +412,28 @@
       "path": "/api/milestones",
       "role": "admin",
       "description": "Get all milestones",
-      "status": 500,
+      "status": 404,
       "expected": 200,
       "data": {
         "success": false,
-        "error": "Authentication failed: headers.get is not a function. (In 'headers.get(\"authorization\")', 'headers.get' is undefined)",
-        "code": "UNKNOWN"
+        "timestamp": "2025-04-11T12:51:25.405Z",
+        "error": "Route not found",
+        "code": "NOT_FOUND",
+        "data": {
+          "success": false,
+          "error": "Route not found",
+          "code": "NOT_FOUND"
+        }
       },
       "success": false
     }
   ],
   "skipped": [],
   "summary": {
-    "total": 20,
-    "passed": 4,
-    "failed": 16,
+    "total": 23,
+    "passed": 3,
+    "failed": 20,
     "skipped": 0,
-    "timestamp": "2025-04-07T20:22:24.876Z"
+    "timestamp": "2025-04-11T12:51:25.405Z"
   }
 }

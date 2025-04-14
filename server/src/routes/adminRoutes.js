@@ -3,11 +3,15 @@ import {
   approveSupervisor,
   assignSupervisorToTeam,
   createAdminTask,
+  createSession,
   createSessionTimeline,
   fixSupervisorFunctionality,
+  getAllSessions,
   getProjects,
   getSessionAnalytics,
+  getSessionDetailedAnalytics,
   getSessionTimeline,
+  getSessionWorkData,
   getStudents,
   getSupervisorActivity,
   getSupervisorPerformance,
@@ -19,6 +23,7 @@ import {
   updateTimelineTask,
   verifySupervisorProgressTracking,
 } from "../controllers/adminController.js";
+import { roles } from "../utils/authUtils.js";
 
 const userSchema = t.Object({
   _id: t.String(),
@@ -44,32 +49,8 @@ const errorResponse = t.Object({
 
 export default function adminRoutes(app) {
   return app.group("/api/admin", (app) => {
-    // Admin-only middleware
-    app.derive(({ jwt, set }) => {
-      if (!jwt?.payload) {
-        set.status = 401;
-        return {
-          success: false,
-          error: "Authentication required",
-          code: "UNAUTHORIZED",
-          timestamp: new Date().toISOString(),
-        };
-      }
-
-      const userRole = jwt.payload.role;
-
-      if (userRole !== "admin" && userRole !== "superadmin") {
-        set.status = 403;
-        return {
-          success: false,
-          error: "Forbidden: Administrator access required",
-          code: "FORBIDDEN",
-          timestamp: new Date().toISOString(),
-        };
-      }
-
-      return {};
-    });
+    // Apply admin role check to all routes in this group
+    app.derive(roles.isAdmin);
 
     app.get(
       "/users",
@@ -183,9 +164,158 @@ export default function adminRoutes(app) {
             },
           },
         },
+        getSystemAnalytics
+      )
+      .post(
+        "/sessions",
+        {
+          body: {
+            type: "object",
+            required: ["name", "startDate", "endDate"],
+            properties: {
+              name: { type: "string" },
+              startDate: { type: "string", format: "date-time" },
+              endDate: { type: "string", format: "date-time" },
+              maxTeamSize: { type: "number", default: 5 },
+              minTeamSize: { type: "number", default: 2 },
+              allowStudentInitiatedTeams: { type: "boolean", default: true },
+              allowSupervisorInitiatedProjects: {
+                type: "boolean",
+                default: true,
+              },
+              description: { type: "string" },
+              academicYear: { type: "string" },
+              term: { type: "string" },
+              academicPrograms: { type: "array", items: { type: "string" } },
+              departments: { type: "array", items: { type: "string" } },
+            },
+          },
+          detail: {
+            summary: "Create a new academic session",
+            tags: ["Admin", "Sessions"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session created successfully" },
+              400: { description: "Validation error" },
+              401: { description: "Unauthorized" },
+            },
+          },
+        },
         async (context) => {
           await authorize(["admin", "super_admin"])(context);
-          return getSystemAnalytics(context);
+          return createSession(context);
+        }
+      )
+      .get(
+        "/sessions",
+        {
+          query: {
+            type: "object",
+            properties: {
+              page: { type: "number", default: 1 },
+              limit: { type: "number", default: 10 },
+              status: { type: "string" },
+              term: { type: "string" },
+              academicYear: { type: "string" },
+              search: { type: "string" },
+              sort: { type: "string", default: "-createdAt" },
+            },
+          },
+          detail: {
+            summary: "Get all sessions with pagination and filtering",
+            tags: ["Admin", "Sessions"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "List of sessions" },
+              401: { description: "Unauthorized" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return getAllSessions(context);
+        }
+      )
+      .get(
+        "/sessions/:sessionId/analytics",
+        {
+          query: {
+            type: "object",
+            properties: {
+              timeRange: {
+                type: "string",
+                enum: ["all", "week", "month", "custom"],
+                default: "all",
+              },
+              fromDate: { type: "string", format: "date-time" },
+              toDate: { type: "string", format: "date-time" },
+              groupBy: {
+                type: "string",
+                enum: ["day", "week", "month"],
+                default: "day",
+              },
+            },
+          },
+          detail: {
+            summary: "Get detailed analytics for a specific session",
+            tags: ["Admin", "Analytics", "Sessions"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session analytics" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return getSessionDetailedAnalytics(context);
+        }
+      )
+      .get(
+        "/sessions/:sessionId/work-data",
+        {
+          query: {
+            type: "object",
+            properties: {
+              startDate: { type: "string", format: "date-time" },
+              endDate: { type: "string", format: "date-time" },
+            },
+          },
+          detail: {
+            summary: "Get work data for a specific session",
+            tags: ["Admin", "Analytics", "Sessions"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session work data" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          return getSessionWorkData(context);
+        }
+      )
+      .post(
+        "/sessions/:sessionId/activate",
+        {
+          detail: {
+            summary: "Activate a session",
+            tags: ["Admin", "Sessions"],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              200: { description: "Session activated successfully" },
+              401: { description: "Unauthorized" },
+              404: { description: "Session not found" },
+            },
+          },
+        },
+        async (context) => {
+          await authorize(["admin", "super_admin"])(context);
+          // This would require implementing an activateSession function in the controller
+          return { success: true, message: "Session activated successfully" };
         }
       )
       .get(

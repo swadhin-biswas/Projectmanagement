@@ -1,0 +1,15 @@
+$ bun src/index.js
+2025-04-11 11:00:42.166 [32minfo[39m: Attempting to connect to MongoDB database
+  Meta: {"service":"research-mgmt-api"}
+2025-04-11 11:00:42.168 [32minfo[39m: Attempting to connect to MongoDB...
+  Meta: {"service":"research-mgmt-api"}
+Started development server: http://localhost:30000
+2025-04-11 11:00:42.837 [32minfo[39m: MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net
+  Meta: {"service":"research-mgmt-api"}
+2025-04-11 11:00:42.837 [32minfo[39m: ✅ MongoDB connection established successfully
+  Meta: {"service":"research-mgmt-api"}
+2025-04-11 11:00:42.841 [32minfo[39m: 🚀 Server running on port 300000
+  Meta: {"service":"research-mgmt-api"}
+2025-04-11 11:05:42.175 [32minfo[39m: Memory usage stats:
+  Meta: {"service":"research-mgmt-api","rss":"203 MB","heapTotal":"29 MB","heapUsed":"50 MB","external":"28 MB"}
+error: script "start" was terminated by signal SIGTERM (Polite quit request)

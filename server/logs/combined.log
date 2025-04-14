@@ -1,0 +1,11 @@
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-11 11:00:42.168"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-11 11:00:42.168"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-11 11:00:42.837"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-11 11:00:42.837"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-11 11:00:42.841"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-11 11:01:21.884"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-11 11:01:21.884"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-11 11:01:22.922"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-11 11:01:22.922"}
+{"level":"info","message":"🚀 Server running on port 300000","service":"research-mgmt-api","timestamp":"2025-04-11 11:01:22.927"}
+{"external":"28 MB","heapTotal":"29 MB","heapUsed":"50 MB","level":"info","message":"Memory usage stats:","rss":"203 MB","service":"research-mgmt-api","timestamp":"2025-04-11 11:05:42.175"}

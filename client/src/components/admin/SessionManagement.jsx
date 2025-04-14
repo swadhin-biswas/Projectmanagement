@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Check, Plus, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { api } from "../../lib/api";
+import { sessionAPI } from "../../api/sessions";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -66,7 +66,11 @@ const SessionManagement = () => {
   const fetchSessions = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/api/sessions");
+      const response = await sessionAPI.getAllSessions({
+        page: 1,
+        limit: 10,
+        sort: "-createdAt",
+      });
       setSessions(response.data.sessions || []);
     } catch (error) {
       console.error("Failed to fetch sessions:", error);
@@ -90,7 +94,7 @@ const SessionManagement = () => {
         endDate: sessionForm.endDate.toISOString(),
       };
 
-      await api.post("/api/sessions", payload);
+      await sessionAPI.createSession(payload);
       toast.success("Academic session created successfully");
       setIsCreateOpen(false);
       resetSessionForm();
@@ -114,7 +118,7 @@ const SessionManagement = () => {
         date: deadlineForm.date.toISOString(),
       };
 
-      await api.post(`/api/sessions/${currentSessionId}/deadlines`, payload);
+      await sessionAPI.addDeadline(currentSessionId, payload);
       toast.success("Deadline added successfully");
       setIsDeadlineOpen(false);
       resetDeadlineForm();
@@ -127,7 +131,7 @@ const SessionManagement = () => {
 
   const handleActivateSession = async (sessionId) => {
     try {
-      await api.post(`/api/sessions/${sessionId}/activate`);
+      await sessionAPI.activateSession(sessionId);
       toast.success("Session activated successfully");
       fetchSessions();
     } catch (error) {
@@ -144,7 +148,7 @@ const SessionManagement = () => {
     }
 
     try {
-      await api.delete(`/api/sessions/${sessionId}/deadlines/${deadlineId}`);
+      await sessionAPI.deleteDeadline(sessionId, deadlineId);
       toast.success("Deadline deleted successfully");
       fetchSessions();
     } catch (error) {

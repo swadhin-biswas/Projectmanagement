@@ -187,6 +187,32 @@ const logApiCall = (method, path, status, duration, error = null) => {
   );
 };
 
+// --- Helper Function for Standard Error Response ---
+const createErrorResponse = (
+  error,
+  defaultMessage,
+  set,
+  status = 500,
+  defaultData = null
+) => {
+  logger.error(`${defaultMessage}:`, error);
+  if (set) set.status = status;
+
+  const response = {
+    success: false,
+    error: defaultMessage,
+    details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    timestamp: new Date().toISOString(),
+  };
+
+  // Add default data if provided
+  if (defaultData) {
+    response.data = defaultData;
+  }
+
+  return response;
+};
+
 // Export logger and utility
-export { logApiCall };
+export { createErrorResponse, logApiCall };
 export default logger;

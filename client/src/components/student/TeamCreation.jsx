@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,13 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import { Loader2, Users } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
-const TeamCreation = () => {
+const TeamCreation = ({ onTeamCreated }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -67,17 +67,22 @@ const TeamCreation = () => {
 
     try {
       setLoading(true);
-      const response = await api.post("/api/teams", formData);
+      const response = await TeamAPI.createTeam(formData);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Team created successfully!");
         // Reset form
         setFormData({
           name: "",
           description: "",
         });
+
+        // Call the onTeamCreated callback if provided
+        if (onTeamCreated) {
+          onTeamCreated(response.data);
+        }
       } else {
-        toast.error(response.data.error || "Failed to create team");
+        toast.error(response.error || "Failed to create team");
       }
     } catch (error) {
       console.error("Error creating team:", error);

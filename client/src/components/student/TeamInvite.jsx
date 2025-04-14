@@ -1,3 +1,4 @@
+import TeamAPI from "@/api/team";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, UserPlus } from "lucide-react";
 import React, { useState } from "react";
@@ -34,19 +34,16 @@ const TeamInvite = ({ teamId, onInviteSent }) => {
   const onSubmit = async (data) => {
     try {
       setIsInviting(true);
-      const response = await api.post(
-        `/api/student/teams/${teamId}/invite`,
-        data
-      );
+      const response = await TeamAPI.inviteStudent(data);
 
-      if (response.data.success) {
+      if (response.success) {
         reset();
         toast.success("Invitation sent successfully!");
         if (onInviteSent) {
-          onInviteSent(response.data.data);
+          onInviteSent(response.data);
         }
       } else {
-        toast.error(response.data.error || "Failed to send invitation");
+        toast.error(response.error || "Failed to send invitation");
       }
     } catch (error) {
       const errorMessage =

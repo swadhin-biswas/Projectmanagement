@@ -32,7 +32,7 @@ import {
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import dashboardAPI from "../../api/dashboard";
+import { studentAPI } from "../../api/student";
 import { useAuth } from "../../contexts/AuthContext";
 
 const formatDate = (dateString) => {
@@ -104,7 +104,7 @@ const Dashboard = () => {
     queryKey: ["student-dashboard"],
     queryFn: async () => {
       try {
-        return await dashboardAPI.getStudentDashboard();
+        return await studentAPI.getStudentDashboard();
       } catch (error) {
         toast.error("Failed to load dashboard");
         throw error;
