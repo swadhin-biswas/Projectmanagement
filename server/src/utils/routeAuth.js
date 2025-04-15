@@ -3,40 +3,59 @@
  * Provides standardized functions to protect API routes with JWT authentication
  */
 
-import { authorize } from "./authUtils.js";
-import logger from "./logger.js";
-
 /**
- * Protects all routes in a group with JWT authentication
- * Applies a middleware that requires a valid JWT token for all routes
- *
- * @param {Object} app - The Elysia app instance
- * @returns {Object} - The app instance with authentication middleware
+ * Helper function to protect routes based on role
  */
-export const protectRoutes = (app) => {
-  app.derive(({ request }) => {
-    logger.debug(`Protecting route: ${request.url}`);
-    return authorize()({ request });
-  });
-  return app;
-};
+function protectRoutesByRole(app, allowedRoles = []) {
+  app.derive(({ user, set, request }) => {
+    // Log authentication data for debugging
+    const path = request?.url ? new URL(request.url).pathname : "unknown";
 
-/**
- * Protects all routes in a group with role-based authentication
- *
- * @param {Object} app - The Elysia app instance
- * @param {Array<string>} allowedRoles - The roles allowed to access these routes
- * @returns {Object} - The app instance with role-based authentication middleware
- */
-export const protectRoutesByRole = (app, allowedRoles) => {
-  app.derive(({ request }) => {
-    logger.debug(
-      `Protecting route with roles ${allowedRoles.join(", ")}: ${request.url}`
+    if (!user) {
+      console.debug(`No user found in context for path: ${path}`);
+      set.status = 401;
+      throw new Error("Authentication required. Please login.");
+    }
+
+    console.debug(
+      `Protecting route with roles ${allowedRoles.join(", ")}: ${path}`
     );
-    return authorize(allowedRoles)({ request });
+
+    // Check if the user has an allowed role
+    if (!allowedRoles.includes(user.role)) {
+      console.warn(`Forbidden access attempt by ${user.role} user to ${path}`);
+      set.status = 403;
+      throw new Error(
+        `Access denied. ${allowedRoles.join(" or ")} role required.`
+      );
+    }
+
+    // User is authenticated and has an allowed role
+    return { user };
   });
+
   return app;
-};
+}
+
+/**
+ * Helper function to protect routes without role checking
+ */
+function protectRoutes(app) {
+  app.derive(({ user, set, request }) => {
+    const path = request?.url ? new URL(request.url).pathname : "unknown";
+
+    if (!user) {
+      console.debug(`No user found in context for path: ${path}`);
+      set.status = 401;
+      throw new Error("Authentication required. Please login.");
+    }
+
+    // User is authenticated
+    return { user };
+  });
+
+  return app;
+}
 
 /**
  * Middleware factories for common role-based protections

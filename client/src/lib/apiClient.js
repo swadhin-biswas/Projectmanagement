@@ -85,22 +85,14 @@ class ApiClient {
     // Normalize URL format
     const apiUrl = this.normalizeUrl(url);
 
-    // Get auth token
+    // Force synchronize token from storage before each request
     const token = getAuthToken();
 
     // Configure request options
     const requestOptions = {
       ...options,
-      headers: {
-        ...options.headers,
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
     };
-
-    // Add Authorization header if token exists
-    if (token) {
-      requestOptions.headers.Authorization = `Bearer ${token}`;
-    }
 
     // Determine if authentication is required
     const requiresAuth = options.requiresAuth !== false; // Default to true
@@ -124,13 +116,10 @@ class ApiClient {
 
       if (!isExemptEndpoint) {
         console.warn(`Authentication required for endpoint: ${apiUrl}`);
-        return {
-          data: {
-            success: false,
-            error: "Authentication required. Please login.",
-            code: "INTERNAL_ERROR",
-          },
-        };
+        const error = new Error("Authentication required. Please login.");
+        error.status = 401;
+        error.isAuthError = true;
+        throw error;
       }
     }
 
@@ -169,10 +158,45 @@ class ApiClient {
         console.error(`API ${method.toUpperCase()} ${apiUrl} failed:`, error);
       }
 
-      throw error;
+      throw handleApiError(error);
     }
   }
 }
+
+// Ensure authorization header is present for all requests
+const getHeaders = () => {
+  const token = getAuthToken();
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+// Generic error handler for API requests
+const handleApiError = (error) => {
+  // If this is already a processed error, return it
+  if (error.isAuthError) {
+    return error;
+  }
+
+  // Check if the error is due to authentication
+  if (error.response?.status === 401) {
+    console.warn("Authentication required. Please login.");
+  }
+
+  return {
+    success: false,
+    error:
+      error.response?.data?.error ||
+      error.message ||
+      "An unexpected error occurred",
+  };
+};
 
 // Create a singleton instance for use throughout the app
 const apiClient = new ApiClient();

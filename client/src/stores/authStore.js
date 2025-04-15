@@ -2,7 +2,7 @@ import { loginUser, logoutUser, refreshToken } from "@/api/auth";
 import { create } from "zustand";
 
 const CACHE_KEYS = {
-  TOKEN: "token",
+  TOKEN: "auth_token",
   USER: "user",
   AUTH_DATA: "auth_data",
 };

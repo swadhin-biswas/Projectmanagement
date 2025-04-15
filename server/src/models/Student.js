@@ -1,4 +1,3 @@
-// server/src/models/Student.js
 import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema(
@@ -25,7 +24,7 @@ const studentSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator: function (v) {
-          if (!v) return true; // Allow empty
+          if (!v) return true;
           return /^https?:\/\/.+\.(jpg|jpeg|png|gif)(\?.*)?$/i.test(v);
         },
         message:
@@ -70,7 +69,7 @@ const studentSchema = new mongoose.Schema(
         },
         expiresAt: {
           type: Date,
-          default: () => new Date(+new Date() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          default: () => new Date(+new Date() + 7 * 24 * 60 * 60 * 1000),
         },
       },
     ],
@@ -100,7 +99,6 @@ const studentSchema = new mongoose.Schema(
         },
       },
     ],
-    // Track notifications specific to student activities
     notifications: [
       {
         type: {
@@ -143,7 +141,6 @@ const studentSchema = new mongoose.Schema(
         },
       },
     ],
-    // Student's progress tracking
     progress: {
       overallProgress: {
         type: Number,
@@ -171,23 +168,19 @@ const studentSchema = new mongoose.Schema(
 
 // Method to handle team invitation
 studentSchema.methods.sendTeamInvite = async function (teamId) {
-  // Check if already in a team
   if (this.team) {
     throw new Error("Student is already in a team");
   }
 
-  // Check if already has pending invite from this team
   const existingInvite = this.pendingInvites.find(
     (invite) =>
       invite.team.toString() === teamId.toString() &&
       invite.status === "pending"
   );
-
   if (existingInvite) {
     throw new Error("Student already has a pending invite from this team");
   }
 
-  // Add new invite
   this.pendingInvites.push({
     team: teamId,
     invitedBy: this._id,
@@ -202,7 +195,6 @@ studentSchema.methods.respondToInvite = async function (teamId, accept) {
   const invite = this.pendingInvites.find(
     (i) => i.team.toString() === teamId.toString() && i.status === "pending"
   );
-
   if (!invite) {
     throw new Error("No pending invite found from this team");
   }
@@ -210,7 +202,6 @@ studentSchema.methods.respondToInvite = async function (teamId, accept) {
   invite.status = accept ? "accepted" : "declined";
 
   if (accept) {
-    // Join the team
     const team = await mongoose.model("Team").findById(teamId);
     if (!team || !team.canAcceptMembers()) {
       throw new Error("Team is full or not found");
@@ -225,11 +216,7 @@ studentSchema.methods.respondToInvite = async function (teamId, accept) {
   return accept ? this.team : null;
 };
 
-// Indexes are automatically created by the unique: true in the schema fields
-
-// Prevent model recompilation
 const Student =
   mongoose.models.Student || mongoose.model("Student", studentSchema);
 
-// Export as named export only
 export { Student };

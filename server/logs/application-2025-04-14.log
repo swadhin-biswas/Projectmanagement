@@ -1,0 +1,656 @@
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.486"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 20:44:20.520"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.534"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.535"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.536"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.537"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:20.538"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:21.387"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:21.388"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 20:44:21.393"}
+{"external":"28 MB","heapTotal":"31 MB","heapUsed":"52 MB","level":"info","message":"Memory usage stats:","rss":"209 MB","service":"research-mgmt-api","timestamp":"2025-04-14 20:49:20.545"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"202 MB","service":"research-mgmt-api","timestamp":"2025-04-14 20:54:20.548"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"203 MB","service":"research-mgmt-api","timestamp":"2025-04-14 20:59:20.547"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"205 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:04:20.547"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"205 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:09:20.548"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"206 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:14:20.549"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"207 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:19:20.549"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"207 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:24:20.550"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"208 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:29:20.551"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"210 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:34:20.552"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"210 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:39:20.552"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"210 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:44:20.553"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"211 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:49:20.554"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"212 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:54:20.554"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"213 MB","service":"research-mgmt-api","timestamp":"2025-04-14 21:59:20.555"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"213 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:04:20.555"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"214 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:09:20.556"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"215 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:14:20.556"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"215 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:19:20.557"}
+{"external":"22 MB","heapTotal":"30 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"216 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:24:20.558"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:27.991"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:27.997"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:28.033"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (220ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:28.253"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:30.009"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:26:30.009"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:49.676"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:26:49.676"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:49.794"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:26:49.798"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:27:49.294"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:28:49.294"}
+{"external":"23 MB","heapTotal":"30 MB","heapUsed":"43 MB","level":"info","message":"Memory usage stats:","rss":"219 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:29:20.558"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:29:49.293"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:30:49.464"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:32:26.464"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:32:26.468"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:33:26.463"}
+{"external":"23 MB","heapTotal":"30 MB","heapUsed":"43 MB","level":"info","message":"Memory usage stats:","rss":"221 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:34:20.558"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:34:26.463"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:34:50.302"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:35:49.464"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:37:26.464"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:37:26.467"}
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.212"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 22:38:01.246"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.261"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.261"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.261"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.261"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.261"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.262"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.263"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.264"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:01.264"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:02.114"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:02.115"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:02.119"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:18.041"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:19.083"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:38:19.084"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:19.173"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:38:19.177"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:39:18.673"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:40:09.572"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:40:09.572"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:40:10.463"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:40:10.467"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:40:39.476"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:40:39.481"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:41:18.508"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:41:18.513"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:42:18.463"}
+{"external":"29 MB","heapTotal":"32 MB","heapUsed":"53 MB","level":"info","message":"Memory usage stats:","rss":"214 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:43:01.271"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:43:18.463"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:44:18.463"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:20.937"}
+{"level":"info","message":"Login attempt for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:20.937"}
+{"level":"info","message":"Verifying password for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.005"}
+{"level":"info","message":"Login successful for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.027"}
+{"level":"info","message":"HTTP POST /api/auth/login - 200 (90ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.027"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.180"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (270ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.449"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.539"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:21.542"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:39.336"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:45:39.336"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:52.450"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:52.554"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:52.560"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (213ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:45:52.662"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:46:04.325"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:46:04.325"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:46:52.055"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:47:52.054"}
+{"external":"22 MB","heapTotal":"31 MB","heapUsed":"41 MB","level":"info","message":"Memory usage stats:","rss":"230 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:01.271"}
+{"level":"warn","message":"Unauthorized access attempt (no/invalid Authorization header): /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:35.448"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:35.448"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:48:35.448"}
+{"level":"warn","message":"Unauthorized access attempt (no/invalid Authorization header): /favicon.ico","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:35.771"}
+{"level":"error","message":"HTTP GET /favicon.ico - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:35.772"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:48:52.055"}
+{"external":"23 MB","heapTotal":"31 MB","heapUsed":"42 MB","level":"info","message":"Memory usage stats:","rss":"231 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:53:01.272"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:18.018"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:55:18.018"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:18.131"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:18.135"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.070"}
+{"level":"info","message":"Login attempt for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.070"}
+{"level":"info","message":"Verifying password for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.125"}
+{"level":"info","message":"Login successful for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.144"}
+{"level":"info","message":"HTTP POST /api/auth/login - 200 (74ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.144"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.260"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (270ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.530"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.656"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:29.660"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:38.268"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:55:38.268"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:38.404"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:55:38.410"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:09.881"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:09.881"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:09.986"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:09.990"}
+{"level":"error","message":"HTTP GET /student/team-chat - 404 (0ms) Error: Route not found","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:12.168"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:19.130"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:19.131"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:19.132"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:19.132"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:25.236"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:25.236"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:25.238"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:25.238"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:25.239"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:25.239"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:56:25.241"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:56:25.241"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:00.479"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:57:00.479"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:00.480"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:57:00.480"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:00.481"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:57:00.481"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:00.482"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:57:00.482"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:09.486"}
+{"level":"warn","message":"Unauthorized access attempt (no/invalid Authorization header): /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:12.543"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:12.543"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:57:12.543"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:23.282"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (316ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:57:23.598"}
+{"external":"25 MB","heapTotal":"31 MB","heapUsed":"44 MB","level":"info","message":"Memory usage stats:","rss":"214 MB","service":"research-mgmt-api","timestamp":"2025-04-14 22:58:01.272"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:58:09.487"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:58:29.171"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:58:29.171"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:58:29.172"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:58:29.172"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:09.486"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/results","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:38.009"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:38.009"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:38.539"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:38.539"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/messages","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:38.540"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:38.540"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:39.258"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:39.258"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:39.259"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:39.259"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:39.260"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:39.260"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/deadlines","service":"research-mgmt-api","timestamp":"2025-04-14 22:59:39.263"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 22:59:39.263"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:00:09.487"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:01:09.486"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:01:09.489"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:02:09.486"}
+{"external":"24 MB","heapTotal":"31 MB","heapUsed":"43 MB","level":"info","message":"Memory usage stats:","rss":"215 MB","service":"research-mgmt-api","timestamp":"2025-04-14 23:03:01.272"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:03:09.485"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:04:09.487"}
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.416"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:05:09.452"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.467"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.467"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.467"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.468"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.469"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.470"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.471"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/notifications/unread/count, error: \"unknown\" cannot be parsed as a URL.","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:09.497"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:10.649"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:10.650"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:10.657"}
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.918"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:05:43.952"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.967"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.967"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.967"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.968"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.969"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:43.970"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:44.712"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:44.712"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:05:44.718"}
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.409"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:06:33.443"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.461"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.461"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.462"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.462"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.462"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.462"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.462"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.463"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.464"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.465"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:33.466"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:34.439"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:34.439"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:06:34.443"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:07:37.243"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.258"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.259"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.260"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.261"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:37.261"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:39.908"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:39.908"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:07:39.914"}
+{"external":"28 MB","heapTotal":"32 MB","heapUsed":"52 MB","level":"info","message":"Memory usage stats:","rss":"206 MB","service":"research-mgmt-api","timestamp":"2025-04-14 23:12:37.268"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:14:48.709"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:14:48.710"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:14:57.576"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:14:57.576"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:15:16.941"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:15:16.942"}
+{"external":"29 MB","heapTotal":"32 MB","heapUsed":"55 MB","level":"info","message":"Memory usage stats:","rss":"210 MB","service":"research-mgmt-api","timestamp":"2025-04-14 23:17:37.269"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:19:27.741"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.756"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.756"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.757"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.758"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.759"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:27.760"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:28.648"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:28.648"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:28.652"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:38.861"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:19:38.862"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:23:40.564"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.579"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.579"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.579"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.579"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.579"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.580"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.581"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.582"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.582"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.582"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.582"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:40.582"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:41.452"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:41.453"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:41.457"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:54.709"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:23:54.709"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:24:04.213"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/api/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:24:04.214"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:26:34.666"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.682"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.682"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.682"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.682"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.683"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.684"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.685"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.686"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:34.686"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:40.454"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:40.454"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:26:40.459"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:28:10.408"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.424"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.424"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.424"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.424"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.424"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.425"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.426"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.427"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:10.428"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:11.723"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:11.723"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:28:11.727"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:38:24.835"}
+{"error":"routeProtection.adminOnly is not a function. (In 'routeProtection.adminOnly(adminGroup)', 'routeProtection.adminOnly' is undefined)","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: routeProtection.adminOnly is not a function. (In 'routeProtection.adminOnly(adminGroup)', 'routeProtection.adminOnly' is undefined)\n    at <anonymous> (/home/swadhin/r/server/src/index.js:381:25)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at <anonymous> (/home/swadhin/r/server/src/index.js:380:8)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at /home/swadhin/r/server/src/index.js:366:5\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 23:38:24.852"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:40:20.559"}
+{"error":"routeProtection.adminOnly is not a function. (In 'routeProtection.adminOnly(adminGroup)', 'routeProtection.adminOnly' is undefined)","level":"error","location":"uncaughtException handler","message":"Uncaught Exception:","service":"research-mgmt-api","stack":"TypeError: routeProtection.adminOnly is not a function. (In 'routeProtection.adminOnly(adminGroup)', 'routeProtection.adminOnly' is undefined)\n    at <anonymous> (/home/swadhin/r/server/src/index.js:381:25)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at <anonymous> (/home/swadhin/r/server/src/index.js:380:8)\n    at group (/home/swadhin/r/server/node_modules/elysia/src/index.ts:2919:38)\n    at /home/swadhin/r/server/src/index.js:366:5\n    at moduleEvaluation (native)\n    at moduleEvaluation (native)\n    at <anonymous> (native:2)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 23:40:20.568"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:43:11.204"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.219"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.219"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.219"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.219"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.219"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.220"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.221"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.222"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.222"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.222"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.222"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:11.222"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-00.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:12.142"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:12.142"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:43:12.147"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:02.521"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/placeholder/500/300, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:02.521"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:02.522"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/placeholder/400/250, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:02.522"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:08.455"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:47:08.455"}
+{"external":"28 MB","heapTotal":"31 MB","heapUsed":"53 MB","level":"info","message":"Memory usage stats:","rss":"212 MB","service":"research-mgmt-api","timestamp":"2025-04-14 23:48:11.229"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:50:13.366"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.382"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.382"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.382"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.382"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.382"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.383"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.384"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.385"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.385"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.385"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.385"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:13.385"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-02.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:14.117"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:14.117"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:50:14.122"}
+{"level":"warn","message":"Authentication required: undefined","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:40.436"}
+{"level":"warn","message":"Role-based auth failed for route: http://localhost:30000/auth/login, error: Authentication required. Please login.","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:40.436"}
+{"level":"info","message":"JWT helper initialized","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.091"}
+{"adminRoutes":true,"authRoutes":true,"level":"info","message":"Route modules loaded:","service":"research-mgmt-api","studentRoutes":true,"supervisorRoutes":true,"timestamp":"2025-04-14 23:53:46.133"}
+{"level":"info","message":"Registered API redirect from GET /notifications to GET /api/notifications","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.149"}
+{"level":"info","message":"Registered API redirect from GET /notifications/unread/count to GET /api/notifications/unread/count","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.149"}
+{"level":"info","message":"Registered API redirect from GET /user/profile to GET /api/user/profile","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.149"}
+{"level":"info","message":"Registered API redirect from GET /dashboard to GET /api/dashboard","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered API redirect from GET /calendar to GET /api/calendar","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered Team API redirect from GET /teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/my-team to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered Team API redirect from GET /teams/:id to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered Team API redirect from PUT /teams/:id to PUT /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.150"}
+{"level":"info","message":"Registered Team API redirect from DELETE /teams/:id to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/invite to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/leave to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Team API redirect from POST /teams/:id/remove-member to POST /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Student Team API redirect from GET /api/student-teams/invitations to GET /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered Student Team API redirect from DELETE /api/student-teams/:id/leave to DELETE /api/students/team/...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered API redirect from GET /projects to GET /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.151"}
+{"level":"info","message":"Registered API redirect from POST /projects to POST /api/projects","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from GET /sessions to GET /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from POST /sessions to POST /api/sessions","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from GET /messages to GET /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from POST /messages to POST /api/messages","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from GET /projects/:id to GET /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from PUT /projects/:id to PUT /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from DELETE /projects/:id to DELETE /api/projects/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from GET /users/:id to GET /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Registered API redirect from PUT /users/:id to PUT /api/users/:id","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Attempting to connect to MongoDB database","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.152"}
+{"level":"info","message":"Attempting to connect to MongoDB...","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.153"}
+{"level":"info","message":"MongoDB Connected: ac-xdpuchx-shard-00-01.tvoe17p.mongodb.net","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.962"}
+{"level":"info","message":"✅ MongoDB connection established successfully","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.963"}
+{"level":"info","message":"🚀 Server running on port 300000 and accessible from all network interfaces","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:46.971"}
+{"level":"info","message":"MongoDB connection state: 1","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.404"}
+{"level":"info","message":"Login attempt for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.404"}
+{"level":"info","message":"Verifying password for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.478"}
+{"level":"info","message":"Login successful for user: teststudent1@gmail.com","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.499"}
+{"level":"info","message":"HTTP POST /api/auth/login - 200 (96ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.499"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:53.670"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:54.013"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:54.020"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (370ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:54.040"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:54.618"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (257ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:54.875"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:55.464"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:53:55.470"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:54:53.511"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:54:54.465"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:55:53.511"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:55:54.462"}
+{"level":"info","message":"📊 Fetching student dashboard data","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:53.690"}
+{"level":"info","message":"HTTP GET /api/notifications - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:53.814"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:53.817"}
+{"level":"info","message":"HTTP GET /api/dashboard - 200 (316ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:54.007"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:54.462"}
+{"level":"warn","message":"Unauthorized access attempt: /api/student/team/invitations","service":"research-mgmt-api","timestamp":"2025-04-14 23:56:59.077"}
+{"level":"error","message":"Application error: Authentication required. Please login.","service":"research-mgmt-api","stack":"Error: Authentication required. Please login.\n    at requireAuth (/home/swadhin/r/server/src/utils/authUtils.js:24:15)\n    at <anonymous> (/home/swadhin/r/server/src/utils/authUtils.js:36:18)\n    at <anonymous> (file:///home/swadhin/r/server/node_modules/elysia/dist/bun/index.js:19:33)\n    at processTicksAndRejections (native:7:39)","timestamp":"2025-04-14 23:56:59.078"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:57:53.313"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:57:54.463"}
+{"external":"32 MB","heapTotal":"32 MB","heapUsed":"57 MB","level":"info","message":"Memory usage stats:","rss":"235 MB","service":"research-mgmt-api","timestamp":"2025-04-14 23:58:46.162"}
+{"level":"info","message":"HTTP GET /api/notifications/unread/count - 200 (0ms)","service":"research-mgmt-api","timestamp":"2025-04-14 23:58:53.313"}

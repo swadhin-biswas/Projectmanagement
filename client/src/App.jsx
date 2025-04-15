@@ -9,6 +9,7 @@ import { api, getAuthToken, setAuthToken } from "@/lib/api";
 import { initializeAuth } from "@/lib/authInitializer";
 import Routes from "@/routes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
@@ -44,6 +45,22 @@ const queryClient = new QueryClient({
 
 // Initialize authentication on app startup
 initializeAuth();
+
+// Add global function to sync auth headers across API instances
+window.syncAllAPIInstances = (token) => {
+  if (token) {
+    // This ensures that imported API instances are updated
+    console.log("Synchronizing auth token across all API instances");
+
+    // Add Bearer prefix if not already present
+    const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+
+    // Update axios defaults (affects new instances)
+    axios.defaults.headers.common["Authorization"] = authHeader;
+  } else {
+    delete axios.defaults.headers.common["Authorization"];
+  }
+};
 
 function AppContent() {
   // Reinitialize auth on component mount in case token was added after initial load

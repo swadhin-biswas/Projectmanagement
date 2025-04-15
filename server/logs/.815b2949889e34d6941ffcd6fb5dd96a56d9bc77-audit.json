@@ -29,6 +29,16 @@
             "date": 1744480826466,
             "name": "/home/swadhin/r/server/logs/application-2025-04-13.log",
             "hash": "06aade31780a0fde6f3993732d8a17d0c95a9d223125d64f120b7a6578944ce3"
+        },
+        {
+            "date": 1744641860482,
+            "name": "/home/swadhin/r/server/logs/application-2025-04-14.log",
+            "hash": "7d8ddfd4341512d5cf561de2707c1b992fe5203d1c39b44445e63443e706ddd2"
+        },
+        {
+            "date": 1744653654192,
+            "name": "/home/swadhin/r/server/logs/application-2025-04-15.log",
+            "hash": "8acf35edf4e440ca3fc52c8bf6042109ae6c15c117853a52e9d8a1815dc983af"
         }
     ],
     "hashType": "sha256"

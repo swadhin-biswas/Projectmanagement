@@ -45,6 +45,7 @@ export const loadToken = () => {
     if (value) {
       // Migrate to standard key
       localStorage.setItem(TOKEN_KEY, value);
+      console.log(`Migrated token from ${key} to ${TOKEN_KEY}`);
       return value;
     }
   }
@@ -57,6 +58,7 @@ export const loadToken = () => {
       if (parsed && parsed.token) {
         // Migrate to standard key
         localStorage.setItem(TOKEN_KEY, parsed.token);
+        console.log(`Restored token from ${AUTH_DATA_KEY}`);
         return parsed.token;
       }
     } catch (e) {

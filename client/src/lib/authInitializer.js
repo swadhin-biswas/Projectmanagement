@@ -23,6 +23,16 @@ export const initializeAuth = () => {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
 
+    // Ensure the token is synced across all potential API instances
+    try {
+      // This ensures that any module-level API instances are also updated
+      if (window.syncAllAPIInstances) {
+        window.syncAllAPIInstances(token);
+      }
+    } catch (e) {
+      console.error("Error during API instance sync", e);
+    }
+
     console.log("Auth token initialized from storage");
     return true;
   } else {

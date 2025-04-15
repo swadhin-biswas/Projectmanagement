@@ -23,7 +23,7 @@ export const createTeam = async ({ body, user }) => {
   try {
     const student = await Student.findOne({ user: user.id }).populate(
       "user",
-      "fullName email"
+      "fullName email profilePicture"
     );
     if (!student) {
       throw new NotFoundError("Student profile not found");
@@ -73,7 +73,9 @@ export const createTeam = async ({ body, user }) => {
       ],
       description:
         body.description || `Team created by ${student.user.fullName}`,
-      status: "forming",
+      status: "active", // Set status to active immediately
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     await team.save();
@@ -100,31 +102,42 @@ export const createTeam = async ({ body, user }) => {
       createdBy: user.id,
     });
 
-    // Return the newly created team
+    const timestamp = new Date().toISOString();
+
+    // Return the newly created team with exact structure needed by client
     return {
       success: true,
-      message: "Team created successfully! You are now the team leader.",
+      message: "Team created successfully",
       data: {
         _id: team._id.toString(),
         name: team.name,
+        description:
+          body.description || `Team created by ${student.user.fullName}`,
         teamId: team.teamId,
         members: [
           {
             user: {
               _id: student._id.toString(),
+              user: {
+                email: student.user.email,
+                fullName: student.user.fullName,
+              },
               fullName: student.user.fullName,
-              email: student.user.email,
-              profilePicture: student.profilePicture || "",
+              studentId: student.studentId,
+              profilePicture: student.user.profilePicture || "",
             },
             role: "leader",
-            joinedAt: new Date(),
+            status: "active",
+            joinedAt: timestamp,
           },
         ],
-        maxMembers: team.maxMembers,
-        description: team.description,
-        status: team.status,
         session: currentSession ? currentSession._id.toString() : null,
+        status: "active",
+        maxMembers: 4,
+        createdAt: timestamp,
+        updatedAt: timestamp,
       },
+      timestamp,
     };
   } catch (error) {
     logger.error("Failed to create team", { error, userId: user.id });

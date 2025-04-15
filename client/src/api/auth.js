@@ -72,13 +72,17 @@ api.interceptors.response.use(
         if (
           error.response?.data?.error?.includes("expired") ||
           error.response?.data?.error?.includes("invalid token") ||
-          error.response?.data?.error?.includes("unauthorized")
+          error.response?.data?.error?.includes("unauthorized") ||
+          error.response?.data?.error?.includes("Authentication required")
         ) {
           // Token expired or invalid
           clearAuthToken(); // Use centralized function instead of individual removals
 
-          // Use location.replace to avoid adding to history stack
-          window.location.replace("/login?session=expired");
+          // Don't redirect if we're already on the login page
+          if (!window.location.pathname.includes("/login")) {
+            // Use location.replace to avoid adding to history stack
+            window.location.replace("/login?session=expired");
+          }
         }
       }
     }
