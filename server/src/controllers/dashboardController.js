@@ -647,11 +647,50 @@ export const getAdminDashboard = async ({ set }) => {
           // ...Object.fromEntries(projectTypeStats.map(item => [item._id, item.count]))
         },
       },
+      // Format recentActivities as required by the schema
       recentActivities: recentActivities.map((a) => ({
-        ...a,
-        _id: a._id.toString(),
-        sender: a.sender ? { ...a.sender, _id: a.sender._id.toString() } : null,
+        id: a._id.toString(),
+        type: a.type || "notification",
+        description: a.message || "Activity notification",
+        user: {
+          id: a.sender ? a.sender._id.toString() : "",
+          name: a.sender ? a.sender.fullName : "System",
+          role: a.sender ? a.sender.role : "system",
+        },
+        timestamp: a.createdAt || new Date().toISOString(),
       })),
+      // Add the missing stats object with the required structure
+      stats: {
+        users: {
+          total: roleCountMap.student + roleCountMap.supervisor || 0,
+          students: roleCountMap.student || 0,
+          supervisors: roleCountMap.supervisor || 0,
+          pendingApprovals: pendingApprovals || 0,
+        },
+        teams: {
+          total: teamsCount || 0,
+          active: teamsCount - teamsWithoutSupervisor || 0,
+          pending: 0, // You'll need to define what "pending" means in your context
+          withoutSupervisor: teamsWithoutSupervisor || 0,
+        },
+        projects: {
+          total:
+            Object.values(projectStatsMap).reduce(
+              (sum, count) => sum + count,
+              0
+            ) || 0,
+          active: projectStatsMap.in_progress || 0,
+          completed: projectStatsMap.completed || 0,
+          overdue: projectStatsMap.overdue || 0,
+        },
+        submissions: {
+          today: 0, // You would need a date filter to calculate this accurately
+          thisWeek: 0, // You would need a date filter to calculate this accurately
+          pending: projectStatsMap.submitted || 0,
+        },
+      },
+      // Add the missing alerts array
+      alerts: [],
     };
 
     if (set) set.status = 200;

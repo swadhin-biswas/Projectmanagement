@@ -1,0 +1,35 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/swadhin/projects/Projectmanagement/server/logs/.650b2c036ca6f57c53964b78be60fc542c4d1a51-audit.json",
+    "files": [
+        {
+            "date": 1744796260360,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/application-2025-04-16.log",
+            "hash": "a5e657cd2132695a306f55337d363208516bae5c8c802654ed292f65806f7f60"
+        },
+        {
+            "date": 1744826406982,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/application-2025-04-17.log",
+            "hash": "3a3eb76370d49fc35c6a95d7c8122f05a87f528c2b222e769cac66cc2f9d184b"
+        },
+        {
+            "date": 1744965815029,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/application-2025-04-18.log",
+            "hash": "04ec07d7173b7718b514d6b36cfcff1276c1f85a63b31c9485aebbcc6c03c957"
+        },
+        {
+            "date": 1745072473810,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/application-2025-04-19.log",
+            "hash": "f4d86410b3df4736e08fa95b46ad01261d767d4987225c4668b8b0d4277edeb4"
+        },
+        {
+            "date": 1745085635982,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/application-2025-04-20.log",
+            "hash": "2ea06b0f19cb217cf0d28ebbfe1948ffab0928516111dd3d04e1576efd65e9d3"
+        }
+    ],
+    "hashType": "sha256"
+}

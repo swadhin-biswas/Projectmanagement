@@ -12,8 +12,14 @@ const AdminLayout = () => {
   const navigation = [
     { name: 'Dashboard', path: '/admin/dashboard' },
     { name: 'Users', path: '/admin/users' },
-    { name: 'Teams', path: '/admin/teams' },
+    { name: 'Students', path: '/admin/students' },
+    { name: 'Supervisors', path: '/admin/supervisors' },
+    { name: 'Admins', path: '/admin/admins' },
     { name: 'Projects', path: '/admin/projects' },
+    { name: 'Teams', path: '/admin/teams' },
+    { name: 'Summarization', path: '/admin/summarization' },
+    { name: 'Timeline', path: '/admin/timeline' },
+    { name: 'Analysis', path: '/admin/analysis' },
   ];
 
   const isActive = (path) => location.pathname === path;

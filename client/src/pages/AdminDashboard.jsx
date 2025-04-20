@@ -173,7 +173,7 @@ const AdminDashboard = () => {
             Dashboard
           </h1>
           <div className="flex items-center gap-4">
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant={activeSection === "dashboard" ? "default" : "outline"}
                 onClick={() => setActiveSection("dashboard")}
@@ -182,18 +182,67 @@ const AdminDashboard = () => {
                 Dashboard
               </Button>
               <Button
-                variant={activeSection === "sessions" ? "default" : "outline"}
-                onClick={() => setActiveSection("sessions")}
-                className={activeSection === "sessions" ? "bg-blue-600" : ""}
-              >
-                Sessions
-              </Button>
-              <Button
                 variant={activeSection === "users" ? "default" : "outline"}
                 onClick={() => setActiveSection("users")}
                 className={activeSection === "users" ? "bg-blue-600" : ""}
               >
                 Users
+              </Button>
+              <Button
+                variant={activeSection === "students" ? "default" : "outline"}
+                onClick={() => setActiveSection("students")}
+                className={activeSection === "students" ? "bg-green-600" : ""}
+              >
+                Students
+              </Button>
+              <Button
+                variant={activeSection === "supervisors" ? "default" : "outline"}
+                onClick={() => setActiveSection("supervisors")}
+                className={activeSection === "supervisors" ? "bg-purple-600" : ""}
+              >
+                Supervisors
+              </Button>
+              <Button
+                variant={activeSection === "admins" ? "default" : "outline"}
+                onClick={() => setActiveSection("admins")}
+                className={activeSection === "admins" ? "bg-red-600" : ""}
+              >
+                Admins
+              </Button>
+              <Button
+                variant={activeSection === "projects" ? "default" : "outline"}
+                onClick={() => setActiveSection("projects")}
+                className={activeSection === "projects" ? "bg-yellow-600" : ""}
+              >
+                Projects
+              </Button>
+              <Button
+                variant={activeSection === "teams" ? "default" : "outline"}
+                onClick={() => setActiveSection("teams")}
+                className={activeSection === "teams" ? "bg-teal-600" : ""}
+              >
+                Teams
+              </Button>
+              <Button
+                variant={activeSection === "summarization" ? "default" : "outline"}
+                onClick={() => setActiveSection("summarization")}
+                className={activeSection === "summarization" ? "bg-pink-600" : ""}
+              >
+                Summarization
+              </Button>
+              <Button
+                variant={activeSection === "timeline" ? "default" : "outline"}
+                onClick={() => setActiveSection("timeline")}
+                className={activeSection === "timeline" ? "bg-indigo-600" : ""}
+              >
+                Timeline
+              </Button>
+              <Button
+                variant={activeSection === "analysis" ? "default" : "outline"}
+                onClick={() => setActiveSection("analysis")}
+                className={activeSection === "analysis" ? "bg-gray-600" : ""}
+              >
+                Analysis
               </Button>
             </div>
             <NotificationCenter />

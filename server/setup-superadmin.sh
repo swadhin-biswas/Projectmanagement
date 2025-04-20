@@ -12,7 +12,7 @@ echo ""
 
 # Check if server is running by pinging the health endpoint
 echo -e "Checking if server is running..."
-SERVER_URL=${API_URL:-"http://localhost:3000"}
+SERVER_URL=${API_URL:-"http://localhost:30000"}
 
 SERVER_RUNNING=false
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $SERVER_URL 2>/dev/null || echo "000")

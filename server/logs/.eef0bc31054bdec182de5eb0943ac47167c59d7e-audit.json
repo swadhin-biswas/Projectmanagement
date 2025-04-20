@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/swadhin/projects/Projectmanagement/server/logs/.eef0bc31054bdec182de5eb0943ac47167c59d7e-audit.json",
+    "files": [
+        {
+            "date": 1744796260361,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/error-2025-04-16.log",
+            "hash": "d98d81eca67fa8f0ea2473fe64bdd40d00731bb106d6cf6dcc087f58e09a4a99"
+        },
+        {
+            "date": 1744965815029,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/error-2025-04-18.log",
+            "hash": "81b2dd36357838c6c9f4e2951b6b3def50648402c6f9d646f6aa025151e46c04"
+        },
+        {
+            "date": 1745072473811,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/error-2025-04-19.log",
+            "hash": "8cb32c8455ac800372d0293c1b833bf8dbdb00b2781f9e9e2e2442e034e20634"
+        },
+        {
+            "date": 1745086803319,
+            "name": "/home/swadhin/projects/Projectmanagement/server/logs/error-2025-04-20.log",
+            "hash": "bdcb7bdb33295c5894595c144666f186135ecffe0e73164dd04c2b4278b96943"
+        }
+    ],
+    "hashType": "sha256"
+}

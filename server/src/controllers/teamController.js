@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Invitation from "../models/Invitation.js";
 import { Notification } from "../models/Notification.js";
 import { Session } from "../models/Session.js";
@@ -11,16 +12,38 @@ import {
   NotFoundError,
   ValidationError,
 } from "../utils/errors.js";
-import { generateRandomId } from "../utils/helpers.js";
 import logger from "../utils/logger.js";
+
+/**
+ * Generate a unique team ID
+ */
+const generateUniqueTeamId = async () => {
+  const length = 6;
+  let teamId;
+  let isUnique = false;
+
+  while (!isUnique) {
+    teamId = Math.random()
+      .toString(36)
+      .substring(2, 2 + length)
+      .toUpperCase();
+    const existingTeam = await Team.findOne({ teamId });
+    if (!existingTeam) {
+      isUnique = true;
+    }
+  }
+  return teamId;
+};
 
 /**
  * Create a new team
  * - Student who creates the team becomes the team leader
  * - Teams can have a maximum of 4 members
+ * - Requires an active session and open team formation period
  */
 export const createTeam = async ({ body, user }) => {
   try {
+    console.log("Creating team", { userId: user.id });
     const student = await Student.findOne({ user: user.id }).populate(
       "user",
       "fullName email profilePicture"
@@ -50,30 +73,43 @@ export const createTeam = async ({ body, user }) => {
       throw new ValidationError("You are already a member of a team");
     }
 
-    // Get active session - but don't require it
+    // Get active session
     const currentSession = await Session.findOne({ status: "active" });
-    // Allow team creation even without an active session
+
+    if (!currentSession) {
+      logger.error("No active session found when creating team", {
+        userId: user.id,
+      });
+      throw new ValidationError(
+        "No active session is currently available for team creation. Please contact an administrator."
+      );
+    }
+
+    // Validate team formation period
+    if (!currentSession.isTeamFormationOpen()) {
+      throw new ValidationError("Team formation period is not active");
+    }
 
     // Generate unique team ID
-    const teamId = generateRandomId(8);
+    const teamId = await generateUniqueTeamId();
 
     // Create team with student as leader
     const team = new Team({
       name: body.name,
       teamId,
-      session: currentSession?._id, // Use optional chaining to handle null case
-      maxMembers: 4, // Maximum of 4 members per team
+      session: currentSession._id,
+      maxMembers: currentSession.maxTeamSize || 4,
       members: [
         {
           user: student._id,
-          role: "leader", // Creator becomes team leader
+          role: "leader",
           status: "active",
           joinedAt: new Date(),
         },
       ],
       description:
         body.description || `Team created by ${student.user.fullName}`,
-      status: "active", // Set status to active immediately
+      status: "active",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -88,6 +124,8 @@ export const createTeam = async ({ body, user }) => {
     // Create team chat
     await TeamChat.create({
       team: team._id,
+      content: `Team "${body.name}" created by ${student.user.fullName}`,
+      sender: student._id,
       messages: [
         {
           type: "system",
@@ -131,9 +169,9 @@ export const createTeam = async ({ body, user }) => {
             joinedAt: timestamp,
           },
         ],
-        session: currentSession ? currentSession._id.toString() : null,
+        session: currentSession._id.toString(),
         status: "active",
-        maxMembers: 4,
+        maxMembers: currentSession.maxTeamSize || 4,
         createdAt: timestamp,
         updatedAt: timestamp,
       },
@@ -404,61 +442,6 @@ export const respondToInvitation = async ({ body, user }) => {
   }
 };
 
-export const removeTeamMember = async ({ params, body, user }) => {
-  try {
-    const team = await Team.findById(params.teamId);
-    if (!team) {
-      throw new NotFoundError("Team not found");
-    }
-
-    const memberToRemove = await Student.findById(params.memberId);
-    if (!memberToRemove) {
-      throw new NotFoundError("Member not found");
-    }
-
-    // Check if the member exists in the team
-    const memberIndex = team.members.findIndex(
-      (m) => m.user.toString() === memberToRemove._id.toString()
-    );
-
-    if (memberIndex === -1) {
-      throw new ValidationError("User is not a member of this team");
-    }
-
-    // Remove the member
-    team.members.splice(memberIndex, 1);
-
-    // If member was leader, assign new leader if there are other members
-    if (
-      team.members.length > 0 &&
-      team.members[memberIndex].role === "leader"
-    ) {
-      team.members[0].role = "leader";
-    }
-
-    await team.save();
-
-    // Track activity if project exists
-    if (team.project) {
-      await trackTeamMemberActivity(
-        team.project,
-        user.id,
-        "leave",
-        memberToRemove._id
-      );
-    }
-
-    return {
-      success: true,
-      message: "Team member removed successfully",
-      data: team,
-    };
-  } catch (error) {
-    logger.error("Failed to remove team member", error);
-    throw error;
-  }
-};
-
 /**
  * Remove a member from a team
  * - Only team leaders can remove members
@@ -504,7 +487,7 @@ export const removeMember = async ({ body, user }) => {
     const isMember = team.members.some(
       (m) =>
         m.user.toString() === memberToRemove._id.toString() &&
-        m.status === "active"
+        m.status === "active pending"
     );
 
     if (!isMember) {
@@ -565,9 +548,6 @@ export const removeMember = async ({ body, user }) => {
     throw error;
   }
 };
-
-// Elysia-compatible API endpoints for team management
-// These work with the new router implementation
 
 /**
  * Get user's teams - Elysia implementation

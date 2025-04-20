@@ -1,68 +1,46 @@
-import mongoose from "mongoose";
+import { Schema, model } from "mongoose";
 
-const teamChatSchema = new mongoose.Schema({
-  teamId: {
-    type: mongoose.Schema.Types.ObjectId,
+const teamChatSchema = new Schema({
+  team: {
+    type: Schema.Types.ObjectId,
     ref: "Team",
     required: true,
   },
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+  teamId: {
+    type: String, // Changed from Schema.Types.ObjectId to String
+    required: false, // Optional to align with studentController.js
+    match: /^[A-Za-z0-9]{6,8}$/, // Validate format (6-8 alphanumeric characters)
   },
   content: {
     type: String,
-    required: true,
+    required: false,
   },
-  attachments: [{
-    url: String,
-    type: String, // file type/mimetype
-    name: String
-  }],
-  readBy: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
+  sender: {
+    type: Schema.Types.ObjectId,
+    ref: "Student",
+    required: false,
+  },
+  messages: [
+    {
+      type: {
+        type: String,
+        enum: ["system", "user"],
+        required: true,
+      },
+      content: {
+        type: String,
+        required: true,
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
     },
-    readAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  isAnnouncement: {
-    type: Boolean,
-    default: false
+  ],
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
-  isDeleted: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
 });
 
-// Indexes for better query performance
-teamChatSchema.index({ teamId: 1, createdAt: -1 });
-teamChatSchema.index({ sender: 1 });
-teamChatSchema.index({ "readBy.user": 1 });
-
-// Method to mark message as read by a user
-teamChatSchema.methods.markAsRead = async function(userId) {
-  if (!this.readBy.some(read => read.user.toString() === userId.toString())) {
-    this.readBy.push({ user: userId });
-    await this.save();
-  }
-  return this;
-};
-
-// Static method to get unread messages count
-teamChatSchema.statics.getUnreadCount = async function(teamId, userId) {
-  return this.countDocuments({
-    teamId,
-    "readBy.user": { $ne: userId },
-    sender: { $ne: userId }
-  });
-};
-
-export const TeamChat = mongoose.model("TeamChat", teamChatSchema);
+export const TeamChat = model("TeamChat", teamChatSchema);
